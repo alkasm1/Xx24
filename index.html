@@ -1,64 +1,272 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>Alm Control Dashboard</title>
-  <style>
-    body { font-family: Arial; padding: 20px; background: #fafafa; }
-    h1 { margin-bottom: 5px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    pre { background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; }
-    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
-  </style>
+<meta charset="UTF-8">
+<title>ALM Secure System v1</title>
+
+<style>
+body {
+  font-family: Cairo, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+}
+
+header {
+  background: #0BA37F;
+  color: white;
+  padding: 15px;
+  text-align: center;
+}
+
+.container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 15px;
+}
+
+textarea {
+  width: 100%;
+  height: 180px;
+  font-family: monospace;
+  padding: 10px;
+}
+
+button {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.primary { background:#0BA37F; color:white; }
+.dark { background:#333; color:white; }
+.orange { background:#ff8c00; color:white; }
+
+#output {
+  background: #111;
+  color: #00ff90;
+  padding: 10px;
+  min-height: 100px;
+  margin-top: 10px;
+  font-family: monospace;
+}
+
+canvas {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+}
+</style>
 </head>
 
 <body>
 
-<!-- 🔥 WebSocket Status -->
-<div id="wsStatus" style="
-  padding:10px;
-  font-size:18px;
-  font-weight:bold;
-  background:#222;
-  color:#fff;
-  margin-bottom:15px;
-  border-radius:6px;">
-  WS: ⏳ connecting...
+<header>🔐 ALM Secure System v1</header>
+
+<div class="container">
+
+<textarea id="input"></textarea>
+
+<button class="primary" onclick="compile()">⚙️ Compile → Secure Image</button>
+<button class="dark" onclick="runFromImage()">📥 Import & Run Image</button>
+<button class="orange" onclick="save()">💾 Save Image</button>
+
+<canvas id="canvas"></canvas>
+
+<div id="output"></div>
+
 </div>
 
-<h1>📡 Alm Control Dashboard</h1>
+<script>
 
-<h2>📊 Metrics</h2>
-<pre id="metrics"></pre>
+/* =========================
+   ALM VM (Core)
+========================= */
+class ALM_VM {
+  constructor(){
+    this.vars = {};
+    this.output = "";
+    this.pointer = 0;
+    this.lines = [];
+  }
 
-<h2>📡 Devices</h2>
-<table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Status</th>
-      <th>Last Seen</th>
-      <th>Last Cmd</th>
-      <th>Exec Time</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody id="devices"></tbody>
-</table>
+  run(code){
+    this.vars = {};
+    this.output = "";
+    this.pointer = 0;
 
-<h2>📡 Broadcast</h2>
-<button id="btn-bc-setfreq">Broadcast SetFreq</button>
-<button id="btn-bc-reboot">Broadcast Reboot</button>
+    this.lines = code.split(";")
+      .map(x=>x.trim())
+      .filter(x=>x);
 
-<h2>📜 Alm Logs</h2>
-<pre id="logs"></pre>
-  
-<h2>📡 Broadcasts</h2>
-<pre id="broadcasts"></pre>
-  
-<!-- 🔥 Frontend Logic -->
-<script type="module" src="frontend/app.js"></script>
+    while(this.pointer < this.lines.length){
+      this.exec(this.lines[this.pointer]);
+      this.pointer++;
+    }
+
+    return this.output;
+  }
+
+  exec(line){
+    const p = line.split(" ");
+    const op = p[0];
+
+    switch(op){
+
+      case "SET":
+        this.vars[p[1]] = Number(p[2]);
+        break;
+
+      case "ADD":
+        this.vars[p[3]] =
+          this.vars[p[1]] + this.vars[p[2]];
+        break;
+
+      case "MUL":
+        this.vars[p[3]] =
+          this.vars[p[1]] * this.vars[p[2]];
+        break;
+
+      case "ECHO":
+        this.output += (this.vars[p[1]] ?? "");
+        break;
+    }
+  }
+}
+
+const vm = new ALM_VM();
+
+/* =========================
+   ALM PACKAGE CORE
+========================= */
+function compilePackage(code){
+
+  const bytes = new TextEncoder().encode(code);
+
+  let checksum = 0;
+  for(let b of bytes) checksum = (checksum + b) % 1000000007;
+
+  return {
+    magic:"ALM1",
+    type:"secure_program",
+    length: bytes.length,
+    checksum,
+    payload: Array.from(bytes)
+  };
+}
+
+/* =========================
+   SIMPLE XOR ENCRYPTION
+========================= */
+function encrypt(data, key=123){
+
+  return data.map(b => b ^ key);
+}
+
+function decrypt(data, key=123){
+
+  return data.map(b => b ^ key);
+}
+
+/* =========================
+   IMAGE ENCODER
+========================= */
+function writeImage(bytes){
+
+  const size = 512;
+  const canvas = document.getElementById("canvas");
+  canvas.width = size;
+  canvas.height = size;
+
+  const ctx = canvas.getContext("2d");
+  const img = ctx.createImageData(size,size);
+  const d = img.data;
+
+  for(let i=0;i<bytes.length;i++){
+
+    const v = 255 - bytes[i];
+    const p = i*4;
+
+    d[p]=d[p+1]=d[p+2]=v;
+    d[p+3]=255;
+  }
+
+  ctx.putImageData(img,0,0);
+}
+
+/* =========================
+   DECODE IMAGE
+========================= */
+function readImage(){
+
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+
+  const bytes = [];
+
+  for(let i=0;i<data.length;i+=4){
+    const v = 255 - data[i];
+    if(v !== 255) bytes.push(v);
+  }
+
+  return bytes;
+}
+
+/* =========================
+   COMPILE FLOW
+========================= */
+function compile(){
+
+  const code = document.getElementById("input").value;
+
+  const pkg = compilePackage(code);
+
+  // 🔐 encrypt payload
+  const encrypted = encrypt(pkg.payload);
+
+  writeImage(encrypted);
+
+  window.__pkg = pkg;
+
+  document.getElementById("output").textContent =
+    "✔ Compiled & secured into image";
+}
+
+/* =========================
+   RUN FROM IMAGE
+========================= */
+function runFromImage(){
+
+  const bytes = readImage();
+
+  const decrypted = decrypt(bytes);
+
+  const text = new TextDecoder().decode(
+    new Uint8Array(decrypted)
+  );
+
+  const out = vm.run(text);
+
+  document.getElementById("output").textContent = out;
+}
+
+/* =========================
+   SAVE IMAGE
+========================= */
+function save(){
+
+  const canvas = document.getElementById("canvas");
+
+  const a = document.createElement("a");
+  a.href = canvas.toDataURL("image/png");
+  a.download = "alm-secure.png";
+  a.click();
+}
+
+</script>
 
 </body>
 </html>
