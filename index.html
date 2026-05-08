@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Alm Control Dashboard</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #fafafa; }
+    h1 { margin-bottom: 5px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    pre { background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; }
+    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+  </style>
+</head>
+
+<body>
+
+<!-- 🔥 WebSocket Status -->
+<div id="wsStatus" style="
+  padding:10px;
+  font-size:18px;
+  font-weight:bold;
+  background:#222;
+  color:#fff;
+  margin-bottom:15px;
+  border-radius:6px;">
+  WS: ⏳ connecting...
+</div>
+
+<h1>📡 Alm Control Dashboard</h1>
+
+<h2>📊 Metrics</h2>
+<pre id="metrics"></pre>
+
+<h2>📡 Devices</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Status</th>
+      <th>Last Seen</th>
+      <th>Last Cmd</th>
+      <th>Exec Time</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="devices"></tbody>
+</table>
+
+<h2>📡 Broadcast</h2>
+<button id="btn-bc-setfreq">Broadcast SetFreq</button>
+<button id="btn-bc-reboot">Broadcast Reboot</button>
+
+<h2>📜 Alm Logs</h2>
+<pre id="logs"></pre>
+  
+<h2>📡 Broadcasts</h2>
+<pre id="broadcasts"></pre>
+  
+<!-- 🔥 Frontend Logic -->
+<script type="module" src="frontend/app.js"></script>
+
+</body>
+</html>
