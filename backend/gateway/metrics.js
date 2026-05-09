@@ -2,81 +2,46 @@
 
 class Metrics {
   constructor(eventBus, registry) {
+    this.eventBus = eventBus;
     this.registry = registry;
 
-    this.commands_sent = 0;
-    this.commands_ok = 0;
-    this.commands_fail = 0;
-    this.timeouts = 0;
+    this.counters = {
+      opcodesTotal: 0,
+      opcodesFailed: 0,
+      transports: {}
+    };
 
-    this.execTimes = {}; // commandId -> [times]
+    this._wire();
+  }
 
-    // -----------------------------
-    // SENT
-    // -----------------------------
-    eventBus.on("command.sent", ({ commandId }) => {
-      this.commands_sent++;
+  _wire() {
+    this.eventBus.on("opcode.received", () => {
+      this.counters.opcodesTotal++;
     });
 
-    // -----------------------------
-    // COMPLETED (بديل device.ack)
-    // -----------------------------
-    eventBus.on("command.completed", (req) => {
-      this.commands_ok++;
+    this.eventBus.on("opcode.failed", () => {
+      this.counters.opcodesFailed++;
+    });
 
-      const commandId = req.commandId;
-      const execMs = req.execMs || 0;
-
-      if (!this.execTimes[commandId]) {
-        this.execTimes[commandId] = [];
+    this.eventBus.on("transport.exec", ({ transport, success }) => {
+      if (!this.counters.transports[transport]) {
+        this.counters.transports[transport] = { total: 0, failed: 0 };
       }
-
-      this.execTimes[commandId].push(execMs);
-    });
-
-    // -----------------------------
-    // FAILED
-    // -----------------------------
-    eventBus.on("command.failed", () => {
-      this.commands_fail++;
-    });
-
-    // -----------------------------
-    // TIMEOUT (اختياري إذا ما زال مستخدم)
-    // -----------------------------
-    eventBus.on("command.timeout", () => {
-      this.timeouts++;
+      this.counters.transports[transport].total++;
+      if (!success) this.counters.transports[transport].failed++;
     });
   }
 
-  // -----------------------------
-  // AVG
-  // -----------------------------
-  _avg(arr) {
-    if (!arr || arr.length === 0) return 0;
-    return arr.reduce((a, b) => a + b, 0) / arr.length;
-  }
-
-  // -----------------------------
-  // SNAPSHOT
-  // -----------------------------
   snapshot() {
-    const avgexecms = {};
-
-    for (const cmd in this.execTimes) {
-      avgexecms[cmd] = this._avg(this.execTimes[cmd]);
-    }
-
     const { online, offline } = this.registry.getStats();
 
     return {
-      commands_sent: this.commands_sent,
-      commands_ok: this.commands_ok,
-      commands_fail: this.commands_fail,
-      timeouts: this.timeouts,
-      avgexecms,
-      devices_online: online,
-      devices_off: offline
+      devices: { online, offline },
+      opcodes: {
+        total: this.counters.opcodesTotal,
+        failed: this.counters.opcodesFailed
+      },
+      transports: this.counters.transports
     };
   }
 }
