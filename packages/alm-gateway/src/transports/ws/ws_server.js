@@ -3,7 +3,7 @@
 const WebSocket = require("ws");
 
 const Queue = require(
-  "../../../../alm-core/src/runtime/queue"
+  "../../../alm-core/src/runtime/queue"
 );
 const registry = require(
   "../../../alm-core/src/registry/device_registry"
