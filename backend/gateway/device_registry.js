@@ -1,10 +1,10 @@
-// backend/gateway/device_registry.js
+// device_registry.js
 
 class DeviceRegistry {
   constructor() {
     this.devices = new Map();
 
-    // جهاز SSH للاختبار
+    // مثال جهاز SSH
     this.upsert("router-1", {
       deviceId: "router-1",
       ip: "192.168.88.232",
@@ -32,6 +32,19 @@ class DeviceRegistry {
   update(id, data) {
     if (!this.devices.has(id)) return;
     this.devices.set(id, { ...this.devices.get(id), ...data });
+  }
+
+  // 🔥 الدالة المطلوبة من metrics.js
+  getStats() {
+    let online = 0;
+    let offline = 0;
+
+    for (const d of this.devices.values()) {
+      if (d.status === "online") online++;
+      else offline++;
+    }
+
+    return { online, offline };
   }
 }
 
