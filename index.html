@@ -22,6 +22,16 @@
       white-space: pre-wrap;
       margin-top: 20px;
     }
+
+    /* شاشة اختبار الضغط */
+    #stressScreen {
+      display: none;
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 
@@ -40,6 +50,9 @@
 </div>
 
 <h1>📡 ALM v3 Control Dashboard</h1>
+
+<!-- زر فتح شاشة اختبار الضغط -->
+<button id="openStress">🔥 Stress Test</button>
 
 <!-- ========================= -->
 <!-- SEND OPCODE -->
@@ -80,16 +93,40 @@
 <h2>🖥️ Gateway Terminal (Live)</h2>
 <pre id="terminal"></pre>
 
+<!-- ========================= -->
+<!-- 🔥 STRESS TEST SCREEN -->
+<!-- ========================= -->
+<div id="stressScreen">
+  <h2>🔥 Stress Test Dashboard</h2>
+
+  <button id="runLight">Light</button>
+  <button id="runMedium">Medium</button>
+  <button id="runHeavy">Heavy</button>
+  <button id="runExtreme">Extreme</button>
+
+  <h3>📊 Results</h3>
+  <pre id="stressResults"></pre>
+</div>
+
 <h2>📜 المطور: رأفت عمر</h2>
 
-<script>
-  const ws = new WebSocket("ws://192.168.88.245:5001");
+<script type="module">
+  import { renderStressResults } from "./stress-view.js";
+
+  const ws = new WebSocket(`ws://${location.hostname}:5001`);
 
   const wsStatus = document.getElementById("wsStatus");
   const resultBox = document.getElementById("opcodeResult");
   const devicesBox = document.getElementById("devicesBox");
   const logs = document.getElementById("logs");
   const terminal = document.getElementById("terminal");
+
+  // -----------------------------
+  // فتح شاشة اختبار الضغط
+  // -----------------------------
+  document.getElementById("openStress").onclick = () => {
+    document.getElementById("stressScreen").style.display = "block";
+  };
 
   // -----------------------------
   // WS Lifecycle
@@ -120,15 +157,20 @@
       devicesBox.textContent = JSON.stringify(msg.devices, null, 2);
     }
 
-    // logs
-    logs.textContent += "\n" + event.data;
-    logs.scrollTop = logs.scrollHeight;
-
     // 🔥 TERMINAL OUTPUT
     if (msg.type === "terminal") {
       terminal.textContent += "\n" + msg.line;
       terminal.scrollTop = terminal.scrollHeight;
     }
+
+    // 🔥 STRESS TEST RESULTS
+    if (msg.type === "stressUpdate") {
+      renderStressResults(msg.data);
+    }
+
+    // logs
+    logs.textContent += "\n" + event.data;
+    logs.scrollTop = logs.scrollHeight;
   };
 
   // -----------------------------
@@ -149,6 +191,23 @@
     ws.send(JSON.stringify(req));
     logs.textContent += "\n📤 SENT OPCODE → " + opcode;
   }
+
+  // -----------------------------
+  // RUN STRESS TEST
+  // -----------------------------
+  function runStress(profile) {
+    ws.send(JSON.stringify({
+      type: "ui.stress.run",
+      profile
+    }));
+    logs.textContent += `\n🔥 STRESS START → ${profile}`;
+  }
+
+  document.getElementById("runLight").onclick = () => runStress("light");
+  document.getElementById("runMedium").onclick = () => runStress("medium");
+  document.getElementById("runHeavy").onclick = () => runStress("heavy");
+  document.getElementById("runExtreme").onclick = () => runStress("extreme");
+
 </script>
 
 </body>
