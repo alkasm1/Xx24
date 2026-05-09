@@ -3,150 +3,22 @@
 const dgram = require("dgram");
 const fs = require("fs");
 const crypto = require("crypto");
-const udp = dgram.createSocket("udp4");
 const WebSocket = require("ws");
-const { Client } = require("ssh2");
+
+const udp = dgram.createSocket("udp4");
 
 const eventBus = require("./event_bus");
 const registry = require("./device_registry");
 const Metrics = require("./metrics");
-const opcodes = require("./opcodes");
+const { dispatch } = require("./dispatcher");
 
 const metrics = new Metrics(eventBus, registry);
 
-// -----------------------------
-// CONFIG
-// -----------------------------
 const SECRET = "alm_shared_secret";
 const STATE_FILE = "./state.json";
 
 // -----------------------------
-// WebSocket + sendToUI
-// -----------------------------
-const wss = new WebSocket.Server({ port: 5001 });
-
-function sendToUI(obj) {
-  wss.clients.forEach(ws => {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(obj));
-    }
-  });
-}
-
-wss.on("connection", ws => {
-  ws.on("message", async raw => {
-    let data;
-    try {
-      data = JSON.parse(raw.toString());
-    } catch {
-      return;
-    }
-
-    // -----------------------------
-    // UI COMMAND (قديم)
-    // -----------------------------
-    if (data.type === "ui.command") {
-      dispatchCommand(data.deviceId, data.commandId, data.params);
-      return;
-    }
-
-    // -----------------------------
-    // UI BROADCAST (قديم)
-    // -----------------------------
-    if (data.type === "ui.broadcast") {
-      broadcastCommand(data.commandId, data.params);
-      return;
-    }
-
-    // -----------------------------
-    // UI OPCODE (جديد)
-    // -----------------------------
-    if (data.type === "ui.opcode") {
-      console.log("RECEIVED ui.opcode:", data);
-
-      const device = registry.get(data.deviceId);
-
-      if (!device) {
-        return sendToUI({
-          type: "opcode.result",
-          requestId: data.requestId,
-          deviceId: data.deviceId,
-          opcode: data.opcode,
-          result: {
-            success: false,
-            error: `Device not found: ${data.deviceId}`
-          }
-        });
-      }
-
-      const descriptor = opcodes[data.opcode];
-
-      if (!descriptor) {
-        return sendToUI({
-          type: "opcode.result",
-          requestId: data.requestId,
-          deviceId: data.deviceId,
-          opcode: data.opcode,
-          result: {
-            success: false,
-            error: `Unknown opcode: ${data.opcode}`
-          }
-        });
-      }
-
-      // حالياً ندعم transport: ssh فقط
-      if (descriptor.transport === "ssh") {
-        try {
-          const res = await execSSH(device, descriptor.command);
-
-          return sendToUI({
-            type: "opcode.result",
-            requestId: data.requestId,
-            deviceId: data.deviceId,
-            opcode: data.opcode,
-            result: {
-              success: true,
-              data: {
-                stdout: res.stdout.trim(),
-                stderr: res.stderr.trim(),
-                execMs: res.execMs,
-                exitCode: res.exitCode,
-                parser: descriptor.parser
-              }
-            }
-          });
-
-        } catch (err) {
-          return sendToUI({
-            type: "opcode.result",
-            requestId: data.requestId,
-            deviceId: data.deviceId,
-            opcode: data.opcode,
-            result: {
-              success: false,
-              error: err.message
-            }
-          });
-        }
-      }
-
-      // transport غير مدعوم حالياً
-      return sendToUI({
-        type: "opcode.result",
-        requestId: data.requestId,
-        deviceId: data.deviceId,
-        opcode: data.opcode,
-        result: {
-          success: false,
-          error: `Transport not implemented: ${descriptor.transport}`
-        }
-      });
-    }
-  });
-});
-
-// -----------------------------
-// Security
+// HELPERS
 // -----------------------------
 function stableStringify(obj) {
   if (obj === null || typeof obj !== "object") return JSON.stringify(obj);
@@ -179,6 +51,26 @@ function genNonce() {
   return crypto.randomBytes(8).toString("hex");
 }
 
+function genId() {
+  return "req_" + Math.random().toString(36).slice(2);
+}
+
+function sanitizeDevice(device) {
+  return {
+    deviceId: device.deviceId,
+    ip: device.ip,
+    port: device.port,
+    method: device.method,
+    profile: device.profile,
+    vendor: device.vendor,
+    status: device.status,
+    lastSeen: device.lastSeen,
+    capabilities: Array.isArray(device.capabilities)
+      ? device.capabilities
+      : []
+  };
+}
+
 // -----------------------------
 // STATE
 // -----------------------------
@@ -206,10 +98,14 @@ function serializeRequests(obj) {
 function saveState() {
   fs.writeFileSync(
     STATE_FILE,
-    JSON.stringify({
-      pendingRequests: serializeRequests(pendingRequests),
-      broadcastRequests
-    }, null, 2)
+    JSON.stringify(
+      {
+        pendingRequests: serializeRequests(pendingRequests),
+        broadcastRequests
+      },
+      null,
+      2
+    )
   );
 }
 
@@ -218,77 +114,148 @@ function loadState() {
   const state = JSON.parse(fs.readFileSync(STATE_FILE));
   pendingRequests = state.pendingRequests || {};
   broadcastRequests = state.broadcastRequests || {};
-  console.log("♻️ State restored");
+  console.log("🦎 State restored");
 }
 
 // -----------------------------
-// SSH EXECUTION (مع stdout + exitCode)
+// WS SERVER
 // -----------------------------
-function execSSH(device, command) {
-  return new Promise((resolve, reject) => {
-    const conn = new Client();
-    const start = Date.now();
+const wss = new WebSocket.Server({ port: 5001 });
 
-    let stdout = "";
-    let stderr = "";
-    let exitCode = null;
-
-    let timeoutRef = setTimeout(() => {
-      conn.end();
-      reject(new Error("SSH timeout"));
-    }, 6000);
-
-    conn.on("ready", () => {
-      conn.exec(command, (err, stream) => {
-        if (err) {
-          clearTimeout(timeoutRef);
-          return reject(err);
-        }
-
-        stream.on("data", (data) => {
-          stdout += data.toString();
-        });
-
-        stream.stderr.on("data", (data) => {
-          stderr += data.toString();
-        });
-
-        stream.on("exit", (code) => {
-          exitCode = code;
-        });
-
-        stream.on("close", () => {
-          clearTimeout(timeoutRef);
-          conn.end();
-          resolve({
-            execMs: Date.now() - start,
-            stdout,
-            stderr,
-            exitCode
-          });
-        });
-      });
-    });
-
-    conn.on("error", err => {
-      clearTimeout(timeoutRef);
-      reject(err);
-    });
-
-    conn.connect({
-      host: device.ip,
-      port: device.port || 22,
-      username: device.username,
-      password: device.password
-    });
+function sendToUI(obj) {
+  const payload = JSON.stringify(obj);
+  wss.clients.forEach(ws => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(payload);
+    }
   });
 }
 
+wss.on("connection", ws => {
+  ws.on("message", async raw => {
+    let msg;
+    try {
+      msg = JSON.parse(raw.toString());
+    } catch {
+      return;
+    }
+
+    if (msg.type === "ui.opcode") {
+      console.log("RECEIVED ui.opcode:", msg);
+      eventBus.emit("opcode.received", msg);
+
+      const device = registry.get(msg.deviceId);
+
+      if (!device) {
+        return sendToUI({
+          type: "opcode.result",
+          requestId: msg.requestId,
+          deviceId: msg.deviceId,
+          opcode: msg.opcode,
+          result: {
+            success: false,
+            error: `Device not found: ${msg.deviceId}`
+          }
+        });
+      }
+
+      try {
+        const result = await dispatch(device, msg.opcode, msg.meta || {});
+        eventBus.emit("transport.exec", {
+          transport: result.transport,
+          success: result.success
+        });
+
+        return sendToUI({
+          type: "opcode.result",
+          requestId: msg.requestId,
+          deviceId: msg.deviceId,
+          opcode: msg.opcode,
+          result
+        });
+      } catch (err) {
+        eventBus.emit("opcode.failed", msg);
+        return sendToUI({
+          type: "opcode.result",
+          requestId: msg.requestId,
+          deviceId: msg.deviceId,
+          opcode: msg.opcode,
+          result: {
+            success: false,
+            error: err.message
+          }
+        });
+      }
+    }
+  });
+});
+
 // -----------------------------
-// DISPATCH (قديم)
+// UDP LISTENER (heartbeat + ack)
 // -----------------------------
-function genId() {
-  return "req_" + Math.random().toString(36).slice(2);
+udp.on("message", (buf, rinfo) => {
+  let packet;
+  try {
+    packet = JSON.parse(buf.toString());
+  } catch {
+    return;
+  }
+
+  if (!verifySignature(packet)) {
+    console.log("❌ Invalid signature → dropped");
+    return;
+  }
+
+  if (packet.type === "heartbeat") {
+    const existing = registry.get(packet.deviceId);
+    if (existing) {
+      registry.update(packet.deviceId, {
+        ip: rinfo.address,
+        port: rinfo.port,
+        lastSeen: Date.now(),
+        status: "online"
+      });
+    } else {
+      registry.upsert(packet.deviceId, {
+        deviceId: packet.deviceId,
+        ip: rinfo.address,
+        port: rinfo.port,
+        method: "udp",
+        profile: "unknown",
+        vendor: "unknown",
+        status: "online",
+        lastSeen: Date.now(),
+        capabilities: []
+      });
+    }
+    return;
+  }
+
+  if (packet.type === "ack") {
+    handleAck(packet);
+    return;
+  }
+});
+
+udp.bind(5000);
+
+// -----------------------------
+// LEGACY COMMAND DISPATCH (UDP)
+// -----------------------------
+function sendPacket(device, request) {
+  const packet = {
+    type: "cmd",
+    requestId: request.requestId,
+    deviceId: request.deviceId,
+    commandId: request.commandId,
+    meta: request.meta,
+    nonce: genNonce()
+  };
+
+  packet.sig = signPacket(packet);
+
+  const buf = Buffer.from(JSON.stringify(packet));
+  udp.send(buf, 0, buf.length, device.port, device.ip);
 }
 
 function dispatchCommand(deviceId, commandId, meta = {}, broadcastId = null) {
@@ -308,119 +275,10 @@ function dispatchCommand(deviceId, commandId, meta = {}, broadcastId = null) {
 
   pendingRequests[request.requestId] = request;
 
-  if (device.method === "ssh") {
-    handleSSH(request, device);
-    return;
-  }
-
   sendPacket(device, request);
   scheduleTimeout(request.requestId);
 }
 
-// -----------------------------
-// SSH HANDLER (قديم)
-// -----------------------------
-async function handleSSH(request, device) {
-  let cmd = "reboot";
-
-  if (request.commandId === 17) {
-    cmd = "uname -a";
-  }
-
-  try {
-    const res = await execSSH(device, cmd);
-
-    console.log("✅ SSH OK:", request.deviceId);
-
-    delete pendingRequests[request.requestId];
-    saveState();
-
-    if (request.broadcastId) {
-      updateBroadcast(request.broadcastId, request.deviceId, "OK");
-    }
-
-    sendToUI({
-      type: "cmd_completed",
-      deviceId: request.deviceId,
-      commandId: request.commandId,
-      execMs: res.execMs
-    });
-
-  } catch (err) {
-    console.log("❌ SSH FAIL:", err.message);
-
-    delete pendingRequests[request.requestId];
-    saveState();
-
-    if (request.broadcastId) {
-      updateBroadcast(request.broadcastId, request.deviceId, "FAILED");
-    }
-
-    sendToUI({
-      type: "cmd_failed",
-      deviceId: request.deviceId,
-      commandId: request.commandId
-    });
-  }
-}
-
-// -----------------------------
-// UDP LISTENER (قديم)
-// -----------------------------
-udp.on("message", (msg, rinfo) => {
-  let packet;
-
-  try {
-    packet = JSON.parse(msg.toString());
-  } catch {
-    return;
-  }
-
-  if (!verifySignature(packet)) {
-    console.log("❌ Invalid signature → dropped");
-    return;
-  }
-
-  if (packet.type === "heartbeat") {
-    registry.update(packet.deviceId, {
-      deviceId: packet.deviceId,
-      ip: rinfo.address,
-      port: rinfo.port,
-      lastSeen: Date.now(),
-      status: "online"
-    });
-  }
-
-  if (packet.type === "ack") {
-    handleAck(packet);
-  }
-});
-
-udp.bind(5000);
-
-// -----------------------------
-// SEND PACKET (UDP ONLY)
-// -----------------------------
-function sendPacket(device, request) {
-  const packet = {
-    type: "cmd",
-    requestId: request.requestId,
-    deviceId: request.deviceId,
-    commandId: request.commandId,
-    meta: request.meta,
-    nonce: genNonce()
-  };
-
-  packet.sig = signPacket(packet);
-
-  const buf = Buffer.from(JSON.stringify(packet));
-
-  udp.send(buf, 0, buf.length, device.port, device.ip);
-}
-
-// -----------------------------
-// ACK HANDLER (UDP ONLY)
-// -----------------------------
 function handleAck(packet) {
   const request = pendingRequests[packet.requestId];
   if (!request) return;
@@ -448,17 +306,9 @@ function handleAck(packet) {
   saveState();
 }
 
-// -----------------------------
-// TIMEOUT (UDP ONLY)
-// -----------------------------
 function scheduleTimeout(id) {
   const r = pendingRequests[id];
   if (!r) return;
-
-  const device = registry.get(r.deviceId);
-  if (!device) return;
-
-  if (device.method === "ssh") return;
 
   r._timeoutRef = setTimeout(() => handleTimeout(id), 2000);
 }
@@ -469,23 +319,6 @@ function handleTimeout(id) {
 
   const device = registry.get(r.deviceId);
   if (!device) return;
-
-  if (device.method === "ssh") {
-    delete pendingRequests[id];
-
-    if (r.broadcastId) {
-      updateBroadcast(r.broadcastId, r.deviceId, "FAILED");
-    }
-
-    sendToUI({
-      type: "cmd_failed",
-      deviceId: r.deviceId,
-      commandId: r.commandId
-    });
-
-    saveState();
-    return;
-  }
 
   if (r.retries >= r.maxRetries) {
     delete pendingRequests[id];
@@ -510,8 +343,29 @@ function handleTimeout(id) {
 }
 
 // -----------------------------
-// BROADCAST UPDATE
+// BROADCAST (legacy)
 // -----------------------------
+function broadcastCommand(commandId, meta = {}) {
+  const devices = registry.getAll();
+  const id = "bc_" + Math.random().toString(36).slice(2);
+
+  console.log("🧩 BROADCAST START:", id);
+
+  broadcastRequests[id] = {
+    broadcastId: id,
+    commandId,
+    devices: {},
+    status: "PENDING"
+  };
+
+  devices.forEach(d => {
+    broadcastRequests[id].devices[d.deviceId] = "PENDING";
+    dispatchCommand(d.deviceId, commandId, meta, id);
+  });
+
+  saveState();
+}
+
 function updateBroadcast(broadcastId, deviceId, status) {
   const bc = broadcastRequests[broadcastId];
   if (!bc) return;
@@ -541,42 +395,11 @@ function updateBroadcast(broadcastId, deviceId, status) {
 }
 
 // -----------------------------
-// BROADCAST
-// -----------------------------
-function broadcastCommand(commandId, meta = {}) {
-  const devices = registry.getAll();
-  const id = "bc_" + Math.random().toString(36).slice(2);
-
-  console.log("📡 BROADCAST START:", id);
-
-  broadcastRequests[id] = {
-    broadcastId: id,
-    commandId,
-    devices: {},
-    status: "PENDING"
-  };
-
-  devices.forEach(d => {
-    broadcastRequests[id].devices[d.deviceId] = "PENDING";
-    dispatchCommand(d.deviceId, commandId, meta, id);
-  });
-
-  saveState();
-}
-
-// -----------------------------
-// SNAPSHOT (مع sanitize)
+// SNAPSHOT LOOP (sanitized)
 // -----------------------------
 setInterval(() => {
   const rawDevices = registry.getAll();
-  const devices = rawDevices.map(d => ({
-    deviceId: d.deviceId,
-    ip: d.ip,
-    port: d.port,
-    method: d.method,
-    status: d.status,
-    lastSeen: d.lastSeen
-  }));
+  const devices = rawDevices.map(sanitizeDevice);
 
   sendToUI({
     type: "snapshot",
