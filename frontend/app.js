@@ -9,7 +9,10 @@ const wsStatus = document.getElementById("wsStatus");
 const metricsEl = document.getElementById("metrics");
 const devicesEl = document.getElementById("devices");
 const logsEl = document.getElementById("logs");
-const broadcastsEl = document.getElementById("broadcasts"); // NEW
+const broadcastsEl = document.getElementById("broadcasts");
+
+// صندوق نتيجة الـopcode
+const resultBox = document.getElementById("opcodeResult");
 
 // -----------------------------
 // Local State
@@ -40,13 +43,19 @@ ws.onmessage = (event) => {
   const msg = JSON.parse(event.data);
 
   // =============================
+  // 🔥 NEW — نتيجة الـopcode
+  // =============================
+  if (msg.type === "opcode.result") {
+    resultBox.textContent = JSON.stringify(msg, null, 2);
+    addLog(`📥 OPCODE RESULT from ${msg.deviceId}`);
+  }
+
+  // =============================
   // SNAPSHOT (كل 2 ثانية)
   // =============================
   if (msg.type === "snapshot") {
     renderMetrics(msg.metrics);
     renderDevices(msg.devices);
-
-    // NEW: عرض broadcast في الواجهة
     broadcastsEl.textContent = JSON.stringify(msg.broadcasts, null, 2);
   }
 
@@ -69,12 +78,11 @@ ws.onmessage = (event) => {
   // =============================
   if (msg.type === "cmd_failed") {
     metricsState.commands_fail++;
-
     addLog(`❌ FAILED cmd=${msg.commandId} dev=${msg.deviceId}`);
   }
 
   // =============================
-  // BROADCAST DONE (NEW)
+  // BROADCAST DONE
   // =============================
   if (msg.type === "broadcast_done") {
     addLog(`📡 BROADCAST ${msg.broadcastId} → ${msg.status}`);
@@ -107,8 +115,8 @@ function renderDevices(devices) {
       <td class="lastCmd">${devicesMap[d.deviceId].lastCmd || "-"}</td>
       <td class="execMs">${devicesMap[d.deviceId].execMs || "-"}</td>
       <td>
-        <button onclick="sendCmd(${d.deviceId},17)">SetFreq</button>
-        <button onclick="sendCmd(${d.deviceId},18)">Reboot</button>
+        <button onclick="sendCmd('${d.deviceId}',17)">SetFreq</button>
+        <button onclick="sendCmd('${d.deviceId}',18)">Reboot</button>
       </td>
     `;
 
@@ -117,7 +125,7 @@ function renderDevices(devices) {
 }
 
 // -----------------------------
-// Update Device Row (Realtime)
+// Update Device Row
 // -----------------------------
 function updateDevice(deviceId, data) {
   devicesMap[deviceId] = {
@@ -146,7 +154,7 @@ function addLog(text) {
 }
 
 // -----------------------------
-// Send Commands
+// Send Commands (القديمة)
 // -----------------------------
 window.sendCmd = function (deviceId, commandId) {
   ws.send(JSON.stringify({
@@ -154,6 +162,25 @@ window.sendCmd = function (deviceId, commandId) {
     deviceId,
     commandId
   }));
+};
+
+// -----------------------------
+// NEW — Send Opcode
+// -----------------------------
+window.sendOpcode = function () {
+  const deviceId = document.getElementById("opcodeDevice").value;
+  const opcode = document.getElementById("opcodeInput").value;
+
+  const req = {
+    type: "ui.opcode",
+    requestId: "req_" + Math.random().toString(36).slice(2),
+    deviceId,
+    opcode,
+    meta: {}
+  };
+
+  ws.send(JSON.stringify(req));
+  addLog(`📤 OPCODE SENT → ${opcode} (${deviceId})`);
 };
 
 // -----------------------------
