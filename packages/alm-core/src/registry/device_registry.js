@@ -6,6 +6,18 @@ class DeviceRegistry {
   constructor() {
     this.devices = new Map();
 
+this.upsert("android-1", {
+  deviceId: "android-1",
+  ip: "192.168.88.232",
+  port: 8022,
+  type: "android",
+  method: "ssh",
+  username: "u0_a0",
+  password: "",
+  status: "online",
+  lastSeen: Date.now()
+});
+    
     //
     // 🔥 إضافة جهاز Android الحقيقي
     //
