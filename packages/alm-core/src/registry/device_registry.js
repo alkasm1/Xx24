@@ -1,125 +1,50 @@
-// packages/alm-core/src/registry/device_registry.js
-
-const Device = require("../models/device");
+// backend/gateway/device_registry.js
 
 class DeviceRegistry {
   constructor() {
     this.devices = new Map();
 
-this.upsert("android-1", {
-  deviceId: "android-1",
-  ip: "192.168.88.232",
-  port: 8022,
-  type: "android",
-  method: "ssh",
-  username: "u0_a0",
-  password: "",
-  status: "online",
-  lastSeen: Date.now()
-});
-    
-    //
-    // 🔥 إضافة جهاز Android الحقيقي
-    //
-    this.upsert("android-1", {
-      deviceId: "android-1",
-      ip: "192.168.88.232",   // ← IP جهاز الأندرويد
-      port: 8022,             // SSH في Termux
-      type: "android",
-      method: "ssh",
-      username: "u0_a0",      // مستخدم Termux
-      password: "",           // إذا تستخدم مفتاح SSH اتركه فارغًا
-      status: "online",
-      lastSeen: Date.now()
-    });
-
-    //
-    // 🔥 مثال جهاز آخر (اختياري)
-    //
+    // جهاز SSH للاختبار
     this.upsert("router-1", {
       deviceId: "router-1",
-      ip: "192.168.88.50",
+      ip: "192.168.88.232",
       port: 22,
-      type: "linux",
-      method: "ssh",
-      username: "root",
+      username: "admin",
       password: "1234",
+      method: "ssh",
       status: "online",
       lastSeen: Date.now()
     });
   }
 
-  upsert(deviceId, data) {
-    const existing = this.devices.get(deviceId);
-
-    if (existing) {
-      Object.assign(existing, data);
-
-      if (data.lastSeen) {
-        existing.lastSeen = data.lastSeen;
-      }
-
-      if (data.status) {
-        existing.status = data.status;
-      }
-
-      return existing;
-    }
-
-    const dev = new Device({
-      deviceId,
-      ...data
-    });
-
-    this.devices.set(deviceId, dev);
-
-    return dev;
+  upsert(id, data) {
+    this.devices.set(id, { ...data });
   }
 
-  markSeen(deviceId, status = "online") {
-    const dev = this.devices.get(deviceId);
-
-    if (!dev) {
-      return null;
-    }
-
-    dev.touch(status);
-
-    return dev;
-  }
-
-  remove(deviceId) {
-    return this.devices.delete(deviceId);
-  }
-
-  get(deviceId) {
-    return this.devices.get(deviceId) || null;
+  get(id) {
+    return this.devices.get(id);
   }
 
   getAll() {
     return Array.from(this.devices.values());
   }
 
-  getByProfile(profile) {
-    return this.getAll().filter(d => d.profile === profile);
+  update(id, data) {
+    if (!this.devices.has(id)) return;
+    this.devices.set(id, { ...this.devices.get(id), ...data });
   }
 
-  getByVendor(vendor) {
-    return this.getAll().filter(d => d.vendor === vendor);
-  }
-
+  // 🔥 الدالة المطلوبة من metrics.js
   getStats() {
-    const all = this.getAll();
+    let online = 0;
+    let offline = 0;
 
-    const online = all.filter(
-      d => d.status === "online"
-    ).length;
+    for (const d of this.devices.values()) {
+      if (d.status === "online") online++;
+      else offline++;
+    }
 
-    return {
-      total: all.length,
-      online,
-      offline: all.length - online
-    };
+    return { online, offline };
   }
 }
 
