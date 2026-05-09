@@ -3,13 +3,17 @@
 module.exports = {
   "system.getIdentity": {
     transport: "ssh",
-    command: "uname -a",
+    payload: {
+      command: "uname -a"
+    },
     parser: "text"
   },
 
   "system.reboot": {
     transport: "ssh",
-    command: "reboot",
+    payload: {
+      command: "reboot"
+    },
     parser: "text"
   }
 };
