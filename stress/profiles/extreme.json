@@ -1,0 +1,5 @@
+{
+  "duration": 15000,
+  "rate": 15000,
+  "transport": "udp"
+}
