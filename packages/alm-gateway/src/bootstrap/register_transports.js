@@ -2,8 +2,10 @@
 
 const {
   registerTransport
-} = require("alm-core/src/execution/transport_registry");
+} = require("../../../../alm-core/src/execution/transport_registry");
 
-const sshAdapter = require("../transports/ssh/ssh_adapter");
+const sshAdapter = require(
+  "../transports/ssh/ssh_adapter"
+);
 
 registerTransport("ssh", sshAdapter);
