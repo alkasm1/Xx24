@@ -1,132 +1,98 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>ALM v3 Dashboard</title>
+  <title>ALM v3 Control Plane</title>
+
   <style>
-    body { font-family: Arial; padding: 20px; background: #fafafa; }
-    h1 { margin-bottom: 5px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    pre { background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; }
-    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
-    input { padding: 8px; width: 300px; }
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      direction: rtl;
+    }
+
+    .header {
+      background: #222;
+      color: #fff;
+      padding: 15px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      background: #333;
+      padding: 10px;
+    }
+
+    .tabs button {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: #444;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
+    .tabs button:hover {
+      background: #555;
+    }
+
+    .view {
+      padding: 20px;
+      display: none;
+    }
+
+    pre {
+      background: #111;
+      color: #0f0;
+      padding: 10px;
+      border-radius: 6px;
+      overflow-y: auto;
+      max-height: 250px;
+    }
+
+    input, button {
+      padding: 8px;
+      margin: 5px 0;
+    }
+
+    #wsStatus {
+      padding: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #222;
+      color: #fff;
+      margin: 10px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 
 <body>
 
-<!-- 🔥 WebSocket Status -->
-<div id="wsStatus" style="
-  padding:10px;
-  font-size:18px;
-  font-weight:bold;
-  background:#222;
-  color:#fff;
-  margin-bottom:15px;
-  border-radius:6px;">
-  WS: ⏳ connecting...
+<div class="header">لوحة تحكم ALM الإصدار 3</div>
+
+<div id="wsStatus">WS: ⏳ جاري الاتصال...</div>
+
+<div class="tabs">
+  <button onclick="showTab('dashboard')">Dashboard</button>
+  <button onclick="showTab('opcode')">Opcode Console</button>
+  <button onclick="showTab('devices')">Devices</button>
+  <button onclick="showTab('logs')">Logs</button>
 </div>
 
-<h1>📡 ALM v3 Control Dashboard</h1>
+<!-- Views -->
+<div id="view-dashboard" class="view"></div>
+<div id="view-opcode" class="view"></div>
+<div id="view-devices" class="view"></div>
+<div id="view-logs" class="view"></div>
 
-<!-- ========================= -->
-<!-- SEND OPCODE -->
-<!-- ========================= -->
-<h2>📡 Send Opcode</h2>
-
-<div>
-  <label>Device ID:</label>
-  <input id="opcodeDevice" value="android-1"><br><br>
-
-  <label>Opcode:</label>
-  <input id="opcodeInput" value="system.getIdentity"><br><br>
-
-  <button onclick="sendOpcode()">Send Opcode</button>
-</div>
-
-<!-- ========================= -->
-<!-- RESULT -->
-<!-- ========================= -->
-<h2>📜 Result</h2>
-<pre id="opcodeResult"></pre>
-
-<!-- ========================= -->
-<!-- DEVICES -->
-<!-- ========================= -->
-<h2>📡 Devices (from registry)</h2>
-<pre id="devicesBox"></pre>
-
-<!-- ========================= -->
-<!-- LOGS -->
-<!-- ========================= -->
-<h2>📜 Logs</h2>
-<pre id="logs"></pre>
-
-  
-<h2>📜 المطور: رأفت عمر</h2>
-
-  
-<script>
-  const ws = new WebSocket("ws://192.168.88.245:5001");
-
-  const wsStatus = document.getElementById("wsStatus");
-  const resultBox = document.getElementById("opcodeResult");
-  const devicesBox = document.getElementById("devicesBox");
-  const logs = document.getElementById("logs");
-
-  // -----------------------------
-  // WS Lifecycle
-  // -----------------------------
-  ws.onopen = () => {
-    wsStatus.innerText = "WS: ✅ connected";
-    wsStatus.style.background = "#0a0";
-  };
-
-  ws.onclose = () => {
-    wsStatus.innerText = "WS: ❌ disconnected";
-    wsStatus.style.background = "#a00";
-  };
-
-  // -----------------------------
-  // WS Messages
-  // -----------------------------
-  ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
-
-    // 🔥 NEW — opcode result
-    if (msg.type === "opcode.result") {
-      resultBox.textContent = JSON.stringify(msg, null, 2);
-    }
-
-    // snapshot (من gateway phase 6)
-    if (msg.type === "snapshot") {
-      devicesBox.textContent = JSON.stringify(msg.devices, null, 2);
-    }
-
-    logs.textContent += "\n" + event.data;
-    logs.scrollTop = logs.scrollHeight;
-  };
-
-  // -----------------------------
-  // SEND OPCODE
-  // -----------------------------
-  function sendOpcode() {
-    const deviceId = document.getElementById("opcodeDevice").value;
-    const opcode = document.getElementById("opcodeInput").value;
-
-    const req = {
-      type: "ui.opcode",
-      requestId: "req-" + Math.random().toString(36).slice(2),
-      deviceId,
-      opcode,
-      meta: {}
-    };
-
-    ws.send(JSON.stringify(req));
-    logs.textContent += "\n📤 SENT OPCODE → " + opcode;
-  }
-</script>
+<script src="app.js"></script>
 
 </body>
 </html>
