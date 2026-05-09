@@ -21,14 +21,12 @@ function connectWS(onMessage) {
     try {
       const data = JSON.parse(e.data);
 
-      // 🔥 إضافة دعم استقبال نتائج الضغط
+      // دعم نتائج الضغط
       if (data.type === "stressUpdate") {
-        // نمررها مباشرة للـ UI
         onMessage(data);
         return;
       }
 
-      // باقي الرسائل تذهب للـ UI كما هي
       onMessage(data);
 
     } catch (err) {
@@ -36,7 +34,7 @@ function connectWS(onMessage) {
     }
   };
 
-  return ws; // ← مهم جدًا
+  return ws;
 }
 
 export { connectWS };
