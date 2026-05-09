@@ -1,3 +1,5 @@
+// backend/gateway/gateway.js
+
 const dgram = require("dgram");
 const fs = require("fs");
 const crypto = require("crypto");
@@ -20,6 +22,16 @@ const STATE_FILE = "./state.json";
 // -----------------------------
 // WebSocket + sendToUI
 // -----------------------------
+const wss = new WebSocket.Server({ port: 5001 });
+
+function sendToUI(obj) {
+  wss.clients.forEach(ws => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(obj));
+    }
+  });
+}
+
 wss.on("connection", ws => {
   ws.on("message", msg => {
     const data = JSON.parse(msg.toString());
