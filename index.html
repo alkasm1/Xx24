@@ -30,35 +30,54 @@
 
 <h1>📡 ALM v3 Control Dashboard</h1>
 
+<!-- ========================= -->
+<!-- SEND OPCODE -->
+<!-- ========================= -->
 <h2>📡 Send Opcode</h2>
 
 <div>
   <label>Device ID:</label>
-  <input id="inpDevice" value="router-1"><br><br>
+  <input id="opcodeDevice" value="android-1"><br><br>
 
   <label>Opcode:</label>
-  <input id="inpOpcode" value="system.getIdentity"><br><br>
+  <input id="opcodeInput" value="system.getIdentity"><br><br>
 
-  <button id="btnSend">Send Opcode</button>
+  <button onclick="sendOpcode()">Send Opcode</button>
 </div>
 
+<!-- ========================= -->
+<!-- RESULT -->
+<!-- ========================= -->
 <h2>📜 Result</h2>
-<pre id="resultBox"></pre>
+<pre id="opcodeResult"></pre>
 
+<!-- ========================= -->
+<!-- DEVICES -->
+<!-- ========================= -->
 <h2>📡 Devices (from registry)</h2>
 <pre id="devicesBox"></pre>
 
+<!-- ========================= -->
+<!-- LOGS -->
+<!-- ========================= -->
 <h2>📜 Logs</h2>
 <pre id="logs"></pre>
 
+  
+<h2>📜 المطور: رأفت عمر</h2>
+<pre id="المطور: رأفت عمر"></pre>
+  
 <script>
-  const ws = new WebSocket("ws://localhost:5001");
+  const ws = new WebSocket("ws://192.168.88.245:5001");
 
   const wsStatus = document.getElementById("wsStatus");
-  const resultBox = document.getElementById("resultBox");
+  const resultBox = document.getElementById("opcodeResult");
   const devicesBox = document.getElementById("devicesBox");
   const logs = document.getElementById("logs");
 
+  // -----------------------------
+  // WS Lifecycle
+  // -----------------------------
   ws.onopen = () => {
     wsStatus.innerText = "WS: ✅ connected";
     wsStatus.style.background = "#0a0";
@@ -69,23 +88,32 @@
     wsStatus.style.background = "#a00";
   };
 
+  // -----------------------------
+  // WS Messages
+  // -----------------------------
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
 
+    // 🔥 NEW — opcode result
     if (msg.type === "opcode.result") {
       resultBox.textContent = JSON.stringify(msg, null, 2);
     }
 
-    if (msg.type === "registry.snapshot") {
+    // snapshot (من gateway phase 6)
+    if (msg.type === "snapshot") {
       devicesBox.textContent = JSON.stringify(msg.devices, null, 2);
     }
 
     logs.textContent += "\n" + event.data;
+    logs.scrollTop = logs.scrollHeight;
   };
 
-  document.getElementById("btnSend").onclick = () => {
-    const deviceId = document.getElementById("inpDevice").value;
-    const opcode = document.getElementById("inpOpcode").value;
+  // -----------------------------
+  // SEND OPCODE
+  // -----------------------------
+  function sendOpcode() {
+    const deviceId = document.getElementById("opcodeDevice").value;
+    const opcode = document.getElementById("opcodeInput").value;
 
     const req = {
       type: "ui.opcode",
@@ -96,7 +124,8 @@
     };
 
     ws.send(JSON.stringify(req));
-  };
+    logs.textContent += "\n📤 SENT OPCODE → " + opcode;
+  }
 </script>
 
 </body>
