@@ -1,5 +1,6 @@
-// /stress/metrics.js
-export class Metrics {
+// stress/metrics.js
+
+class Metrics {
   constructor() {
     this.okCount = 0;
     this.errCount = 0;
@@ -33,3 +34,5 @@ export class Metrics {
     };
   }
 }
+
+module.exports = Metrics;
