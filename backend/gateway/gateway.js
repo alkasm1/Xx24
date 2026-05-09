@@ -8,6 +8,7 @@ console.log = (...args) => {
     sendToUI({ type: "terminal", line: payload });
   } catch (_) {}
 };
+
 const dgram = require("dgram");
 const fs = require("fs");
 const crypto = require("crypto");
@@ -19,6 +20,9 @@ const eventBus = require("./event_bus");
 const registry = require("./device_registry");
 const Metrics = require("./metrics");
 const { dispatch } = require("./dispatcher");
+
+// ✅ استيراد Stress Runner
+const { runStress } = require("../../stress/runner");
 
 const metrics = new Metrics(eventBus, registry);
 
@@ -139,12 +143,34 @@ function sendToUI(obj) {
   });
 }
 
+// ✅ بث نتائج الضغط للواجهة
+function broadcastStressUpdate(results) {
+  sendToUI({
+    type: "stressUpdate",
+    data: results
+  });
+}
+
 wss.on("connection", ws => {
   ws.on("message", async raw => {
     let msg;
     try {
       msg = JSON.parse(raw.toString());
     } catch {
+      return;
+    }
+
+    // ✅ تشغيل Stress Test من الواجهة
+    if (msg.type === "ui.stress.run") {
+      const profile = msg.profile || "light";
+      console.log("🔥 UI requested stress run:", profile);
+
+      try {
+        const results = await runStress(profile);
+        broadcastStressUpdate(results);
+      } catch (err) {
+        console.log("❌ Stress run failed:", err.message);
+      }
       return;
     }
 
