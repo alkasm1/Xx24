@@ -6,11 +6,22 @@
   <style>
     body { font-family: Arial; padding: 20px; background: #fafafa; }
     h1 { margin-bottom: 5px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
     pre { background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; }
     button { padding: 10px 15px; margin: 5px; cursor: pointer; }
     input { padding: 8px; width: 300px; }
+
+    /* 🔥 Terminal Style */
+    #terminal {
+      background: #000;
+      color: #0f0;
+      padding: 10px;
+      height: 250px;
+      overflow-y: auto;
+      font-family: monospace;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      margin-top: 20px;
+    }
   </style>
 </head>
 
@@ -63,10 +74,14 @@
 <h2>📜 Logs</h2>
 <pre id="logs"></pre>
 
-  
+<!-- ========================= -->
+<!-- 🔥 TERMINAL (LIVE GATEWAY OUTPUT) -->
+<!-- ========================= -->
+<h2>🖥️ Gateway Terminal (Live)</h2>
+<pre id="terminal"></pre>
+
 <h2>📜 المطور: رأفت عمر</h2>
 
-  
 <script>
   const ws = new WebSocket("ws://192.168.88.245:5001");
 
@@ -74,6 +89,7 @@
   const resultBox = document.getElementById("opcodeResult");
   const devicesBox = document.getElementById("devicesBox");
   const logs = document.getElementById("logs");
+  const terminal = document.getElementById("terminal");
 
   // -----------------------------
   // WS Lifecycle
@@ -94,18 +110,25 @@
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
 
-    // 🔥 NEW — opcode result
+    // 🔥 opcode result
     if (msg.type === "opcode.result") {
       resultBox.textContent = JSON.stringify(msg, null, 2);
     }
 
-    // snapshot (من gateway phase 6)
+    // snapshot
     if (msg.type === "snapshot") {
       devicesBox.textContent = JSON.stringify(msg.devices, null, 2);
     }
 
+    // logs
     logs.textContent += "\n" + event.data;
     logs.scrollTop = logs.scrollHeight;
+
+    // 🔥 TERMINAL OUTPUT
+    if (msg.type === "terminal") {
+      terminal.textContent += "\n" + msg.line;
+      terminal.scrollTop = terminal.scrollHeight;
+    }
   };
 
   // -----------------------------
