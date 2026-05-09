@@ -10,6 +10,7 @@ const { Client } = require("ssh2");
 const eventBus = require("./event_bus");
 const registry = require("./device_registry");
 const Metrics = require("./metrics");
+const opcodes = require("./opcodes");
 
 const metrics = new Metrics(eventBus, registry);
 
@@ -33,30 +34,111 @@ function sendToUI(obj) {
 }
 
 wss.on("connection", ws => {
-  ws.on("message", msg => {
-    const data = JSON.parse(msg.toString());
+  ws.on("message", async raw => {
+    let data;
+    try {
+      data = JSON.parse(raw.toString());
+    } catch {
+      return;
+    }
 
-    // الواجهة القديمة
+    // -----------------------------
+    // UI COMMAND (قديم)
+    // -----------------------------
     if (data.type === "ui.command") {
       dispatchCommand(data.deviceId, data.commandId, data.params);
+      return;
     }
 
+    // -----------------------------
+    // UI BROADCAST (قديم)
+    // -----------------------------
     if (data.type === "ui.broadcast") {
       broadcastCommand(data.commandId, data.params);
+      return;
     }
 
-    // الواجهة الجديدة (opcode)
+    // -----------------------------
+    // UI OPCODE (جديد)
+    // -----------------------------
     if (data.type === "ui.opcode") {
       console.log("RECEIVED ui.opcode:", data);
 
-      sendToUI({
+      const device = registry.get(data.deviceId);
+
+      if (!device) {
+        return sendToUI({
+          type: "opcode.result",
+          requestId: data.requestId,
+          deviceId: data.deviceId,
+          opcode: data.opcode,
+          result: {
+            success: false,
+            error: `Device not found: ${data.deviceId}`
+          }
+        });
+      }
+
+      const descriptor = opcodes[data.opcode];
+
+      if (!descriptor) {
+        return sendToUI({
+          type: "opcode.result",
+          requestId: data.requestId,
+          deviceId: data.deviceId,
+          opcode: data.opcode,
+          result: {
+            success: false,
+            error: `Unknown opcode: ${data.opcode}`
+          }
+        });
+      }
+
+      // حالياً ندعم transport: ssh فقط
+      if (descriptor.transport === "ssh") {
+        try {
+          const res = await execSSH(device, descriptor.command);
+
+          return sendToUI({
+            type: "opcode.result",
+            requestId: data.requestId,
+            deviceId: data.deviceId,
+            opcode: data.opcode,
+            result: {
+              success: true,
+              data: {
+                stdout: res.stdout.trim(),
+                stderr: res.stderr.trim(),
+                execMs: res.execMs,
+                exitCode: res.exitCode,
+                parser: descriptor.parser
+              }
+            }
+          });
+
+        } catch (err) {
+          return sendToUI({
+            type: "opcode.result",
+            requestId: data.requestId,
+            deviceId: data.deviceId,
+            opcode: data.opcode,
+            result: {
+              success: false,
+              error: err.message
+            }
+          });
+        }
+      }
+
+      // transport غير مدعوم حالياً
+      return sendToUI({
         type: "opcode.result",
         requestId: data.requestId,
         deviceId: data.deviceId,
         opcode: data.opcode,
         result: {
           success: false,
-          error: "Opcode pipeline not implemented in Phase 6 gateway."
+          error: `Transport not implemented: ${descriptor.transport}`
         }
       });
     }
@@ -140,12 +222,16 @@ function loadState() {
 }
 
 // -----------------------------
-// SSH EXECUTION
+// SSH EXECUTION (مع stdout + exitCode)
 // -----------------------------
 function execSSH(device, command) {
   return new Promise((resolve, reject) => {
     const conn = new Client();
     const start = Date.now();
+
+    let stdout = "";
+    let stderr = "";
+    let exitCode = null;
 
     let timeoutRef = setTimeout(() => {
       conn.end();
@@ -159,10 +245,27 @@ function execSSH(device, command) {
           return reject(err);
         }
 
+        stream.on("data", (data) => {
+          stdout += data.toString();
+        });
+
+        stream.stderr.on("data", (data) => {
+          stderr += data.toString();
+        });
+
+        stream.on("exit", (code) => {
+          exitCode = code;
+        });
+
         stream.on("close", () => {
           clearTimeout(timeoutRef);
           conn.end();
-          resolve({ execMs: Date.now() - start });
+          resolve({
+            execMs: Date.now() - start,
+            stdout,
+            stderr,
+            exitCode
+          });
         });
       });
     });
@@ -182,7 +285,7 @@ function execSSH(device, command) {
 }
 
 // -----------------------------
-// DISPATCH
+// DISPATCH (قديم)
 // -----------------------------
 function genId() {
   return "req_" + Math.random().toString(36).slice(2);
@@ -215,7 +318,7 @@ function dispatchCommand(deviceId, commandId, meta = {}, broadcastId = null) {
 }
 
 // -----------------------------
-// SSH HANDLER
+// SSH HANDLER (قديم)
 // -----------------------------
 async function handleSSH(request, device) {
   let cmd = "reboot";
@@ -262,7 +365,7 @@ async function handleSSH(request, device) {
 }
 
 // -----------------------------
-// UDP LISTENER
+// UDP LISTENER (قديم)
 // -----------------------------
 udp.on("message", (msg, rinfo) => {
   let packet;
@@ -462,12 +565,22 @@ function broadcastCommand(commandId, meta = {}) {
 }
 
 // -----------------------------
-// SNAPSHOT
+// SNAPSHOT (مع sanitize)
 // -----------------------------
 setInterval(() => {
+  const rawDevices = registry.getAll();
+  const devices = rawDevices.map(d => ({
+    deviceId: d.deviceId,
+    ip: d.ip,
+    port: d.port,
+    method: d.method,
+    status: d.status,
+    lastSeen: d.lastSeen
+  }));
+
   sendToUI({
     type: "snapshot",
-    devices: registry.getAll(),
+    devices,
     metrics: metrics.snapshot(),
     broadcasts: broadcastRequests
   });
@@ -475,4 +588,4 @@ setInterval(() => {
 
 // -----------------------------
 loadState();
-console.log("🚀 Gateway Phase 6 FINAL running");
+console.log("🚀 Gateway Phase 6.2 running (opcode + descriptors)");
