@@ -20,7 +20,17 @@ function connectWS(onMessage) {
   ws.onmessage = (e) => {
     try {
       const data = JSON.parse(e.data);
+
+      // 🔥 إضافة دعم استقبال نتائج الضغط
+      if (data.type === "stressUpdate") {
+        // نمررها مباشرة للـ UI
+        onMessage(data);
+        return;
+      }
+
+      // باقي الرسائل تذهب للـ UI كما هي
       onMessage(data);
+
     } catch (err) {
       console.error("WS parse error:", err);
     }
