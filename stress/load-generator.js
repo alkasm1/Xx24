@@ -1,9 +1,10 @@
-// /stress/load-generator.js
-import { sendWS } from './transports/ws.js';
-import { sendSSH } from './transports/ssh.js';
-import { sendUDP } from './transports/udp.js';
+// stress/load-generator.js
 
-export async function startLoad(profile, metrics) {
+const { sendWS } = require("./transports/ws");
+const { sendSSH } = require("./transports/ssh");
+const { sendUDP } = require("./transports/udp");
+
+async function startLoad(profile, metrics) {
   const { duration, rate, transport } = profile;
 
   const start = Date.now();
@@ -15,7 +16,7 @@ export async function startLoad(profile, metrics) {
     for (let i = 0; i < rate; i++) {
       const payload = { opcode: "ping", ts: Date.now() };
 
-      const sendFn =
+      let sendFn =
         transport === "ws" ? sendWS :
         transport === "ssh" ? sendSSH :
         sendUDP;
@@ -30,3 +31,5 @@ export async function startLoad(profile, metrics) {
     await new Promise(r => setTimeout(r, sleep));
   }
 }
+
+module.exports = { startLoad };
