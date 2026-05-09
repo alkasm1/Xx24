@@ -20,26 +20,33 @@ const STATE_FILE = "./state.json";
 // -----------------------------
 // WebSocket + sendToUI
 // -----------------------------
-const wss = new WebSocket.Server({ port: 5001 });
-
-function sendToUI(obj) {
-  wss.clients.forEach(ws => {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(obj));
-    }
-  });
-}
-
 wss.on("connection", ws => {
   ws.on("message", msg => {
     const data = JSON.parse(msg.toString());
 
+    // الواجهة القديمة
     if (data.type === "ui.command") {
       dispatchCommand(data.deviceId, data.commandId, data.params);
     }
 
     if (data.type === "ui.broadcast") {
       broadcastCommand(data.commandId, data.params);
+    }
+
+    // الواجهة الجديدة (opcode)
+    if (data.type === "ui.opcode") {
+      console.log("RECEIVED ui.opcode:", data);
+
+      sendToUI({
+        type: "opcode.result",
+        requestId: data.requestId,
+        deviceId: data.deviceId,
+        opcode: data.opcode,
+        result: {
+          success: false,
+          error: "Opcode pipeline not implemented in Phase 6 gateway."
+        }
+      });
     }
   });
 });
