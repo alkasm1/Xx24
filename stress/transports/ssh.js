@@ -1,7 +1,7 @@
-// /stress/transports/ssh.js
-export function sendSSH(payload) {
-  return new Promise((resolve) => {
-    // mock SSH latency
-    setTimeout(resolve, 20);
-  });
+// stress/transports/ssh.js
+
+function sendSSH() {
+  return new Promise(resolve => setTimeout(resolve, 20));
 }
+
+module.exports = { sendSSH };
