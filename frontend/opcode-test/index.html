@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>لوحة تحكم ALM الإصدار 3 - Opcode Console</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #fafafa; direction: rtl; }
+    h1 { margin-bottom: 5px; }
+    pre { background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; }
+    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    input { padding: 8px; width: 300px; }
+  </style>
+</head>
+
+<body>
+
+<div id="wsStatus" style="padding:10px;font-size:18px;font-weight:bold;background:#222;color:#fff;margin-bottom:15px;border-radius:6px;">
+  WS: ⏳ متصل...
+</div>
+
+<h1>📡 لوحة تحكم ALM الإصدار 3</h1>
+
+<h2>📡 إرسال Opcode</h2>
+
+<div>
+  <label>معرف الجهاز:</label>
+  <input id="opcodeDevice" value="router-1"><br><br>
+
+  <label>رمز العملية:</label>
+  <input id="opcodeInput" value="system.getIdentity"><br><br>
+
+  <button onclick="sendOpcode()">إرسال رمز العملية</button>
+</div>
+
+<h2>📜 النتيجة</h2>
+<pre id="opcodeResult"></pre>
+
+<h2>🛰️ الأجهزة (من السجل)</h2>
+<pre id="devicesBox"></pre>
+
+<h2>📜 السجلات</h2>
+<pre id="logs"></pre>
+
+<script src="app.js"></script>
+
+</body>
+</html>
