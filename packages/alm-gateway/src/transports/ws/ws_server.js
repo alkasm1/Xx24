@@ -6,7 +6,7 @@ const Queue = require(
   "../../../../alm-core/src/runtime/queue"
 );
 const registry = require(
-  "../../../../alm-core/src/registry/device_registry"
+  "../../../alm-core/src/registry/device_registry"
 );
 const dispatch = require(
   "../../orchestrator/dispatcher"
