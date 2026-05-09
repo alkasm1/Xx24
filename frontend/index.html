@@ -9,6 +9,16 @@
     pre { background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; }
     button { padding: 10px 15px; margin: 5px; cursor: pointer; }
     input { padding: 8px; width: 300px; }
+
+    /* شاشة اختبار الضغط */
+    #stressScreen {
+      display: none;
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 
@@ -19,6 +29,9 @@
 </div>
 
 <h1>📡 ALM v3 Control Dashboard</h1>
+
+<!-- زر فتح شاشة اختبار الضغط -->
+<button id="openStress">🔥 Stress Test</button>
 
 <h2>📡 Send Opcode</h2>
 
@@ -40,6 +53,19 @@
 
 <h2>📜 Logs</h2>
 <pre id="logs"></pre>
+
+<!-- شاشة اختبار الضغط -->
+<div id="stressScreen">
+  <h2>🔥 Stress Test Dashboard</h2>
+
+  <button id="runLight">Light</button>
+  <button id="runMedium">Medium</button>
+  <button id="runHeavy">Heavy</button>
+  <button id="runExtreme">Extreme</button>
+
+  <h3>📊 Results</h3>
+  <pre id="stressResults"></pre>
+</div>
 
 <script src="app.js"></script>
 
