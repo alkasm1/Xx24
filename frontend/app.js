@@ -59,13 +59,14 @@ function sendOpcode() {
   logs.textContent += "\n📤 SENT OPCODE → " + opcode;
 }
 
-// تشغيل اختبار الضغط عبر Gateway
+// تشغيل اختبار الضغط عبر WebSocket → Gateway
 function runStress(profile) {
-  fetch(`/stress/run?profile=${profile}`)
-    .then(r => r.json())
-    .then(data => {
-      stressResults.textContent = JSON.stringify(data, null, 2);
-    });
+  const msg = {
+    type: "ui.stress.run",
+    profile
+  };
+  ws.send(JSON.stringify(msg));
+  logs.textContent += `\n🔥 STRESS START → ${profile}`;
 }
 
 document.getElementById("runLight").onclick = () => runStress("light");
