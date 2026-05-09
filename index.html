@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Alm Control Dashboard</title>
+  <title>ALM v3 Dashboard</title>
   <style>
     body { font-family: Arial; padding: 20px; background: #fafafa; }
     h1 { margin-bottom: 5px; }
@@ -10,6 +10,7 @@
     th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
     pre { background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; }
     button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    input { padding: 8px; width: 300px; }
   </style>
 </head>
 
@@ -27,38 +28,76 @@
   WS: ⏳ connecting...
 </div>
 
-<h1>📡 Alm Control Dashboard</h1>
+<h1>📡 ALM v3 Control Dashboard</h1>
 
-<h2>📊 Metrics</h2>
-<pre id="metrics"></pre>
+<h2>📡 Send Opcode</h2>
 
-<h2>📡 Devices</h2>
-<table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Status</th>
-      <th>Last Seen</th>
-      <th>Last Cmd</th>
-      <th>Exec Time</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody id="devices"></tbody>
-</table>
+<div>
+  <label>Device ID:</label>
+  <input id="inpDevice" value="router-1"><br><br>
 
-<h2>📡 Broadcast</h2>
-<button id="btn-bc-setfreq">Broadcast SetFreq</button>
-<button id="btn-bc-reboot">Broadcast Reboot</button>
+  <label>Opcode:</label>
+  <input id="inpOpcode" value="system.getIdentity"><br><br>
 
-<h2>📜 Alm Logs</h2>
+  <button id="btnSend">Send Opcode</button>
+</div>
+
+<h2>📜 Result</h2>
+<pre id="resultBox"></pre>
+
+<h2>📡 Devices (from registry)</h2>
+<pre id="devicesBox"></pre>
+
+<h2>📜 Logs</h2>
 <pre id="logs"></pre>
-  
-<h2>📡 Broadcasts</h2>
-<pre id="broadcasts"></pre>
-  
-<!-- 🔥 Frontend Logic -->
-<script type="module" src="frontend/app.js"></script>
+
+<script>
+  const ws = new WebSocket("ws://localhost:5001");
+
+  const wsStatus = document.getElementById("wsStatus");
+  const resultBox = document.getElementById("resultBox");
+  const devicesBox = document.getElementById("devicesBox");
+  const logs = document.getElementById("logs");
+
+  ws.onopen = () => {
+    wsStatus.innerText = "WS: ✅ connected";
+    wsStatus.style.background = "#0a0";
+  };
+
+  ws.onclose = () => {
+    wsStatus.innerText = "WS: ❌ disconnected";
+    wsStatus.style.background = "#a00";
+  };
+
+  ws.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+
+    if (msg.type === "opcode.result") {
+      resultBox.textContent = JSON.stringify(msg, null, 2);
+    }
+
+    if (msg.type === "registry.snapshot") {
+      devicesBox.textContent = JSON.stringify(msg.devices, null, 2);
+    }
+
+    logs.textContent += "\n" + event.data;
+  };
+
+  document.getElementById("btnSend").onclick = () => {
+    const deviceId = document.getElementById("inpDevice").value;
+    const opcode = document.getElementById("inpOpcode").value;
+
+    const req = {
+      type: "ui.opcode",
+      requestId: "req-" + Math.random().toString(36).slice(2),
+      deviceId,
+      opcode,
+      meta: {}
+    };
+
+    ws.send(JSON.stringify(req));
+  };
+</script>
 
 </body>
 </html>
