@@ -3,7 +3,7 @@
 const profiles = require("../../../alm-profiles");
 
 const execute = require(
-  "../../../../alm-core/src/execution/execution_engine"
+  "../../../alm-core/src/execution/execution_engine"
 );
 
 async function dispatch(
