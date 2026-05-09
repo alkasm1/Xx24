@@ -5,6 +5,36 @@ const Device = require("../models/device");
 class DeviceRegistry {
   constructor() {
     this.devices = new Map();
+
+    //
+    // 🔥 إضافة جهاز Android الحقيقي
+    //
+    this.upsert("android-1", {
+      deviceId: "android-1",
+      ip: "192.168.88.232",   // ← IP جهاز الأندرويد
+      port: 8022,             // SSH في Termux
+      type: "android",
+      method: "ssh",
+      username: "u0_a0",      // مستخدم Termux
+      password: "",           // إذا تستخدم مفتاح SSH اتركه فارغًا
+      status: "online",
+      lastSeen: Date.now()
+    });
+
+    //
+    // 🔥 مثال جهاز آخر (اختياري)
+    //
+    this.upsert("router-1", {
+      deviceId: "router-1",
+      ip: "192.168.88.50",
+      port: 22,
+      type: "linux",
+      method: "ssh",
+      username: "root",
+      password: "1234",
+      status: "online",
+      lastSeen: Date.now()
+    });
   }
 
   upsert(deviceId, data) {
