@@ -1,10 +1,9 @@
-// device_registry.js
+// backend/gateway/device_registry.js
 
 class DeviceRegistry {
   constructor() {
     this.devices = new Map();
 
-    // مثال جهاز SSH
     this.upsert("router-1", {
       deviceId: "router-1",
       ip: "192.168.88.232",
@@ -12,13 +11,19 @@ class DeviceRegistry {
       username: "admin",
       password: "1234",
       method: "ssh",
+      profile: "linux",
+      vendor: "generic",
       status: "online",
-      lastSeen: Date.now()
+      lastSeen: Date.now(),
+      capabilities: [
+        "system.getIdentity",
+        "system.reboot"
+      ]
     });
   }
 
   upsert(id, data) {
-    this.devices.set(id, { ...data });
+    this.devices.set(id, { ...data, deviceId: id });
   }
 
   get(id) {
@@ -34,7 +39,6 @@ class DeviceRegistry {
     this.devices.set(id, { ...this.devices.get(id), ...data });
   }
 
-  // 🔥 الدالة المطلوبة من metrics.js
   getStats() {
     let online = 0;
     let offline = 0;
