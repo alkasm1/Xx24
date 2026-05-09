@@ -2,51 +2,37 @@
 
 class DeviceRegistry {
   constructor() {
-    this.devices = {};
+    this.devices = new Map();
+
+    // جهاز SSH للاختبار
+    this.upsert("router-1", {
+      deviceId: "router-1",
+      ip: "192.168.88.232",
+      port: 22,
+      username: "admin",
+      password: "1234",
+      method: "ssh",
+      status: "online",
+      lastSeen: Date.now()
+    });
   }
 
-  update(deviceId, data) {
-    this.devices[deviceId] = {
-      ...this.devices[deviceId],
-      ...data
-    };
+  upsert(id, data) {
+    this.devices.set(id, { ...data });
   }
 
-  get(deviceId) {
-    return this.devices[deviceId];
+  get(id) {
+    return this.devices.get(id);
   }
 
   getAll() {
-    return Object.values(this.devices);
+    return Array.from(this.devices.values());
   }
 
-  getStats() {
-    let online = 0;
-    let offline = 0;
-
-    Object.values(this.devices).forEach(d => {
-      if (d.status === "online") online++;
-      else offline++;
-    });
-
-    return { online, offline };
+  update(id, data) {
+    if (!this.devices.has(id)) return;
+    this.devices.set(id, { ...this.devices.get(id), ...data });
   }
 }
 
-// ✅ إنشاء instance قبل الاستخدام
-const registry = new DeviceRegistry();
-
-// ✅ إضافة جهاز SSH تجريبي (اختياري)
-registry.update("router-1", {
-  deviceId: "router-1",
-  ip: "192.168.88.232",   // 
-  port: 22,
-  username: "admin",
-  password: "1234",
-  method: "ssh",
-  status: "online",
-  lastSeen: Date.now()
-});
-
-// ✅ تصدير instance
-module.exports = registry;
+module.exports = new DeviceRegistry();
