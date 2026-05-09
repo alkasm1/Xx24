@@ -1,6 +1,6 @@
 // frontend/app.js
 
-const ws = new WebSocket("ws://192.168.88.245:5001");
+const ws = new WebSocket(`ws://${location.hostname}:5001`);
 
 const wsStatus = document.getElementById("wsStatus");
 const resultBox = document.getElementById("opcodeResult");
@@ -9,9 +9,12 @@ const logs = document.getElementById("logs");
 const stressResults = document.getElementById("stressResults");
 
 // فتح شاشة اختبار الضغط
-document.getElementById("openStress").onclick = () => {
-  document.getElementById("stressScreen").style.display = "block";
-};
+const stressBtn = document.getElementById("openStress");
+if (stressBtn) {
+  stressBtn.onclick = () => {
+    document.getElementById("stressScreen").style.display = "block";
+  };
+}
 
 ws.onopen = () => {
   wsStatus.innerText = "WS: ✅ connected";
@@ -34,7 +37,6 @@ ws.onmessage = (event) => {
     devicesBox.textContent = JSON.stringify(msg.devices, null, 2);
   }
 
-  // استقبال نتائج الضغط من الـ Gateway
   if (msg.type === "stressUpdate") {
     stressResults.textContent = JSON.stringify(msg.data, null, 2);
   }
@@ -59,17 +61,16 @@ function sendOpcode() {
   logs.textContent += "\n📤 SENT OPCODE → " + opcode;
 }
 
-// تشغيل اختبار الضغط عبر WebSocket → Gateway
+// تشغيل اختبار الضغط
 function runStress(profile) {
-  const msg = {
+  ws.send(JSON.stringify({
     type: "ui.stress.run",
     profile
-  };
-  ws.send(JSON.stringify(msg));
+  }));
   logs.textContent += `\n🔥 STRESS START → ${profile}`;
 }
 
-document.getElementById("runLight").onclick = () => runStress("light");
-document.getElementById("runMedium").onclick = () => runStress("medium");
-document.getElementById("runHeavy").onclick = () => runStress("heavy");
-document.getElementById("runExtreme").onclick = () => runStress("extreme");
+document.getElementById("runLight")?.addEventListener("click", () => runStress("light"));
+document.getElementById("runMedium")?.addEventListener("click", () => runStress("medium"));
+document.getElementById("runHeavy")?.addEventListener("click", () => runStress("heavy"));
+document.getElementById("runExtreme")?.addEventListener("click", () => runStress("extreme"));
