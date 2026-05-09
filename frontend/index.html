@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ALM v3 Dashboard</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #fafafa; }
+    h1 { margin-bottom: 5px; }
+    pre { background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; }
+    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    input { padding: 8px; width: 300px; }
+  </style>
+</head>
+
+<body>
+
+<div id="wsStatus" style="padding:10px;font-size:18px;font-weight:bold;background:#222;color:#fff;margin-bottom:15px;border-radius:6px;">
+  WS: ⏳ connecting...
+</div>
+
+<h1>📡 ALM v3 Control Dashboard</h1>
+
+<h2>📡 Send Opcode</h2>
+
+<div>
+  <label>Device ID:</label>
+  <input id="opcodeDevice" value="router-1"><br><br>
+
+  <label>Opcode:</label>
+  <input id="opcodeInput" value="system.getIdentity"><br><br>
+
+  <button onclick="sendOpcode()">Send Opcode</button>
+</div>
+
+<h2>📜 Result</h2>
+<pre id="opcodeResult"></pre>
+
+<h2>📡 Devices</h2>
+<pre id="devicesBox"></pre>
+
+<h2>📜 Logs</h2>
+<pre id="logs"></pre>
+
+<script src="app.js"></script>
+
+</body>
+</html>
