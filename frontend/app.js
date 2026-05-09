@@ -6,6 +6,12 @@ const wsStatus = document.getElementById("wsStatus");
 const resultBox = document.getElementById("opcodeResult");
 const devicesBox = document.getElementById("devicesBox");
 const logs = document.getElementById("logs");
+const stressResults = document.getElementById("stressResults");
+
+// فتح شاشة اختبار الضغط
+document.getElementById("openStress").onclick = () => {
+  document.getElementById("stressScreen").style.display = "block";
+};
 
 ws.onopen = () => {
   wsStatus.innerText = "WS: ✅ connected";
@@ -28,6 +34,11 @@ ws.onmessage = (event) => {
     devicesBox.textContent = JSON.stringify(msg.devices, null, 2);
   }
 
+  // استقبال نتائج الضغط من الـ Gateway
+  if (msg.type === "stressUpdate") {
+    stressResults.textContent = JSON.stringify(msg.data, null, 2);
+  }
+
   logs.textContent += "\n" + event.data;
   logs.scrollTop = logs.scrollHeight;
 };
@@ -47,3 +58,17 @@ function sendOpcode() {
   ws.send(JSON.stringify(req));
   logs.textContent += "\n📤 SENT OPCODE → " + opcode;
 }
+
+// تشغيل اختبار الضغط عبر Gateway
+function runStress(profile) {
+  fetch(`/stress/run?profile=${profile}`)
+    .then(r => r.json())
+    .then(data => {
+      stressResults.textContent = JSON.stringify(data, null, 2);
+    });
+}
+
+document.getElementById("runLight").onclick = () => runStress("light");
+document.getElementById("runMedium").onclick = () => runStress("medium");
+document.getElementById("runHeavy").onclick = () => runStress("heavy");
+document.getElementById("runExtreme").onclick = () => runStress("extreme");
