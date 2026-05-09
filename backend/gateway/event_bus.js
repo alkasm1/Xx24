@@ -1,4 +1,5 @@
-// gateway/event_bus.js
+// backend/gateway/event_bus.js
+
 const EventEmitter = require("events");
 
 class EventBus extends EventEmitter {}
