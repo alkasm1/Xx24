@@ -1,5 +1,13 @@
 // backend/gateway/gateway.js
 
+const originalLog = console.log;
+console.log = (...args) => {
+  originalLog(...args);
+  try {
+    const payload = args.map(a => (typeof a === "object" ? JSON.stringify(a) : a)).join(" ");
+    sendToUI({ type: "terminal", line: payload });
+  } catch (_) {}
+};
 const dgram = require("dgram");
 const fs = require("fs");
 const crypto = require("crypto");
