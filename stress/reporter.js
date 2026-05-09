@@ -1,8 +1,10 @@
-// /stress/reporter.js
-import fs from 'fs';
+// stress/reporter.js
 
-export async function reportResults(results) {
-  const path = './stress/results.json';
-  fs.writeFileSync(path, JSON.stringify(results, null, 2));
-  console.log(`📄 Results saved to ${path}`);
+const fs = require("fs");
+
+async function reportResults(results) {
+  fs.writeFileSync("./stress/results.json", JSON.stringify(results, null, 2));
+  console.log("📄 Stress results saved.");
 }
+
+module.exports = { reportResults };
