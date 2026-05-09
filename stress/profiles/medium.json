@@ -1,0 +1,5 @@
+{
+  "duration": 8000,
+  "rate": 1000,
+  "transport": "ws"
+}
