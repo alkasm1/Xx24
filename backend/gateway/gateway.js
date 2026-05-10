@@ -1,12 +1,10 @@
 // backend/gateway/gateway.js
 
-const {
-  createSessionManager
-} = require(
+const { createSessionManager } = require(
   "../../packages/alm-core/runtime/session_manager"
 );
-require("./transports");
-const originalLog = console.log;
+
+require("./transports"); // Transport Registry bootstrap
 
 // -----------------------------
 // CORE IMPORTS
@@ -24,17 +22,14 @@ const udp = dgram.createSocket("udp4");
 const eventBus = require("./event_bus");
 const registry = require("./device_registry");
 const Metrics = require("./metrics");
-
 const { dispatch } = require("./dispatcher");
 
-const {
-  createTaskManager
-} = require("../../packages/alm-core/runtime/task_manager");
+const { createTaskManager } = require(
+  "../../packages/alm-core/runtime/task_manager"
+);
 
-// ✅ Stress Runner
-const {
-  runStress
-} = require("../../stress/runner");
+// Stress Runner
+const { runStress } = require("../../stress/runner");
 
 // -----------------------------
 // TASK MANAGER (Phase 6.3)
@@ -44,8 +39,11 @@ const taskManager = createTaskManager({
   eventBus
 });
 
-const sessionManager =
-  createSessionManager();
+// -----------------------------
+// SESSION MANAGER (Phase 7.2)
+// -----------------------------
+const sessionManager = createSessionManager();
+
 // -----------------------------
 // METRICS
 // -----------------------------
@@ -56,29 +54,28 @@ const metrics = new Metrics(eventBus, registry);
 // -----------------------------
 const SECRET = "alm_shared_secret";
 const STATE_FILE = "./state.json";
+
 // -----------------------------
-// REQUEST DE-DUPE
+// REQUEST DE-DUPE (Phase 7.2)
 // -----------------------------
 const activeRequests = new Set();
 
-function isDuplicateRequest(requestId) {
-  return activeRequests.has(requestId);
+function isDuplicateRequest(id) {
+  return activeRequests.has(id);
 }
 
-function markRequestActive(requestId) {
-  activeRequests.add(requestId);
+function markRequestActive(id) {
+  activeRequests.add(id);
 }
 
-function clearActiveRequest(requestId) {
-  activeRequests.delete(requestId);
+function clearActiveRequest(id) {
+  activeRequests.delete(id);
 }
 
 // -----------------------------
 // WS SERVER
 // -----------------------------
-const wss = new WebSocket.Server({
-  port: 5001
-});
+const wss = new WebSocket.Server({ port: 5001 });
 
 function sendToUI(obj) {
   const payload = JSON.stringify(obj);
@@ -106,65 +103,41 @@ function broadcastStressUpdate(results) {
   });
 }
 
-// request de-dupe
-const activeRequests = new Set();
-
+// -----------------------------
+// WS CONNECTION HANDLER
+// -----------------------------
 wss.on("connection", ws => {
   // إنشاء session جديدة
-  const session =
-    sessionManager.createSession(ws);
-
+  const session = sessionManager.createSession(ws);
   ws.sessionId = session.id;
 
-  console.log(
-    "🟢 Session connected:",
-    ws.sessionId
-  );
+  console.log("🟢 Session connected:", ws.sessionId);
 
   ws.on("message", async raw => {
     try {
       let msg;
-
       try {
-        msg = JSON.parse(
-          raw.toString()
-        );
+        msg = JSON.parse(raw.toString());
       } catch {
         return;
       }
 
       // تحديث آخر نشاط للجلسة
-      sessionManager.touch(
-        ws.sessionId
-      );
+      sessionManager.touch(ws.sessionId);
 
       // -----------------------------
       // STRESS TEST
       // -----------------------------
-      if (
-        msg.type ===
-        "ui.stress.run"
-      ) {
-        const profile =
-          msg.profile || "light";
+      if (msg.type === "ui.stress.run") {
+        const profile = msg.profile || "light";
 
-        console.log(
-          "🔥 UI requested stress run:",
-          profile
-        );
+        console.log("🔥 UI requested stress run:", profile);
 
         try {
-          const results =
-            await runStress(profile);
-
-          broadcastStressUpdate(
-            results
-          );
+          const results = await runStress(profile);
+          broadcastStressUpdate(results);
         } catch (err) {
-          console.log(
-            "❌ Stress run failed:",
-            err.message
-          );
+          console.log("❌ Stress run failed:", err.message);
         }
 
         return;
@@ -173,66 +146,32 @@ wss.on("connection", ws => {
       // -----------------------------
       // OPCODE EXECUTION
       // -----------------------------
-      if (
-        msg.type ===
-        "ui.opcode"
-      ) {
-        console.log(
-          "RECEIVED ui.opcode:",
-          msg
-        );
+      if (msg.type === "ui.opcode") {
+        console.log("RECEIVED ui.opcode:", msg);
 
-        eventBus.emit(
-          "opcode.received",
-          msg
-        );
+        eventBus.emit("opcode.received", msg);
 
         // request de-dupe
-        if (
-          activeRequests.has(
-            msg.requestId
-          )
-        ) {
-          console.log(
-            "⚠ Duplicate request ignored:",
-            msg.requestId
-          );
-
+        if (isDuplicateRequest(msg.requestId)) {
+          console.log("⚠ Duplicate request ignored:", msg.requestId);
           return;
         }
 
-        activeRequests.add(
-          msg.requestId
-        );
+        markRequestActive(msg.requestId);
 
-        const device =
-          registry.get(
-            msg.deviceId
-          );
+        const device = registry.get(msg.deviceId);
 
         if (!device) {
-          activeRequests.delete(
-            msg.requestId
-          );
+          clearActiveRequest(msg.requestId);
 
           sendToUI({
-            type:
-              "opcode.result",
-
-            requestId:
-              msg.requestId,
-
-            deviceId:
-              msg.deviceId,
-
-            opcode:
-              msg.opcode,
-
+            type: "opcode.result",
+            requestId: msg.requestId,
+            deviceId: msg.deviceId,
+            opcode: msg.opcode,
             result: {
               success: false,
-
-              error:
-                `Device not found: ${msg.deviceId}`
+              error: `Device not found: ${msg.deviceId}`
             }
           });
 
@@ -240,95 +179,49 @@ wss.on("connection", ws => {
         }
 
         try {
-          const task =
-            await taskManager.executeOpcode(
-              {
-                device,
+          const task = await taskManager.executeOpcode({
+            device,
+            opcode: msg.opcode,
+            meta: msg.meta || {},
+            requestId: msg.requestId,
+            sessionId: ws.sessionId
+          });
 
-                opcode:
-                  msg.opcode,
-
-                meta:
-                  msg.meta || {},
-
-                requestId:
-                  msg.requestId,
-
-                sessionId:
-                  ws.sessionId
-              }
-            );
-
-          sessionManager.attachTask(
-            ws.sessionId,
-            task.id
-          );
+          sessionManager.attachTask(ws.sessionId, task.id);
 
           // backward compatibility
           sendToUI({
-            type:
-              "opcode.result",
-
-            requestId:
-              task.id,
-
-            deviceId:
-              task.deviceId,
-
-            opcode:
-              task.opcode,
-
-            result:
-              task.result
+            type: "opcode.result",
+            requestId: task.id,
+            deviceId: task.deviceId,
+            opcode: task.opcode,
+            result: task.result
           });
         } catch (err) {
-          eventBus.emit(
-            "opcode.failed",
-            msg
-          );
+          eventBus.emit("opcode.failed", msg);
 
           sendToUI({
-            type:
-              "opcode.result",
-
-            requestId:
-              msg.requestId,
-
-            deviceId:
-              msg.deviceId,
-
-            opcode:
-              msg.opcode,
-
+            type: "opcode.result",
+            requestId: msg.requestId,
+            deviceId: msg.deviceId,
+            opcode: msg.opcode,
             result: {
               success: false,
-              error:
-                err.message
+              error: err.message
             }
           });
         } finally {
-          activeRequests.delete(
-            msg.requestId
-          );
+          clearActiveRequest(msg.requestId);
         }
       }
     } catch (err) {
-      console.log(
-        "WS message error:",
-        err.message
-      );
+      console.log("WS message error:", err.message);
     }
   });
 
   ws.on("close", () => {
-    console.log(
-      "🔴 Session disconnected:",
-      ws.sessionId
-    );
-
-    sessionManager.removeSession(
-      ws.sessionId
-    );
+    console.log("🔴 Session disconnected:", ws.sessionId);
+    sessionManager.removeSession(ws.sessionId);
   });
 });
   // -----------------------------
