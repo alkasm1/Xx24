@@ -1,6 +1,5 @@
 // frontend/opcode-test/app.js
 
-const ws = new WebSocket("ws://192.168.88.245:5001");
 
 const wsStatus = document.getElementById("wsStatus");
 const resultBox = document.getElementById("opcodeResult");
