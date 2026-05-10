@@ -111,7 +111,7 @@
 <h2>📜 المطور: رأفت عمر</h2>
 
 <script>
-  const ws = new WebSocket("ws://192.168.88.245:5001");
+  const ws = new WebSocket(`ws://${location.hostname}:5001`);
 
   const wsStatus = document.getElementById("wsStatus");
   const resultBox = document.getElementById("opcodeResult");
