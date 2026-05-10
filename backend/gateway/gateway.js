@@ -64,6 +64,271 @@ const wss = new WebSocket.Server({
   port: 5001
 });
 
+const {
+  createSessionManager
+} = require(
+  "../../packages/alm-core/runtime/session_manager"
+);
+
+const {
+  createTaskManager
+} = require(
+  "../../packages/alm-core/runtime/task_manager"
+);
+
+const sessionManager =
+  createSessionManager();
+
+const taskManager =
+  createTaskManager({
+    dispatcher: dispatch,
+    eventBus
+  });
+
+function sendToUI(obj) {
+  const payload =
+    JSON.stringify(obj);
+
+  wss.clients.forEach(ws => {
+    if (
+      ws.readyState ===
+      WebSocket.OPEN
+    ) {
+      ws.send(payload);
+    }
+  });
+}
+
+// task.update stream
+eventBus.on(
+  "task.update",
+  task => {
+    sendToUI({
+      type: "task.update",
+      task
+    });
+  }
+);
+
+// stress stream
+function broadcastStressUpdate(
+  results
+) {
+  sendToUI({
+    type: "stressUpdate",
+    data: results
+  });
+}
+
+wss.on("connection", ws => {
+  // -----------------------------
+  // CREATE SESSION
+  // -----------------------------
+  const session =
+    sessionManager.createSession(
+      ws,
+      {
+        remoteAddress:
+          ws._socket
+            ?.remoteAddress ||
+          null
+      }
+    );
+
+  console.log(
+    "🟢 Session connected:",
+    session.sessionId
+  );
+
+  // -----------------------------
+  // WS MESSAGE
+  // -----------------------------
+  ws.on(
+    "message",
+    async raw => {
+      sessionManager.touchSession(
+        ws.sessionId
+      );
+
+      let msg;
+
+      try {
+        msg = JSON.parse(
+          raw.toString()
+        );
+      } catch {
+        return;
+      }
+
+      // -----------------------------
+      // STRESS RUNNER
+      // -----------------------------
+      if (
+        msg.type ===
+        "ui.stress.run"
+      ) {
+        const profile =
+          msg.profile ||
+          "light";
+
+        console.log(
+          "🔥 UI requested stress run:",
+          profile
+        );
+
+        try {
+          const results =
+            await runStress(
+              profile
+            );
+
+          broadcastStressUpdate(
+            results
+          );
+        } catch (err) {
+          console.log(
+            "❌ Stress run failed:",
+            err.message
+          );
+        }
+
+        return;
+      }
+
+      // -----------------------------
+      // OPCODE EXECUTION
+      // -----------------------------
+      if (
+        msg.type ===
+        "ui.opcode"
+      ) {
+        console.log(
+          "RECEIVED ui.opcode:",
+          msg
+        );
+
+        eventBus.emit(
+          "opcode.received",
+          msg
+        );
+
+        const device =
+          registry.get(
+            msg.deviceId
+          );
+
+        if (!device) {
+          sendToUI({
+            type:
+              "opcode.result",
+
+            requestId:
+              msg.requestId,
+
+            deviceId:
+              msg.deviceId,
+
+            opcode:
+              msg.opcode,
+
+            result: {
+              success: false,
+
+              error:
+                `Device not found: ${msg.deviceId}`
+            }
+          });
+
+          return;
+        }
+
+        try {
+          const task =
+            await taskManager.executeOpcode(
+              {
+                device,
+
+                opcode:
+                  msg.opcode,
+
+                meta:
+                  msg.meta ||
+                  {},
+
+                requestId:
+                  msg.requestId,
+
+                sessionId:
+                  ws.sessionId
+              }
+            );
+
+          sessionManager.attachTask(
+            ws.sessionId,
+            task.id
+          );
+
+          // backward compatibility
+          sendToUI({
+            type:
+              "opcode.result",
+
+            requestId:
+              task.id,
+
+            deviceId:
+              task.deviceId,
+
+            opcode:
+              task.opcode,
+
+            result:
+              task.result
+          });
+        } catch (err) {
+          eventBus.emit(
+            "opcode.failed",
+            msg
+          );
+
+          sendToUI({
+            type:
+              "opcode.result",
+
+            requestId:
+              msg.requestId,
+
+            deviceId:
+              msg.deviceId,
+
+            opcode:
+              msg.opcode,
+
+            result: {
+              success: false,
+              error:
+                err.message
+            }
+          });
+        }
+      }
+    }
+  );
+
+  // -----------------------------
+  // WS CLOSE
+  // -----------------------------
+  ws.on("close", () => {
+    console.log(
+      "🔴 Session disconnected:",
+      ws.sessionId
+    );
+
+    sessionManager.destroySession(
+      ws.sessionId
+    );
+  });
+});
 // -----------------------------
 // UI SENDER
 // -----------------------------
