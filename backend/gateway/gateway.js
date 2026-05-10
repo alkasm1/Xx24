@@ -64,27 +64,6 @@ const wss = new WebSocket.Server({
   port: 5001
 });
 
-const {
-  createSessionManager
-} = require(
-  "../../packages/alm-core/runtime/session_manager"
-);
-
-const {
-  createTaskManager
-} = require(
-  "../../packages/alm-core/runtime/task_manager"
-);
-
-const sessionManager =
-  createSessionManager();
-
-const taskManager =
-  createTaskManager({
-    dispatcher: dispatch,
-    eventBus
-  });
-
 function sendToUI(obj) {
   const payload =
     JSON.stringify(obj);
@@ -98,6 +77,7 @@ function sendToUI(obj) {
     }
   });
 }
+
 
 // task.update stream
 eventBus.on(
