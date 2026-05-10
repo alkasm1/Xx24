@@ -1148,4 +1148,4 @@ loadState();
 
 console.log(
   "🚀 Gateway Phase 6.3 running (Task Lifecycle Enabled)"
-);
+);}
