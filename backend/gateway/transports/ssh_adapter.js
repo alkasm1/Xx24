@@ -38,7 +38,28 @@ async function execSSH(
 
       clearTimeout(timeoutRef);
 
-      resolve(result);
+      resolve({
+        transport: "ssh",
+
+        success: !!result.success,
+
+        stdout:
+          String(result.stdout || ""),
+
+        stderr:
+          String(result.stderr || ""),
+
+        execMs:
+          Number(result.execMs || 0),
+
+        exitCode:
+          result.exitCode === undefined
+            ? null
+            : result.exitCode,
+
+        error:
+          result.error || null
+      });
     }
 
     const timeoutRef = setTimeout(() => {
