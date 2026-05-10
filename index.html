@@ -110,16 +110,15 @@
 
 <h2>📜 المطور: رأفت عمر</h2>
 
-<script type="module">
-  import { renderStressResults } from "./stress-view.js";
-
-  const ws = new WebSocket(`ws://${location.hostname}:5001`);
+<script>
+  const ws = new WebSocket("ws://192.168.88.245:5001");
 
   const wsStatus = document.getElementById("wsStatus");
   const resultBox = document.getElementById("opcodeResult");
   const devicesBox = document.getElementById("devicesBox");
   const logs = document.getElementById("logs");
   const terminal = document.getElementById("terminal");
+  const stressResults = document.getElementById("stressResults");
 
   // -----------------------------
   // فتح شاشة اختبار الضغط
@@ -165,7 +164,7 @@
 
     // 🔥 STRESS TEST RESULTS
     if (msg.type === "stressUpdate") {
-      renderStressResults(msg.data);
+      stressResults.textContent = JSON.stringify(msg.data, null, 2);
     }
 
     // logs
