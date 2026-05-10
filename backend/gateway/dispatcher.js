@@ -2,8 +2,8 @@
 
 const opcodes = require("./opcodes");
 
-const sshAdapter = require(
-  "./transports/ssh_adapter"
+const transportRegistry = require(
+  "./transports"
 );
 
 async function dispatch(
@@ -29,15 +29,10 @@ async function dispatch(
   const transportName =
     descriptor.transport;
 
-  let adapter;
-
-  if (transportName === "ssh") {
-    adapter = sshAdapter;
-  } else {
-    throw new Error(
-      `Transport not registered: ${transportName}`
+  const adapter =
+    transportRegistry.get(
+      transportName
     );
-  }
 
   const result =
     await adapter.execute(
