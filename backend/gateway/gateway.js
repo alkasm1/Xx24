@@ -61,9 +61,9 @@ const STATE_FILE = "./state.json";
 // WS SERVER
 // -----------------------------
 const wss = new WebSocket.Server({
-  port: 5001
+  port: 5001,
+  host: "0.0.0.0"
 });
-
 function sendToUI(obj) {
   const payload =
     JSON.stringify(obj);
