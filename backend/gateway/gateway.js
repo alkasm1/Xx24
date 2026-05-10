@@ -1,5 +1,6 @@
 // backend/gateway/gateway.js
 
+require("./transports");
 const originalLog = console.log;
 
 // -----------------------------
