@@ -21,7 +21,15 @@ class DeviceRegistry {
       ]
     });
   }
-
+  registry.update("android-1", {
+  deviceId: "android-1",
+  ip: "127.0.0.1",
+  port: 6000,
+  method: "udp",
+  profile: "fake",
+  status: "online",
+  lastSeen: Date.now()
+});
   upsert(id, data) {
     this.devices.set(id, { ...data, deviceId: id });
   }
