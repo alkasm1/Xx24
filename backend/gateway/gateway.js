@@ -1,5 +1,10 @@
 // backend/gateway/gateway.js
 
+const {
+  createSessionManager
+} = require(
+  "../../packages/alm-core/runtime/session_manager"
+);
 require("./transports");
 const originalLog = console.log;
 
@@ -39,6 +44,8 @@ const taskManager = createTaskManager({
   eventBus
 });
 
+const sessionManager =
+  createSessionManager();
 // -----------------------------
 // METRICS
 // -----------------------------
