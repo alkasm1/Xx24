@@ -56,28 +56,34 @@ const metrics = new Metrics(eventBus, registry);
 // -----------------------------
 const SECRET = "alm_shared_secret";
 const STATE_FILE = "./state.json";
-// -----------------------------
-// REQUEST DE-DUPE
-// -----------------------------
-const activeRequests = new Set();
 
-function isDuplicateRequest(requestId) {
-  return activeRequests.has(requestId);
-}
-
-function markRequestActive(requestId) {
-  activeRequests.add(requestId);
-}
-
-function clearActiveRequest(requestId) {
-  activeRequests.delete(requestId);
-}
 // -----------------------------
 // WS SERVER
 // -----------------------------
 const wss = new WebSocket.Server({
   port: 5001
 });
+
+const {
+  createSessionManager
+} = require(
+  "../../packages/alm-core/runtime/session_manager"
+);
+
+const {
+  createTaskManager
+} = require(
+  "../../packages/alm-core/runtime/task_manager"
+);
+
+const sessionManager =
+  createSessionManager();
+
+const taskManager =
+  createTaskManager({
+    dispatcher: dispatch,
+    eventBus
+  });
 
 function sendToUI(obj) {
   const payload =
@@ -92,7 +98,6 @@ function sendToUI(obj) {
     }
   });
 }
-
 
 // task.update stream
 eventBus.on(
@@ -190,7 +195,7 @@ wss.on("connection", ws => {
         return;
       }
 
-// -----------------------------
+      // -----------------------------
       // OPCODE EXECUTION
       // -----------------------------
       if (
@@ -207,65 +212,37 @@ wss.on("connection", ws => {
           msg
         );
 
-        // -----------------------------
-        // REQUEST DE-DUPE
-        // -----------------------------
-        if (
-          isDuplicateRequest(
-            msg.requestId
-          )
-        ) {
-          console.log(
-            "⚠ Duplicate request ignored:",
-            msg.requestId
+        const device =
+          registry.get(
+            msg.deviceId
           );
 
+        if (!device) {
           sendToUI({
             type:
-              "opcode.duplicate",
+              "opcode.result",
 
             requestId:
-              msg.requestId
+              msg.requestId,
+
+            deviceId:
+              msg.deviceId,
+
+            opcode:
+              msg.opcode,
+
+            result: {
+              success: false,
+
+              error:
+                `Device not found: ${msg.deviceId}`
+            }
           });
 
           return;
         }
 
-        markRequestActive(
-          msg.requestId
-        );
-
         try {
-          const device =
-            registry.get(
-              msg.deviceId
-            );
-
-          if (!device) {
-            sendToUI({
-              type:
-                "opcode.result",
-
-              requestId:
-                msg.requestId,
-
-              deviceId:
-                msg.deviceId,
-
-              opcode:
-                msg.opcode,
-
-              result: {
-                success: false,
-
-                error:
-                  `Device not found: ${msg.deviceId}`
-              }
-            });
-
-            return;
-          }
-
           const task =
             await taskManager.executeOpcode(
               {
@@ -282,8 +259,7 @@ wss.on("connection", ws => {
                   msg.requestId,
 
                 sessionId:
-                  ws.sessionId ||
-                  null
+                  ws.sessionId
               }
             );
 
@@ -330,17 +306,15 @@ wss.on("connection", ws => {
 
             result: {
               success: false,
-
               error:
                 err.message
             }
           });
-        } finally {
-          clearActiveRequest(
-            msg.requestId
-          );
         }
       }
+    }
+  );
+
   // -----------------------------
   // WS CLOSE
   // -----------------------------
