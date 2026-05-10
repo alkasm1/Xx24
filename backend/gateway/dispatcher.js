@@ -1,44 +1,54 @@
 // backend/gateway/dispatcher.js
 
 const opcodes = require("./opcodes");
-const { execSSH } = require("./transports/ssh_adapter");
-const { parseResult } = require("./parsers");
 
-async function dispatch(device, opcodeName, meta = {}) {
-  const descriptor = opcodes[opcodeName];
+const sshAdapter = require(
+  "./transports/ssh_adapter"
+);
+
+async function dispatch(
+  device,
+  opcodeName,
+  meta = {}
+) {
+  const descriptor =
+    opcodes[opcodeName];
 
   if (!descriptor) {
-    throw new Error(`Unknown opcode: ${opcodeName}`);
+    throw new Error(
+      `Unknown opcode: ${opcodeName}`
+    );
   }
 
   if (!descriptor.transport) {
-    throw new Error("Descriptor missing transport");
+    throw new Error(
+      "Descriptor missing transport"
+    );
   }
 
-  if (!descriptor.payload) {
-    throw new Error("Descriptor missing payload");
-  }
+  const transportName =
+    descriptor.transport;
 
-  let raw;
+  let adapter;
 
-  if (descriptor.transport === "ssh") {
-    raw = await execSSH(device, descriptor.payload, meta);
+  if (transportName === "ssh") {
+    adapter = sshAdapter;
   } else {
-    throw new Error(`Transport not registered: ${descriptor.transport}`);
+    throw new Error(
+      `Transport not registered: ${transportName}`
+    );
   }
 
-  const parsed = parseResult(descriptor.parser, raw);
+  const result =
+    await adapter.execute(
+      device,
+      descriptor,
+      meta
+    );
 
-  return {
-    transport: descriptor.transport,
-    success: raw.success,
-    error: raw.error,
-    stdout: raw.stdout,
-    stderr: raw.stderr,
-    execMs: raw.execMs,
-    exitCode: raw.exitCode,
-    parsed
-  };
+  return result;
 }
 
-module.exports = { dispatch };
+module.exports = {
+  dispatch
+};
