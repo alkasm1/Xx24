@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const socket = dgram.createSocket("udp4");
 
 const DEVICE_ID = 101;
-const GATEWAY_PORT = 5000;
+const GATEWAY_PORT = 41234;
 const GATEWAY_IP = "127.0.0.1";
 
 const SECRET = "alm_shared_secret";
