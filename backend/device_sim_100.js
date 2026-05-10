@@ -2,7 +2,7 @@ const dgram = require("dgram");
 const crypto = require("crypto");
 
 const GATEWAY_PORT = 5000;   // ⚠️ نفس منفذ gateway.js
-const GATEWAY_IP = "127.0.0.1";
+const GATEWAY_IP = "192.168.88.245";
 const SECRET = "alm_shared_secret";
 
 // -----------------------------
