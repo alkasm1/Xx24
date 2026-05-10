@@ -20,7 +20,8 @@ class DeviceRegistry {
         "system.reboot"
       ]
     });
-  
+  }
+
   upsert(id, data) {
     this.devices.set(id, { ...data, deviceId: id });
   }
