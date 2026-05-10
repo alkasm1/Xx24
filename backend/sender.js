@@ -1,9 +1,7 @@
-//
 // backend/sender.js
-//
-// Manual sender for testing ALM packets
-//
+// Disabled — do not auto-run
 
+/*
 const dgram = require("dgram");
 const ACL = require("../src/acl/alm_acl_secure");
 
@@ -24,4 +22,4 @@ async function sendTest() {
 }
 
 sendTest();
-bash: //: Is a directory
+*/
