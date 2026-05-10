@@ -271,7 +271,7 @@ udp.on("message", (buf, rinfo) => {
   }
 });
 
-udp.bind(5000);
+udp.bind(41234);
 
 // -----------------------------
 // LEGACY COMMAND DISPATCH (UDP)
