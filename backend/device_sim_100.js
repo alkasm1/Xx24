@@ -1,21 +1,34 @@
 const dgram = require("dgram");
 const crypto = require("crypto");
 
-const GATEWAY_PORT = 41234;
+const GATEWAY_PORT = 5000;   // ⚠️ يجب أن يطابق udp.bind في gateway.js
 const GATEWAY_IP = "127.0.0.1";
 const SECRET = "alm_shared_secret";
 
 // -----------------------------
-// Stable stringify (نفس gateway)
+// نفس stableStringify الموجود في gateway.js
 // -----------------------------
 function stableStringify(obj) {
   if (obj === null || typeof obj !== "object") return JSON.stringify(obj);
   if (Array.isArray(obj)) return "[" + obj.map(stableStringify).join(",") + "]";
-  return "{" + Object.keys(obj).sort().map(k => JSON.stringify(k) + ":" + stableStringify(obj[k])).join(",") + "}";
+  return (
+    "{" +
+    Object.keys(obj)
+      .sort()
+      .map(k => JSON.stringify(k) + ":" + stableStringify(obj[k]))
+      .join(",") +
+    "}"
+  );
 }
 
+// -----------------------------
+// نفس signPacket الموجود في gateway.js
+// -----------------------------
 function signPacket(packet) {
-  return crypto.createHmac("sha256", SECRET).update(stableStringify(packet)).digest("hex");
+  return crypto
+    .createHmac("sha256", SECRET)
+    .update(stableStringify(packet))
+    .digest("hex");
 }
 
 function genNonce() {
@@ -43,6 +56,7 @@ for (let i = 1; i <= 100; i++) {
       nonce: genNonce()
     };
 
+    // ⚠️ التوقيع يجب أن يكون على النسخة بدون sig
     const base = { ...hb };
     hb.sig = signPacket(base);
 
