@@ -3,7 +3,6 @@
 function connectWS(onMessage) {
   const statusEl = document.getElementById("wsStatus");
 
-  const ws = new WebSocket(`ws://192.168.88.245:5001`);
 
   ws.onopen = () => {
     if (statusEl) statusEl.textContent = "WS: ✅ Connected";
