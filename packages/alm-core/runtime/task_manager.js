@@ -1,169 +1,223 @@
-async function executeOpcode({
-  device,
-  opcode,
-  meta = {},
-  requestId,
-  sessionId
+// packages/alm-core/runtime/task_manager.js
+
+const Task = require("./task");
+
+const taskStore = require("./task_store");
+
+const {
+  TASK_STATES
+} = require("./task_states");
+
+const {
+  TASK_EVENTS
+} = require("./task_events");
+
+const {
+  normalizeExecutionResult
+} = require("../execution/execution_contract");
+
+const {
+  genTaskId
+} = require("../ids/gentaskid");
+
+function createTaskManager({
+  dispatcher,
+  eventBus
 }) {
-  if (!device) {
+  if (typeof dispatcher !== "function") {
     throw new Error(
-      "device is required"
+      "dispatcher is required for taskManager"
     );
   }
 
-  if (!opcode) {
+  if (!eventBus) {
     throw new Error(
-      "opcode is required"
+      "eventBus is required for taskManager"
     );
   }
 
-  const id =
-    requestId || genTaskId();
-
-  // -----------------------------
-  // REQUEST DE-DUPE
-  // -----------------------------
-  const existing =
-    taskStore.get(id);
-
-  if (existing) {
-    return existing;
+  function emitTaskUpdate(task) {
+    eventBus.emit(
+      TASK_EVENTS.UPDATE,
+      task
+    );
   }
 
-  // -----------------------------
-  // CREATE TASK
-  // -----------------------------
-  const task = new Task({
-    id,
-
-    deviceId:
-      device.deviceId,
-
+  async function executeOpcode({
+    device,
     opcode,
-
-    meta: {
-      ...meta,
-
-      sessionId:
-        sessionId || null
+    meta = {},
+    requestId,
+    sessionId
+  }) {
+    if (!device) {
+      throw new Error(
+        "device is required"
+      );
     }
-  });
 
-  taskStore.add(task);
-
-  // -----------------------------
-  // CREATED EVENT
-  // -----------------------------
-  eventBus.emit(
-    TASK_EVENTS.CREATED,
-    task
-  );
-
-  emitTaskUpdate(task);
-
-  // -----------------------------
-  // RUNNING STATE
-  // -----------------------------
-  taskStore.update(task.id, {
-    status:
-      TASK_STATES.RUNNING,
-
-    startedAt:
-      Date.now()
-  });
-
-  const runningTask =
-    taskStore.get(task.id);
-
-  eventBus.emit(
-    TASK_EVENTS.STARTED,
-    runningTask
-  );
-
-  emitTaskUpdate(
-    runningTask
-  );
-
-  // -----------------------------
-  // EXECUTION
-  // -----------------------------
-  try {
-    const rawResult =
-      await dispatcher(
-        device,
-        opcode,
-        meta
+    if (!opcode) {
+      throw new Error(
+        "opcode is required"
       );
+    }
 
-    const normalized =
-      normalizeExecutionResult(
-        rawResult
-      );
+    const id =
+      requestId || genTaskId();
 
-    const finalStatus =
-      normalized.success
-        ? TASK_STATES.SUCCESS
-        : TASK_STATES.FAILED;
+    // -----------------------------
+    // REQUEST DEDUPE
+    // -----------------------------
+    const existingTask =
+      taskStore.get(id);
 
-    taskStore.update(task.id, {
-      status:
-        finalStatus,
+    if (existingTask) {
+      return existingTask;
+    }
 
-      finishedAt:
-        Date.now(),
+    // -----------------------------
+    // CREATE TASK
+    // -----------------------------
+    const task = new Task({
+      id,
 
-      result:
-        normalized
+      deviceId:
+        device.deviceId,
+
+      opcode,
+
+      meta: {
+        ...meta,
+
+        sessionId:
+          sessionId || null
+      }
     });
 
-    const finalTask =
+    taskStore.add(task);
+
+    eventBus.emit(
+      TASK_EVENTS.CREATED,
+      task
+    );
+
+    emitTaskUpdate(task);
+
+    // -----------------------------
+    // RUNNING STATE
+    // -----------------------------
+    taskStore.update(task.id, {
+      status:
+        TASK_STATES.RUNNING,
+
+      startedAt:
+        Date.now()
+    });
+
+    const runningTask =
       taskStore.get(task.id);
 
     eventBus.emit(
-      TASK_EVENTS.COMPLETED,
-      finalTask
+      TASK_EVENTS.STARTED,
+      runningTask
     );
 
     emitTaskUpdate(
-      finalTask
+      runningTask
     );
 
-    return finalTask;
-  } catch (err) {
-    const normalized =
-      normalizeExecutionResult({
-        success: false,
+    // -----------------------------
+    // EXECUTION
+    // -----------------------------
+    try {
+      const rawResult =
+        await dispatcher(
+          device,
+          opcode,
+          meta
+        );
 
-        error:
-          err &&
-          err.message
-            ? err.message
-            : "Execution error"
+      const normalized =
+        normalizeExecutionResult(
+          rawResult
+        );
+
+      const finalStatus =
+        normalized.success
+          ? TASK_STATES.SUCCESS
+          : TASK_STATES.FAILED;
+
+      taskStore.update(task.id, {
+        status: finalStatus,
+
+        finishedAt:
+          Date.now(),
+
+        result: normalized
       });
 
-    taskStore.update(task.id, {
-      status:
-        TASK_STATES.FAILED,
+      const finalTask =
+        taskStore.get(task.id);
 
-      finishedAt:
-        Date.now(),
+      eventBus.emit(
+        TASK_EVENTS.COMPLETED,
+        finalTask
+      );
 
-      result:
-        normalized
-    });
+      emitTaskUpdate(
+        finalTask
+      );
 
-    const failedTask =
-      taskStore.get(task.id);
+      return finalTask;
+    } catch (err) {
+      const normalized =
+        normalizeExecutionResult({
+          success: false,
 
-    eventBus.emit(
-      TASK_EVENTS.FAILED,
-      failedTask
-    );
+          error:
+            err &&
+            err.message
+              ? err.message
+              : "Execution error"
+        });
 
-    emitTaskUpdate(
-      failedTask
-    );
+      taskStore.update(task.id, {
+        status:
+          TASK_STATES.FAILED,
 
-    return failedTask;
+        finishedAt:
+          Date.now(),
+
+        result: normalized
+      });
+
+      const failedTask =
+        taskStore.get(task.id);
+
+      eventBus.emit(
+        TASK_EVENTS.FAILED,
+        failedTask
+      );
+
+      emitTaskUpdate(
+        failedTask
+      );
+
+      return failedTask;
+    }
   }
+
+  return {
+    executeOpcode,
+
+    getTask:
+      taskStore.get,
+
+    listTasks:
+      taskStore.all
+  };
 }
+
+module.exports = {
+  createTaskManager
+};
