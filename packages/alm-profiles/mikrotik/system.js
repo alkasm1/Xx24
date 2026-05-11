@@ -1,31 +1,87 @@
 // packages/alm-profiles/mikrotik/system.js
 
+function buildCommand(
+  command,
+  timeout = 5000
+) {
+  return {
+    type: "command",
+
+    transport: "ssh",
+
+    payload: {
+      command
+    },
+
+    timeout,
+
+    parser: "text"
+  };
+}
+
 module.exports = {
-  reboot(meta = {}) {
-    return {
-      type: "command",
-      transport: "ssh",
+  // -----------------------------
+  // REBOOT
+  // -----------------------------
+  reboot(
+    meta = {}
+  ) {
+    const delay =
+      Number(
+        meta.delay || 0
+      );
 
-      payload: {
-        command: "/system reboot"
-      },
+    let command =
+      "/system reboot";
 
-      timeout: 5000,
-      parser: "text"
-    };
+    if (delay > 0) {
+      command =
+        `:delay ${delay}; ${command}`;
+    }
+
+    return buildCommand(
+      command,
+      5000
+    );
   },
 
+  // -----------------------------
+  // GET IDENTITY
+  // -----------------------------
   getIdentity() {
-    return {
-      type: "command",
-      transport: "ssh",
+    return buildCommand(
+      "/system identity print",
+      4000
+    );
+  },
 
-      payload: {
-        command: "/system identity print"
-      },
+  // -----------------------------
+  // GET RESOURCE INFO
+  // -----------------------------
+  getResources() {
+    return buildCommand(
+      "/system resource print",
+      4000
+    );
+  },
 
-      timeout: 4000,
-      parser: "text"
-    };
+  // -----------------------------
+  // GET CLOCK
+  // -----------------------------
+  getClock() {
+    return buildCommand(
+      "/system clock print",
+      3000
+    );
+  },
+
+  // -----------------------------
+  // GET ROUTERBOARD INFO
+  // -----------------------------
+  getBoardInfo() {
+    return buildCommand(
+      "/system routerboard print",
+      4000
+    );
   }
 };
