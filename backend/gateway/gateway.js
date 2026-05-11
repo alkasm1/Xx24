@@ -252,18 +252,22 @@ wss.on(
         } catch {
           return;
         }
-// -----------------------------
+
+ // -----------------------------
 // HEARTBEAT
 // -----------------------------
-ws.isAlive = true;
-
-ws.on("pong", () => {
-  ws.isAlive = true;
-
+if (msg.type === "ping") {
   sessionManager.touchSession(
     ws.sessionId
   );
-});
+
+  ws.send(JSON.stringify({
+    type: "pong",
+    ts: Date.now()
+  }));
+
+  return;
+}
         // -----------------------------
         // STRESS RUN
         // -----------------------------
