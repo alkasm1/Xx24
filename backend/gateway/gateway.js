@@ -5,7 +5,15 @@ const {
 } = require(
   "../../packages/alm-core/runtime/session_manager"
 );
+
+const {
+  createTaskManager
+} = require(
+  "../../packages/alm-core/runtime/task_manager"
+);
+
 require("./transports");
+
 const originalLog = console.log;
 
 // -----------------------------
@@ -27,43 +35,59 @@ const Metrics = require("./metrics");
 
 const { dispatch } = require("./dispatcher");
 
-const {
-  createTaskManager
-} = require("../../packages/alm-core/runtime/task_manager");
-
 // ✅ Stress Runner
 const {
   runStress
 } = require("../../stress/runner");
 
 // -----------------------------
-// TASK MANAGER (Phase 6.3)
+// RUNTIME MANAGERS
 // -----------------------------
-const taskManager = createTaskManager({
-  dispatcher: dispatch,
-  eventBus
-});
+const taskManager =
+  createTaskManager({
+    dispatcher: dispatch,
+    eventBus
+  });
 
 const sessionManager =
   createSessionManager();
+
 // -----------------------------
 // METRICS
 // -----------------------------
-const metrics = new Metrics(eventBus, registry);
+const metrics =
+  new Metrics(
+    eventBus,
+    registry
+  );
 
 // -----------------------------
 // CONSTANTS
 // -----------------------------
-const SECRET = "alm_shared_secret";
-const STATE_FILE = "./state.json";
+const SECRET =
+  "alm_shared_secret";
+
+const STATE_FILE =
+  "./state.json";
+
+// -----------------------------
+// ACTIVE REQUESTS (Phase 7.2)
+// -----------------------------
+const activeRequests =
+  new Set();
 
 // -----------------------------
 // WS SERVER
 // -----------------------------
-const wss = new WebSocket.Server({
-  port: 5001,
-  host: "0.0.0.0"
-});
+const wss =
+  new WebSocket.Server({
+    port: 5001,
+    host: "0.0.0.0"
+  });
+
+// -----------------------------
+// UI SENDER
+// -----------------------------
 function sendToUI(obj) {
   const payload =
     JSON.stringify(obj);
@@ -78,265 +102,58 @@ function sendToUI(obj) {
   });
 }
 
-
-// task.update stream
-eventBus.on(
-  "task.update",
-  task => {
-    sendToUI({
-      type: "task.update",
-      task
-    });
-  }
-);
-
-// stress stream
-function broadcastStressUpdate(
-  results
-) {
-  sendToUI({
-    type: "stressUpdate",
-    data: results
-  });
-}
-
-wss.on("connection", ws => {
-  // -----------------------------
-  // CREATE SESSION
-  // -----------------------------
-  const session =
-    sessionManager.createSession(
-      ws,
-      {
-        remoteAddress:
-          ws._socket
-            ?.remoteAddress ||
-          null
-      }
-    );
-
-  console.log(
-    "🟢 Session connected:",
-    session.sessionId
-  );
-
-  // -----------------------------
-  // WS MESSAGE
-  // -----------------------------
-  ws.on(
-    "message",
-    async raw => {
-      sessionManager.touchSession(
-        ws.sessionId
-      );
-
-      let msg;
-
-      try {
-        msg = JSON.parse(
-          raw.toString()
-        );
-      } catch {
-        return;
-      }
-
-      // -----------------------------
-      // STRESS RUNNER
-      // -----------------------------
-      if (
-        msg.type ===
-        "ui.stress.run"
-      ) {
-        const profile =
-          msg.profile ||
-          "light";
-
-        console.log(
-          "🔥 UI requested stress run:",
-          profile
-        );
-
-        try {
-          const results =
-            await runStress(
-              profile
-            );
-
-          broadcastStressUpdate(
-            results
-          );
-        } catch (err) {
-          console.log(
-            "❌ Stress run failed:",
-            err.message
-          );
-        }
-
-        return;
-      }
-
-      // -----------------------------
-      // OPCODE EXECUTION
-      // -----------------------------
-      if (
-        msg.type ===
-        "ui.opcode"
-      ) {
-        console.log(
-          "RECEIVED ui.opcode:",
-          msg
-        );
-
-        eventBus.emit(
-          "opcode.received",
-          msg
-        );
-
-        const device =
-          registry.get(
-            msg.deviceId
-          );
-
-        if (!device) {
-          sendToUI({
-            type:
-              "opcode.result",
-
-            requestId:
-              msg.requestId,
-
-            deviceId:
-              msg.deviceId,
-
-            opcode:
-              msg.opcode,
-
-            result: {
-              success: false,
-
-              error:
-                `Device not found: ${msg.deviceId}`
-            }
-          });
-
-          return;
-        }
-
-        try {
-          const task =
-            await taskManager.executeOpcode(
-              {
-                device,
-
-                opcode:
-                  msg.opcode,
-
-                meta:
-                  msg.meta ||
-                  {},
-
-                requestId:
-                  msg.requestId,
-
-                sessionId:
-                  ws.sessionId
-              }
-            );
-
-          sessionManager.attachTask(
-            ws.sessionId,
-            task.id
-          );
-
-          // backward compatibility
-          sendToUI({
-            type:
-              "opcode.result",
-
-            requestId:
-              task.id,
-
-            deviceId:
-              task.deviceId,
-
-            opcode:
-              task.opcode,
-
-            result:
-              task.result
-          });
-        } catch (err) {
-          eventBus.emit(
-            "opcode.failed",
-            msg
-          );
-
-          sendToUI({
-            type:
-              "opcode.result",
-
-            requestId:
-              msg.requestId,
-
-            deviceId:
-              msg.deviceId,
-
-            opcode:
-              msg.opcode,
-
-            result: {
-              success: false,
-              error:
-                err.message
-            }
-          });
-        }
-      }
-    }
-  );
-
-  // -----------------------------
-  // WS CLOSE
-  // -----------------------------
-  ws.on("close", () => {
-    console.log(
-      "🔴 Session disconnected:",
-      ws.sessionId
-    );
-
-    sessionManager.destroySession(
-      ws.sessionId
-    );
-  });
-});
-// -----------------------------
-// UI SENDER
-// -----------------------------
-function sendToUI(obj) {
-  const payload = JSON.stringify(obj);
-
-  wss.clients.forEach(ws => {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(payload);
-    }
-  });
-}
-
 // -----------------------------
 // TASK EVENT STREAM → UI
 // -----------------------------
-function emitTaskUpdate(task) {
+function emitTaskUpdate(
+  task
+) {
   sendToUI({
     type: "task.update",
     task
   });
+
+  const doneStates = [
+    "SUCCESS",
+    "FAILED",
+    "TIMEOUT",
+    "CANCELLED"
+  ];
+
+  if (
+    doneStates.includes(
+      task.status
+    ) &&
+    task.meta &&
+    task.meta.sessionId
+  ) {
+    sessionManager.detachTask(
+      task.meta.sessionId,
+      task.id
+    );
+  }
 }
 
 function bindTaskEventsToUI() {
-  eventBus.on("task.created", emitTaskUpdate);
-  eventBus.on("task.started", emitTaskUpdate);
-  eventBus.on("task.completed", emitTaskUpdate);
-  eventBus.on("task.failed", emitTaskUpdate);
+  eventBus.on(
+    "task.created",
+    emitTaskUpdate
+  );
+
+  eventBus.on(
+    "task.started",
+    emitTaskUpdate
+  );
+
+  eventBus.on(
+    "task.completed",
+    emitTaskUpdate
+  );
+
+  eventBus.on(
+    "task.failed",
+    emitTaskUpdate
+  );
 }
 
 bindTaskEventsToUI();
@@ -344,13 +161,16 @@ bindTaskEventsToUI();
 // -----------------------------
 // TERMINAL STREAM
 // -----------------------------
-console.log = (...args) => {
+console.log = (
+  ...args
+) => {
   originalLog(...args);
 
   try {
     const payload = args
       .map(a =>
-        typeof a === "object"
+        typeof a ===
+        "object"
           ? JSON.stringify(a)
           : String(a)
       )
@@ -364,15 +184,347 @@ console.log = (...args) => {
 };
 
 // -----------------------------
+// STRESS UPDATE STREAM
+// -----------------------------
+function broadcastStressUpdate(
+  results
+) {
+  sendToUI({
+    type: "stressUpdate",
+    data: results
+  });
+}
+
+// -----------------------------
+// WS CONNECTIONS
+// -----------------------------
+wss.on(
+  "connection",
+  ws => {
+    // -----------------------------
+    // CREATE SESSION
+    // -----------------------------
+    const session =
+      sessionManager.createSession(
+        ws,
+        {
+          remoteAddress:
+            ws._socket
+              ?.remoteAddress ||
+            null
+        }
+      );
+
+    console.log(
+      "🟢 Session connected:",
+      session.sessionId
+    );
+
+    // -----------------------------
+    // HEARTBEAT
+    // -----------------------------
+    ws.isAlive = true;
+
+    ws.on("pong", () => {
+      ws.isAlive = true;
+
+      sessionManager.touchSession(
+        ws.sessionId
+      );
+    });
+
+    // -----------------------------
+    // WS MESSAGE
+    // -----------------------------
+    ws.on(
+      "message",
+      async raw => {
+        sessionManager.touchSession(
+          ws.sessionId
+        );
+
+        let msg;
+
+        try {
+          msg = JSON.parse(
+            raw.toString()
+          );
+        } catch {
+          return;
+        }
+
+        // -----------------------------
+        // STRESS RUN
+        // -----------------------------
+        if (
+          msg.type ===
+          "ui.stress.run"
+        ) {
+          const profile =
+            msg.profile ||
+            "light";
+
+          console.log(
+            "🔥 UI requested stress run:",
+            profile
+          );
+
+          try {
+            const results =
+              await runStress(
+                profile
+              );
+
+            broadcastStressUpdate(
+              results
+            );
+          } catch (err) {
+            console.log(
+              "❌ Stress run failed:",
+              err.message
+            );
+          }
+
+          return;
+        }
+
+        // -----------------------------
+        // OPCODE EXECUTION
+        // -----------------------------
+        if (
+          msg.type ===
+          "ui.opcode"
+        ) {
+          console.log(
+            "RECEIVED ui.opcode:",
+            msg
+          );
+
+          // -----------------------------
+          // REQUEST DE-DUPE
+          // -----------------------------
+          if (
+            activeRequests.has(
+              msg.requestId
+            )
+          ) {
+            console.log(
+              "⚠ Duplicate request ignored:",
+              msg.requestId
+            );
+
+            return;
+          }
+
+          activeRequests.add(
+            msg.requestId
+          );
+
+          eventBus.emit(
+            "opcode.received",
+            msg
+          );
+
+          const device =
+            registry.get(
+              msg.deviceId
+            );
+
+          // -----------------------------
+          // DEVICE NOT FOUND
+          // -----------------------------
+          if (!device) {
+            activeRequests.delete(
+              msg.requestId
+            );
+
+            sendToUI({
+              type:
+                "opcode.result",
+
+              requestId:
+                msg.requestId,
+
+              deviceId:
+                msg.deviceId,
+
+              opcode:
+                msg.opcode,
+
+              result: {
+                success: false,
+
+                error:
+                  `Device not found: ${msg.deviceId}`
+              }
+            });
+
+            return;
+          }
+
+          // -----------------------------
+          // TASK EXECUTION
+          // -----------------------------
+          try {
+            const task =
+              await taskManager.executeOpcode(
+                {
+                  device,
+
+                  opcode:
+                    msg.opcode,
+
+                  meta:
+                    msg.meta ||
+                    {},
+
+                  requestId:
+                    msg.requestId,
+
+                  sessionId:
+                    ws.sessionId
+                }
+              );
+
+            sessionManager.attachTask(
+              ws.sessionId,
+              task.id
+            );
+
+            // backward compatibility
+            sendToUI({
+              type:
+                "opcode.result",
+
+              requestId:
+                task.id,
+
+              deviceId:
+                task.deviceId,
+
+              opcode:
+                task.opcode,
+
+              result:
+                task.result
+            });
+          } catch (err) {
+            eventBus.emit(
+              "opcode.failed",
+              msg
+            );
+
+            sendToUI({
+              type:
+                "opcode.result",
+
+              requestId:
+                msg.requestId,
+
+              deviceId:
+                msg.deviceId,
+
+              opcode:
+                msg.opcode,
+
+              result: {
+                success: false,
+                error:
+                  err.message
+              }
+            });
+          } finally {
+            activeRequests.delete(
+              msg.requestId
+            );
+          }
+        }
+      }
+    );
+
+    // -----------------------------
+    // WS CLOSE
+    // -----------------------------
+    ws.on(
+      "close",
+      () => {
+        console.log(
+          "🔴 Session disconnected:",
+          ws.sessionId
+        );
+
+        sessionManager.destroySession(
+          ws.sessionId
+        );
+
+        activeRequests.forEach(
+          id => {
+            // future cleanup hook
+          }
+        );
+      }
+    );
+  }
+);
+
+// -----------------------------
+// WS HEARTBEAT LOOP
+// -----------------------------
+setInterval(() => {
+  wss.clients.forEach(
+    ws => {
+      if (
+        ws.isAlive === false
+      ) {
+        console.log(
+          "💀 WS heartbeat timeout:",
+          ws.sessionId
+        );
+
+        sessionManager.destroySession(
+          ws.sessionId
+        );
+
+        return ws.terminate();
+      }
+
+      ws.isAlive = false;
+
+      try {
+        ws.ping();
+      } catch (_) {}
+    }
+  );
+}, 15000);
+
+// -----------------------------
 // HELPERS
 // -----------------------------
-function stableStringify(obj) {
-  if (obj === null || typeof obj !== "object") {
-    return JSON.stringify(obj);
+function stableStringify(
+  obj
+) {
+  if (
+    obj === null ||
+    typeof obj !==
+      "object"
+  ) {
+    return JSON.stringify(
+      obj
+    );
   }
 
-  if (Array.isArray(obj)) {
-    return "[" + obj.map(stableStringify).join(",") + "]";
+  if (
+    Array.isArray(obj)
+  ) {
+    return (
+      "[" +
+      obj
+        .map(
+          stableStringify
+        )
+        .join(",") +
+      "]"
+    );
   }
 
   return (
@@ -383,22 +535,36 @@ function stableStringify(obj) {
         k =>
           JSON.stringify(k) +
           ":" +
-          stableStringify(obj[k])
+          stableStringify(
+            obj[k]
+          )
       )
       .join(",") +
     "}"
   );
 }
 
-function signPacket(packet) {
+function signPacket(
+  packet
+) {
   return crypto
-    .createHmac("sha256", SECRET)
-    .update(stableStringify(packet))
+    .createHmac(
+      "sha256",
+      SECRET
+    )
+    .update(
+      stableStringify(
+        packet
+      )
+    )
     .digest("hex");
 }
 
-function verifySignature(packet) {
-  const sig = packet.sig;
+function verifySignature(
+  packet
+) {
+  const sig =
+    packet.sig;
 
   const base = {
     ...packet
@@ -406,7 +572,10 @@ function verifySignature(packet) {
 
   delete base.sig;
 
-  return signPacket(base) === sig;
+  return (
+    signPacket(base) ===
+    sig
+  );
 }
 
 function genNonce() {
@@ -424,46 +593,81 @@ function genId() {
   );
 }
 
-function sanitizeDevice(device) {
+function sanitizeDevice(
+  device
+) {
   return {
-    deviceId: device.deviceId,
-    ip: device.ip,
-    port: device.port,
-    method: device.method,
-    profile: device.profile,
-    vendor: device.vendor,
-    status: device.status,
-    lastSeen: device.lastSeen,
+    deviceId:
+      device.deviceId,
 
-    capabilities: Array.isArray(
-      device.capabilities
-    )
-      ? device.capabilities
-      : []
+    ip: device.ip,
+
+    port:
+      device.port,
+
+    method:
+      device.method,
+
+    profile:
+      device.profile,
+
+    vendor:
+      device.vendor,
+
+    status:
+      device.status,
+
+    lastSeen:
+      device.lastSeen,
+
+    capabilities:
+      Array.isArray(
+        device.capabilities
+      )
+        ? device.capabilities
+        : []
   };
 }
 
 // -----------------------------
 // STATE
 // -----------------------------
-let pendingRequests = {};
-let broadcastRequests = {};
+let pendingRequests =
+  {};
 
-function serializeRequests(obj) {
+let broadcastRequests =
+  {};
+
+function serializeRequests(
+  obj
+) {
   const clean = {};
 
   for (const id in obj) {
     const r = obj[id];
 
     clean[id] = {
-      requestId: r.requestId,
-      deviceId: r.deviceId,
-      commandId: r.commandId,
+      requestId:
+        r.requestId,
+
+      deviceId:
+        r.deviceId,
+
+      commandId:
+        r.commandId,
+
       meta: r.meta,
-      retries: r.retries,
-      maxRetries: r.maxRetries,
+
+      retries:
+        r.retries,
+
+      maxRetries:
+        r.maxRetries,
+
       state: r.state,
-      broadcastId: r.broadcastId
+
+      broadcastId:
+        r.broadcastId
     };
   }
 
@@ -489,199 +693,33 @@ function saveState() {
 }
 
 function loadState() {
-  if (!fs.existsSync(STATE_FILE)) {
+  if (
+    !fs.existsSync(
+      STATE_FILE
+    )
+  ) {
     return;
   }
 
-  const state = JSON.parse(
-    fs.readFileSync(STATE_FILE)
-  );
+  const state =
+    JSON.parse(
+      fs.readFileSync(
+        STATE_FILE
+      )
+    );
 
   pendingRequests =
-    state.pendingRequests || {};
+    state.pendingRequests ||
+    {};
 
   broadcastRequests =
-    state.broadcastRequests || {};
+    state.broadcastRequests ||
+    {};
 
-  console.log("🦎 State restored");
+  console.log(
+    "🦎 State restored"
+  );
 }
-
-// -----------------------------
-// STRESS UPDATE STREAM
-// -----------------------------
-function broadcastStressUpdate(
-  results
-) {
-  sendToUI({
-    type: "stressUpdate",
-    data: results
-  });
-}
-
-// -----------------------------
-// WS CONNECTIONS
-// -----------------------------
-wss.on("connection", ws => {
-  // Session placeholder
-  ws.sessionId =
-    "ws_" +
-    Math.random()
-      .toString(36)
-      .slice(2);
-
-  ws.on("message", async raw => {
-    let msg;
-
-    try {
-      msg = JSON.parse(raw.toString());
-    } catch {
-      return;
-    }
-
-    // -----------------------------
-    // STRESS RUN
-    // -----------------------------
-    if (
-      msg.type ===
-      "ui.stress.run"
-    ) {
-      const profile =
-        msg.profile || "light";
-
-      console.log(
-        "🔥 UI requested stress run:",
-        profile
-      );
-
-      try {
-        const results =
-          await runStress(profile);
-
-        broadcastStressUpdate(
-          results
-        );
-      } catch (err) {
-        console.log(
-          "❌ Stress run failed:",
-          err.message
-        );
-      }
-
-      return;
-    }
-
-    // -----------------------------
-    // OPCODE EXECUTION
-    // -----------------------------
-    if (
-      msg.type ===
-      "ui.opcode"
-    ) {
-      console.log(
-        "RECEIVED ui.opcode:",
-        msg
-      );
-
-      eventBus.emit(
-        "opcode.received",
-        msg
-      );
-
-      const device = registry.get(
-        msg.deviceId
-      );
-
-      // -----------------------------
-      // DEVICE NOT FOUND
-      // -----------------------------
-      if (!device) {
-        sendToUI({
-          type: "opcode.result",
-
-          requestId:
-            msg.requestId,
-
-          deviceId:
-            msg.deviceId,
-
-          opcode:
-            msg.opcode,
-
-          result: {
-            success: false,
-
-            error:
-              `Device not found: ${msg.deviceId}`
-          }
-        });
-
-        return;
-      }
-
-      // -----------------------------
-      // TASK EXECUTION
-      // -----------------------------
-      try {
-        const task =
-          await taskManager.executeOpcode({
-            device,
-
-            opcode:
-              msg.opcode,
-
-            meta:
-              msg.meta || {},
-
-            requestId:
-              msg.requestId,
-
-            sessionId:
-              ws.sessionId
-          });
-
-        // backward compatibility
-        sendToUI({
-          type: "opcode.result",
-
-          requestId:
-            task.id,
-
-          deviceId:
-            task.deviceId,
-
-          opcode:
-            task.opcode,
-
-          result:
-            task.result
-        });
-      } catch (err) {
-        eventBus.emit(
-          "opcode.failed",
-          msg
-        );
-
-        sendToUI({
-          type: "opcode.result",
-
-          requestId:
-            msg.requestId,
-
-          deviceId:
-            msg.deviceId,
-
-          opcode:
-            msg.opcode,
-
-          result: {
-            success: false,
-            error: err.message
-          }
-        });
-      }
-    }
-  });
-});
 
 // -----------------------------
 // UDP LISTENER
@@ -699,7 +737,11 @@ udp.on(
       return;
     }
 
-    if (!verifySignature(packet)) {
+    if (
+      !verifySignature(
+        packet
+      )
+    ) {
       console.log(
         "❌ Invalid signature → dropped"
       );
@@ -707,9 +749,7 @@ udp.on(
       return;
     }
 
-    // -----------------------------
     // HEARTBEAT
-    // -----------------------------
     if (
       packet.type ===
       "heartbeat"
@@ -724,9 +764,14 @@ udp.on(
           packet.deviceId,
           {
             ip: rinfo.address,
-            port: rinfo.port,
-            lastSeen: Date.now(),
-            status: "online"
+            port:
+              rinfo.port,
+
+            lastSeen:
+              Date.now(),
+
+            status:
+              "online"
           }
         );
       } else {
@@ -737,19 +782,27 @@ udp.on(
               packet.deviceId,
 
             ip: rinfo.address,
-            port: rinfo.port,
 
-            method: "udp",
+            port:
+              rinfo.port,
 
-            profile: "unknown",
-            vendor: "unknown",
+            method:
+              "udp",
 
-            status: "online",
+            profile:
+              "unknown",
+
+            vendor:
+              "unknown",
+
+            status:
+              "online",
 
             lastSeen:
               Date.now(),
 
-            capabilities: []
+            capabilities:
+              []
           }
         );
       }
@@ -757,10 +810,11 @@ udp.on(
       return;
     }
 
-    // -----------------------------
     // ACK
-    // -----------------------------
-    if (packet.type === "ack") {
+    if (
+      packet.type ===
+      "ack"
+    ) {
       handleAck(packet);
       return;
     }
@@ -826,10 +880,13 @@ function dispatchCommand(
     requestId: genId(),
 
     deviceId,
+
     commandId,
+
     meta,
 
     retries: 0,
+
     maxRetries: 0,
 
     state: "PENDING",
@@ -841,7 +898,10 @@ function dispatchCommand(
     request.requestId
   ] = request;
 
-  sendPacket(device, request);
+  sendPacket(
+    device,
+    request
+  );
 
   scheduleTimeout(
     request.requestId
@@ -877,7 +937,9 @@ function handleAck(packet) {
     packet.requestId
   );
 
-  if (request.broadcastId) {
+  if (
+    request.broadcastId
+  ) {
     updateBroadcast(
       request.broadcastId,
       request.deviceId,
@@ -886,7 +948,8 @@ function handleAck(packet) {
   }
 
   sendToUI({
-    type: "cmd_completed",
+    type:
+      "cmd_completed",
 
     deviceId:
       request.deviceId,
@@ -901,7 +964,9 @@ function handleAck(packet) {
   saveState();
 }
 
-function scheduleTimeout(id) {
+function scheduleTimeout(
+  id
+) {
   const r =
     pendingRequests[id];
 
@@ -909,13 +974,17 @@ function scheduleTimeout(id) {
     return;
   }
 
-  r._timeoutRef = setTimeout(
-    () => handleTimeout(id),
-    2000
-  );
+  r._timeoutRef =
+    setTimeout(
+      () =>
+        handleTimeout(id),
+      2000
+    );
 }
 
-function handleTimeout(id) {
+function handleTimeout(
+  id
+) {
   const r =
     pendingRequests[id];
 
@@ -924,7 +993,9 @@ function handleTimeout(id) {
   }
 
   const device =
-    registry.get(r.deviceId);
+    registry.get(
+      r.deviceId
+    );
 
   if (!device) {
     return;
@@ -934,9 +1005,13 @@ function handleTimeout(id) {
     r.retries >=
     r.maxRetries
   ) {
-    delete pendingRequests[id];
+    delete pendingRequests[
+      id
+    ];
 
-    if (r.broadcastId) {
+    if (
+      r.broadcastId
+    ) {
       updateBroadcast(
         r.broadcastId,
         r.deviceId,
@@ -945,7 +1020,8 @@ function handleTimeout(id) {
     }
 
     sendToUI({
-      type: "cmd_failed",
+      type:
+        "cmd_failed",
 
       deviceId:
         r.deviceId,
@@ -987,20 +1063,24 @@ function broadcastCommand(
     id
   );
 
-  broadcastRequests[id] = {
-    broadcastId: id,
+  broadcastRequests[id] =
+    {
+      broadcastId: id,
 
-    commandId,
+      commandId,
 
-    devices: {},
+      devices: {},
 
-    status: "PENDING"
-  };
+      status:
+        "PENDING"
+    };
 
   devices.forEach(d => {
-    broadcastRequests[id]
-      .devices[d.deviceId] =
-      "PENDING";
+    broadcastRequests[
+      id
+    ].devices[
+      d.deviceId
+    ] = "PENDING";
 
     dispatchCommand(
       d.deviceId,
@@ -1027,29 +1107,36 @@ function updateBroadcast(
     return;
   }
 
-  bc.devices[deviceId] =
-    status;
+  bc.devices[
+    deviceId
+  ] = status;
 
-  const states = Object.values(
-    bc.devices
-  );
+  const states =
+    Object.values(
+      bc.devices
+    );
 
   if (
     states.every(
       s => s === "OK"
     )
   ) {
-    bc.status = "COMPLETED";
+    bc.status =
+      "COMPLETED";
   } else if (
     states.every(
-      s => s !== "PENDING"
+      s =>
+        s !==
+        "PENDING"
     )
   ) {
-    bc.status = "PARTIAL";
+    bc.status =
+      "PARTIAL";
   }
 
   if (
-    bc.status !== "PENDING"
+    bc.status !==
+    "PENDING"
   ) {
     console.log(
       "📊 BROADCAST DONE:",
@@ -1059,13 +1146,16 @@ function updateBroadcast(
     );
 
     sendToUI({
-      type: "broadcast_done",
+      type:
+        "broadcast_done",
 
       broadcastId,
 
-      status: bc.status,
+      status:
+        bc.status,
 
-      devices: bc.devices
+      devices:
+        bc.devices
     });
   }
 
@@ -1101,5 +1191,5 @@ setInterval(() => {
 loadState();
 
 console.log(
-  "🚀 Gateway Phase 6.3 running (Task Lifecycle Enabled)"
+  "🚀 Gateway Phase 7.2 running (Session Runtime Stabilized)"
 );
