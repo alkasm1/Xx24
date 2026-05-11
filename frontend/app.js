@@ -4,9 +4,17 @@ let ws = null;
 
 let reconnectTimer = null;
 
+let heartbeatTimer = null;
+
 const activeRequests =
   new Set();
 
+let stressRunning =
+  false;
+
+// -----------------------------
+// UI ELEMENTS
+// -----------------------------
 const wsStatus =
   document.getElementById(
     "wsStatus"
@@ -33,14 +41,70 @@ const stressResults =
   );
 
 // -----------------------------
+// LOGGING
+// -----------------------------
+function logLine(line) {
+  logs.textContent +=
+    "\n" + line;
+
+  logs.scrollTop =
+    logs.scrollHeight;
+}
+
+// -----------------------------
+// WS HEARTBEAT
+// -----------------------------
+function startHeartbeat() {
+
+  stopHeartbeat();
+
+  heartbeatTimer =
+    setInterval(() => {
+
+      if (
+        !ws ||
+        ws.readyState !==
+          WebSocket.OPEN
+      ) {
+        return;
+      }
+
+      ws.send(
+        JSON.stringify({
+          type: "ping",
+          ts: Date.now()
+        })
+      );
+
+    }, 10000);
+}
+
+function stopHeartbeat() {
+
+  if (heartbeatTimer) {
+
+    clearInterval(
+      heartbeatTimer
+    );
+
+    heartbeatTimer = null;
+  }
+}
+
+// -----------------------------
 // WS CONNECT
 // -----------------------------
 function connectWS() {
+
   ws = new WebSocket(
     `ws://${location.hostname}:5001`
   );
 
+  // -----------------------------
+  // OPEN
+  // -----------------------------
   ws.onopen = () => {
+
     wsStatus.innerText =
       "WS: ✅ connected";
 
@@ -50,19 +114,15 @@ function connectWS() {
     logLine(
       "🟢 WS connected"
     );
+
+    startHeartbeat();
   };
-// -----------------------------
-// WS HEARTBEAT
-// -----------------------------
-setInterval(() => {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({
-      type: "ping",
-      ts: Date.now()
-    }));
-  }
-}, 10000);
+
+  // -----------------------------
+  // CLOSE
+  // -----------------------------
   ws.onclose = () => {
+
     wsStatus.innerText =
       "WS: ❌ disconnected";
 
@@ -73,18 +133,57 @@ setInterval(() => {
       "🔴 WS disconnected"
     );
 
+    stopHeartbeat();
+
     scheduleReconnect();
   };
 
-  ws.onmessage = event => {
-    const msg = JSON.parse(
-      event.data
-    );
+  // -----------------------------
+  // ERROR
+  // -----------------------------
+  ws.onerror = err => {
 
+    logLine(
+      "❌ WS error"
+    );
+  };
+
+  // -----------------------------
+  // MESSAGE
+  // -----------------------------
+  ws.onmessage = event => {
+
+    let msg;
+
+    try {
+
+      msg = JSON.parse(
+        event.data
+      );
+
+    } catch {
+
+      return;
+    }
+
+    // -----------------------------
+    // PONG
+    // -----------------------------
+    if (
+      msg.type === "pong"
+    ) {
+
+      return;
+    }
+
+    // -----------------------------
+    // OPCODE RESULT
+    // -----------------------------
     if (
       msg.type ===
       "opcode.result"
     ) {
+
       resultBox.textContent =
         JSON.stringify(
           msg,
@@ -97,10 +196,14 @@ setInterval(() => {
       );
     }
 
+    // -----------------------------
+    // SNAPSHOT
+    // -----------------------------
     if (
       msg.type ===
       "snapshot"
     ) {
+
       devicesBox.textContent =
         JSON.stringify(
           msg.devices,
@@ -109,69 +212,80 @@ setInterval(() => {
         );
     }
 
+    // -----------------------------
+    // STRESS RESULTS
+    // -----------------------------
     if (
       msg.type ===
       "stressUpdate"
     ) {
+
       stressResults.textContent =
         JSON.stringify(
           msg.data,
           null,
           2
         );
+
+      stressRunning = false;
+    }
+
+    // -----------------------------
+    // TERMINAL STREAM
+    // -----------------------------
+    if (
+      msg.type ===
+      "terminal"
+    ) {
+
+      logLine(msg.line);
+
+      return;
     }
 
     logLine(event.data);
   };
-
-  // heartbeat
-  setInterval(() => {
-    if (
-      ws.readyState === 1
-    ) {
-      ws.send(
-        JSON.stringify({
-          type: "ping"
-        })
-      );
-    }
-  }, 10000);
 }
 
 // -----------------------------
-// RECONNECT
+// WS RECONNECT
 // -----------------------------
 function scheduleReconnect() {
+
   if (reconnectTimer) {
     return;
   }
 
   reconnectTimer =
     setTimeout(() => {
-      reconnectTimer = null;
+
+      reconnectTimer =
+        null;
+
+      logLine(
+        "🔄 Reconnecting WS..."
+      );
+
       connectWS();
+
     }, 2000);
 }
 
 // -----------------------------
-// LOG
-// -----------------------------
-function logLine(line) {
-  logs.textContent +=
-    "\n" + line;
-
-  logs.scrollTop =
-    logs.scrollHeight;
-}
-
-// -----------------------------
-// OPCODE
+// OPCODE EXECUTION
 // -----------------------------
 function sendOpcode() {
+
   if (
     !ws ||
-    ws.readyState !== 1
+    ws.readyState !==
+      WebSocket.OPEN
   ) {
+
+    logLine(
+      "❌ WS not connected"
+    );
+
     return;
   }
 
@@ -185,18 +299,43 @@ function sendOpcode() {
       "opcodeInput"
     ).value;
 
+  if (!deviceId) {
+
+    logLine(
+      "❌ Missing deviceId"
+    );
+
+    return;
+  }
+
+  if (!opcode) {
+
+    logLine(
+      "❌ Missing opcode"
+    );
+
+    return;
+  }
+
   const requestId =
     "req_" +
     Math.random()
       .toString(36)
       .slice(2);
 
-  // dedupe
+  // -----------------------------
+  // REQUEST DEDUPE
+  // -----------------------------
   if (
     activeRequests.has(
       requestId
     )
   ) {
+
+    logLine(
+      "⚠ Duplicate request blocked"
+    );
+
     return;
   }
 
@@ -226,24 +365,36 @@ function sendOpcode() {
 }
 
 // -----------------------------
-// STRESS
+// STRESS RUNNER
 // -----------------------------
-let stressRunning =
-  false;
+function runStress(
+  profile
+) {
 
-function runStress(profile) {
   if (
     !ws ||
-    ws.readyState !== 1
+    ws.readyState !==
+      WebSocket.OPEN
   ) {
+
+    logLine(
+      "❌ WS not connected"
+    );
+
     return;
   }
 
   if (stressRunning) {
+
+    logLine(
+      "⚠ Stress already running"
+    );
+
     return;
   }
 
-  stressRunning = true;
+  stressRunning =
+    true;
 
   ws.send(
     JSON.stringify({
@@ -257,12 +408,11 @@ function runStress(profile) {
   logLine(
     `🔥 STRESS START → ${profile}`
   );
-
-  setTimeout(() => {
-    stressRunning = false;
-  }, 3000);
 }
 
+// -----------------------------
+// STRESS BUTTONS
+// -----------------------------
 document
   .getElementById(
     "runLight"
@@ -303,5 +453,7 @@ document
       runStress("extreme")
   );
 
-// start
+// -----------------------------
+// START
+// -----------------------------
 connectWS();
