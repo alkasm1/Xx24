@@ -1,31 +1,102 @@
 // packages/alm-profiles/linux/system.js
 
+function buildCommand(
+  command,
+  timeout = 5000
+) {
+  return {
+    type: "command",
+
+    transport: "ssh",
+
+    payload: {
+      command
+    },
+
+    timeout,
+
+    parser: "text"
+  };
+}
+
 module.exports = {
-  reboot() {
-    return {
-      type: "command",
-      transport: "ssh",
+  // -----------------------------
+  // REBOOT
+  // -----------------------------
+  reboot(
+    meta = {}
+  ) {
+    const useSudo =
+      meta.sudo !== false;
 
-      payload: {
-        command: "sudo reboot"
-      },
+    const command =
+      useSudo
+        ? "sudo reboot"
+        : "reboot";
 
-      timeout: 5000,
-      parser: "text"
-    };
+    return buildCommand(
+      command,
+      5000
+    );
   },
 
+  // -----------------------------
+  // UNAME
+  // -----------------------------
   uname() {
-    return {
-      type: "command",
-      transport: "ssh",
+    return buildCommand(
+      "uname -a",
+      3000
+    );
+  },
 
-      payload: {
-        command: "uname -a"
-      },
+  // -----------------------------
+  // HOSTNAME
+  // -----------------------------
+  hostname() {
+    return buildCommand(
+      "hostname",
+      2000
+    );
+  },
 
-      timeout: 3000,
-      parser: "text"
-    };
+  // -----------------------------
+  // UPTIME
+  // -----------------------------
+  uptime() {
+    return buildCommand(
+      "uptime",
+      3000
+    );
+  },
+
+  // -----------------------------
+  // MEMORY INFO
+  // -----------------------------
+  memory() {
+    return buildCommand(
+      "free -m",
+      3000
+    );
+  },
+
+  // -----------------------------
+  // DISK INFO
+  // -----------------------------
+  disk() {
+    return buildCommand(
+      "df -h",
+      4000
+    );
+  },
+
+  // -----------------------------
+  // CPU INFO
+  // -----------------------------
+  cpu() {
+    return buildCommand(
+      "cat /proc/cpuinfo",
+      4000
+    );
   }
 };
