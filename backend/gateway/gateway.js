@@ -252,7 +252,18 @@ wss.on(
         } catch {
           return;
         }
+// -----------------------------
+// HEARTBEAT
+// -----------------------------
+ws.isAlive = true;
 
+ws.on("pong", () => {
+  ws.isAlive = true;
+
+  sessionManager.touchSession(
+    ws.sessionId
+  );
+});
         // -----------------------------
         // STRESS RUN
         // -----------------------------
