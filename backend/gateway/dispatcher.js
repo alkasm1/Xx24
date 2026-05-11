@@ -1,7 +1,3 @@
-// backend/gateway/dispatcher.js
-
-const opcodes = require("./opcodes");
-
 const transportRegistry = require(
   "./transports"
 );
@@ -10,8 +6,14 @@ const Queue = require(
   "../../packages/alm-core/src/runtime/queue"
 );
 
+const {
+  resolveOpcode
+} = require(
+  "../../packages/alm-profiles"
+);
+
 // -----------------------------
-// EXECUTION QUEUES (Phase 7.3)
+// EXECUTION QUEUES
 // -----------------------------
 const deviceQueues =
   new Map();
@@ -38,6 +40,55 @@ function getDeviceQueue(
 }
 
 // -----------------------------
+// BUILD DESCRIPTOR
+// -----------------------------
+function buildDescriptor(
+  device,
+  opcodeName,
+  meta = {}
+) {
+  if (!device.profile) {
+    throw new Error(
+      `Device missing profile: ${device.deviceId}`
+    );
+  }
+
+  const resolver =
+    resolveOpcode(
+      device.profile,
+      opcodeName
+    );
+
+  if (
+    typeof resolver !==
+    "function"
+  ) {
+    throw new Error(
+      `Opcode resolver invalid: ${opcodeName}`
+    );
+  }
+
+  const descriptor =
+    resolver(meta);
+
+  if (!descriptor) {
+    throw new Error(
+      `Descriptor build failed: ${opcodeName}`
+    );
+  }
+
+  if (
+    !descriptor.transport
+  ) {
+    throw new Error(
+      `Descriptor missing transport: ${opcodeName}`
+    );
+  }
+
+  return descriptor;
+}
+
+// -----------------------------
 // DISPATCH
 // -----------------------------
 async function dispatch(
@@ -51,21 +102,25 @@ async function dispatch(
     );
   }
 
+  if (!opcodeName) {
+    throw new Error(
+      "Opcode is required"
+    );
+  }
+
+  // -----------------------------
+  // BUILD OPCODE DESCRIPTOR
+  // -----------------------------
   const descriptor =
-    opcodes[opcodeName];
-
-  if (!descriptor) {
-    throw new Error(
-      `Unknown opcode: ${opcodeName}`
+    buildDescriptor(
+      device,
+      opcodeName,
+      meta
     );
-  }
 
-  if (!descriptor.transport) {
-    throw new Error(
-      "Descriptor missing transport"
-    );
-  }
-
+  // -----------------------------
+  // TRANSPORT
+  // -----------------------------
   const transportName =
     descriptor.transport;
 
@@ -109,7 +164,17 @@ async function dispatch(
                 meta
               );
 
-            resolve(result);
+            resolve({
+              opcode:
+                opcodeName,
+
+              profile:
+                device.profile,
+
+              descriptor,
+
+              ...result
+            });
           } catch (err) {
             reject(err);
           }
@@ -124,6 +189,9 @@ async function dispatch(
   );
 }
 
+// -----------------------------
+// STATS
+// -----------------------------
 function getDispatcherStats() {
   const stats = {};
 
@@ -148,5 +216,8 @@ function getDispatcherStats() {
 
 module.exports = {
   dispatch,
+
+  buildDescriptor,
+
   getDispatcherStats
 };
