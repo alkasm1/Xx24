@@ -41,14 +41,40 @@ const stressResults =
   );
 
 // -----------------------------
+// OPCODE HISTORY
+// -----------------------------
+const opcodeHistory =
+  [];
+
+// -----------------------------
 // LOGGING
 // -----------------------------
 function logLine(line) {
+
+  if (!logs) {
+    return;
+  }
+
   logs.textContent +=
     "\n" + line;
 
   logs.scrollTop =
     logs.scrollHeight;
+}
+
+// -----------------------------
+// SAFE JSON
+// -----------------------------
+function safeJson(data) {
+
+  try {
+
+    return JSON.parse(data);
+
+  } catch {
+
+    return null;
+  }
 }
 
 // -----------------------------
@@ -81,20 +107,35 @@ function startHeartbeat() {
 
 function stopHeartbeat() {
 
-  if (heartbeatTimer) {
-
-    clearInterval(
-      heartbeatTimer
-    );
-
-    heartbeatTimer = null;
+  if (!heartbeatTimer) {
+    return;
   }
+
+  clearInterval(
+    heartbeatTimer
+  );
+
+  heartbeatTimer =
+    null;
 }
 
 // -----------------------------
 // WS CONNECT
 // -----------------------------
 function connectWS() {
+
+  if (
+    ws &&
+    (
+      ws.readyState ===
+        WebSocket.OPEN ||
+
+      ws.readyState ===
+        WebSocket.CONNECTING
+    )
+  ) {
+    return;
+  }
 
   ws = new WebSocket(
     `ws://${location.hostname}:5001`
@@ -143,6 +184,11 @@ function connectWS() {
   // -----------------------------
   ws.onerror = err => {
 
+    console.error(
+      "WS error:",
+      err
+    );
+
     logLine(
       "❌ WS error"
     );
@@ -153,16 +199,12 @@ function connectWS() {
   // -----------------------------
   ws.onmessage = event => {
 
-    let msg;
-
-    try {
-
-      msg = JSON.parse(
+    const msg =
+      safeJson(
         event.data
       );
 
-    } catch {
-
+    if (!msg) {
       return;
     }
 
@@ -172,7 +214,6 @@ function connectWS() {
     if (
       msg.type === "pong"
     ) {
-
       return;
     }
 
@@ -194,6 +235,43 @@ function connectWS() {
       activeRequests.delete(
         msg.requestId
       );
+
+      opcodeHistory.push({
+        requestId:
+          msg.requestId,
+
+        deviceId:
+          msg.deviceId,
+
+        opcode:
+          msg.opcode,
+
+        result:
+          msg.result,
+
+        ts: Date.now()
+      });
+
+      logLine(
+        `✅ OPCODE RESULT → ${msg.opcode}`
+      );
+
+      return;
+    }
+
+    // -----------------------------
+    // TASK STREAM
+    // -----------------------------
+    if (
+      msg.type ===
+      "task.update"
+    ) {
+
+      logLine(
+        `📡 TASK ${msg.task.id} → ${msg.task.status}`
+      );
+
+      return;
     }
 
     // -----------------------------
@@ -206,10 +284,18 @@ function connectWS() {
 
       devicesBox.textContent =
         JSON.stringify(
-          msg.devices,
+          {
+            devices:
+              msg.devices,
+
+            metrics:
+              msg.metrics
+          },
           null,
           2
         );
+
+      return;
     }
 
     // -----------------------------
@@ -227,7 +313,14 @@ function connectWS() {
           2
         );
 
-      stressRunning = false;
+      stressRunning =
+        false;
+
+      logLine(
+        "✅ Stress test completed"
+      );
+
+      return;
     }
 
     // -----------------------------
@@ -238,12 +331,19 @@ function connectWS() {
       "terminal"
     ) {
 
-      logLine(msg.line);
+      logLine(
+        msg.line
+      );
 
       return;
     }
 
-    logLine(event.data);
+    // -----------------------------
+    // GENERIC LOG
+    // -----------------------------
+    logLine(
+      event.data
+    );
   };
 }
 
@@ -292,12 +392,14 @@ function sendOpcode() {
   const deviceId =
     document.getElementById(
       "opcodeDevice"
-    ).value;
+    )?.value
+      ?.trim();
 
   const opcode =
     document.getElementById(
       "opcodeInput"
-    ).value;
+    )?.value
+      ?.trim();
 
   if (!deviceId) {
 
@@ -452,6 +554,15 @@ document
     () =>
       runStress("extreme")
   );
+
+// -----------------------------
+// GLOBAL ACTIONS
+// -----------------------------
+window.sendOpcode =
+  sendOpcode;
+
+window.runStress =
+  runStress;
 
 // -----------------------------
 // START
