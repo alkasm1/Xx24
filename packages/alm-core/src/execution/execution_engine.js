@@ -1,21 +1,36 @@
 // packages/alm-core/src/execution/execution_engine.js
 
-const registry = require("./transport_registry");
+const registry = require(
+  "./transport_registry"
+);
 
-async function execute(device, descriptor) {
+// -----------------------------
+// EXECUTION ENGINE
+// -----------------------------
+async function execute(
+  device,
+  descriptor,
+  meta = {}
+) {
   if (!device) {
-    throw new Error("Device is required");
+    throw new Error(
+      "Device is required"
+    );
   }
 
-  if (!descriptor || !descriptor.transport) {
+  if (
+    !descriptor ||
+    !descriptor.transport
+  ) {
     throw new Error(
       "Invalid execution descriptor"
     );
   }
 
-  const adapter = registry.getTransport(
-    descriptor.transport
-  );
+  const adapter =
+    registry.getTransport(
+      descriptor.transport
+    );
 
   if (!adapter) {
     throw new Error(
@@ -23,13 +38,60 @@ async function execute(device, descriptor) {
     );
   }
 
-  if (typeof adapter.run !== "function") {
+  const fn =
+    adapter.execute ||
+    adapter.run;
+
+  if (
+    typeof fn !==
+    "function"
+  ) {
     throw new Error(
       `Invalid transport adapter: ${descriptor.transport}`
     );
   }
 
-  return adapter.run(device, descriptor);
+  const startedAt =
+    Date.now();
+
+  try {
+    const result =
+      await fn(
+        device,
+        descriptor,
+        meta
+      );
+
+    return {
+      success: true,
+
+      transport:
+        descriptor.transport,
+
+      durationMs:
+        Date.now() -
+        startedAt,
+
+      result
+    };
+  } catch (err) {
+    return {
+      success: false,
+
+      transport:
+        descriptor.transport,
+
+      durationMs:
+        Date.now() -
+        startedAt,
+
+      error:
+        err &&
+        err.message
+          ? err.message
+          : "Execution failed"
+    };
+  }
 }
 
 module.exports = execute;
