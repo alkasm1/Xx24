@@ -14,38 +14,62 @@ const {
 
 require("./transports");
 
-const originalLog = console.log;
+const originalLog =
+  console.log;
 
 // -----------------------------
 // CORE IMPORTS
 // -----------------------------
-const dgram = require("dgram");
-const fs = require("fs");
-const crypto = require("crypto");
-const WebSocket = require("ws");
+const dgram =
+  require("dgram");
 
-const udp = dgram.createSocket("udp4");
+const fs =
+  require("fs");
+
+const crypto =
+  require("crypto");
+
+const WebSocket =
+  require("ws");
+
+const udp =
+  dgram.createSocket("udp4");
 
 // -----------------------------
 // INTERNAL MODULES
 // -----------------------------
-const eventBus = require("./event_bus");
-const registry = require("./device_registry");
-const Metrics = require("./metrics");
+const eventBus =
+  require("./event_bus");
 
-const { dispatch } = require("./dispatcher");
+const registry =
+  require("./device_registry");
 
-// ✅ Stress Runner
+const Metrics =
+  require("./metrics");
+
+const {
+  dispatch
+} = require(
+  "./dispatcher"
+);
+
+// -----------------------------
+// STRESS RUNNER
+// -----------------------------
 const {
   runStress
-} = require("../../stress/runner");
+} = require(
+  "../../stress/runner"
+);
 
 // -----------------------------
 // RUNTIME MANAGERS
 // -----------------------------
 const taskManager =
   createTaskManager({
-    dispatcher: dispatch,
+    dispatcher:
+      dispatch,
+
     eventBus
   });
 
@@ -70,8 +94,11 @@ const SECRET =
 const STATE_FILE =
   "./state.json";
 
+const WS_HEARTBEAT_MS =
+  15000;
+
 // -----------------------------
-// ACTIVE REQUESTS (Phase 7.2)
+// ACTIVE REQUESTS
 // -----------------------------
 const activeRequests =
   new Set();
@@ -89,27 +116,35 @@ const wss =
 // UI SENDER
 // -----------------------------
 function sendToUI(obj) {
+
   const payload =
     JSON.stringify(obj);
 
-  wss.clients.forEach(ws => {
-    if (
-      ws.readyState ===
-      WebSocket.OPEN
-    ) {
-      ws.send(payload);
+  wss.clients.forEach(
+    ws => {
+
+      if (
+        ws.readyState ===
+        WebSocket.OPEN
+      ) {
+
+        ws.send(payload);
+      }
     }
-  });
+  );
 }
 
 // -----------------------------
-// TASK EVENT STREAM → UI
+// TASK EVENTS → UI
 // -----------------------------
 function emitTaskUpdate(
   task
 ) {
+
   sendToUI({
-    type: "task.update",
+    type:
+      "task.update",
+
     task
   });
 
@@ -127,6 +162,7 @@ function emitTaskUpdate(
     task.meta &&
     task.meta.sessionId
   ) {
+
     sessionManager.detachTask(
       task.meta.sessionId,
       task.id
@@ -135,6 +171,7 @@ function emitTaskUpdate(
 }
 
 function bindTaskEventsToUI() {
+
   eventBus.on(
     "task.created",
     emitTaskUpdate
@@ -164,33 +201,40 @@ bindTaskEventsToUI();
 console.log = (
   ...args
 ) => {
+
   originalLog(...args);
 
   try {
-    const payload = args
-      .map(a =>
-        typeof a ===
-        "object"
-          ? JSON.stringify(a)
-          : String(a)
-      )
-      .join(" ");
+
+    const payload =
+      args
+        .map(a =>
+          typeof a ===
+          "object"
+            ? JSON.stringify(a)
+            : String(a)
+        )
+        .join(" ");
 
     sendToUI({
       type: "terminal",
       line: payload
     });
+
   } catch (_) {}
 };
 
 // -----------------------------
-// STRESS UPDATE STREAM
+// STRESS STREAM
 // -----------------------------
 function broadcastStressUpdate(
   results
 ) {
+
   sendToUI({
-    type: "stressUpdate",
+    type:
+      "stressUpdate",
+
     data: results
   });
 }
@@ -201,6 +245,7 @@ function broadcastStressUpdate(
 wss.on(
   "connection",
   ws => {
+
     // -----------------------------
     // CREATE SESSION
     // -----------------------------
@@ -225,20 +270,26 @@ wss.on(
     // -----------------------------
     ws.isAlive = true;
 
-    ws.on("pong", () => {
-      ws.isAlive = true;
+    ws.on(
+      "pong",
+      () => {
 
-      sessionManager.touchSession(
-        ws.sessionId
-      );
-    });
+        ws.isAlive =
+          true;
+
+        sessionManager.touchSession(
+          ws.sessionId
+        );
+      }
+    );
 
     // -----------------------------
-    // WS MESSAGE
+    // MESSAGE
     // -----------------------------
     ws.on(
       "message",
       async raw => {
+
         sessionManager.touchSession(
           ws.sessionId
         );
@@ -246,28 +297,41 @@ wss.on(
         let msg;
 
         try {
+
           msg = JSON.parse(
             raw.toString()
           );
+
         } catch {
+
           return;
         }
 
- // -----------------------------
-// HEARTBEAT
-// -----------------------------
-if (msg.type === "ping") {
-  sessionManager.touchSession(
-    ws.sessionId
-  );
+        // -----------------------------
+        // UI HEARTBEAT
+        // -----------------------------
+        if (
+          msg.type ===
+          "ping"
+        ) {
 
-  ws.send(JSON.stringify({
-    type: "pong",
-    ts: Date.now()
-  }));
+          sessionManager.touchSession(
+            ws.sessionId
+          );
 
-  return;
-}
+          ws.send(
+            JSON.stringify({
+              type:
+                "pong",
+
+              ts:
+                Date.now()
+            })
+          );
+
+          return;
+        }
+
         // -----------------------------
         // STRESS RUN
         // -----------------------------
@@ -275,6 +339,7 @@ if (msg.type === "ping") {
           msg.type ===
           "ui.stress.run"
         ) {
+
           const profile =
             msg.profile ||
             "light";
@@ -285,6 +350,7 @@ if (msg.type === "ping") {
           );
 
           try {
+
             const results =
               await runStress(
                 profile
@@ -293,7 +359,9 @@ if (msg.type === "ping") {
             broadcastStressUpdate(
               results
             );
+
           } catch (err) {
+
             console.log(
               "❌ Stress run failed:",
               err.message
@@ -310,10 +378,36 @@ if (msg.type === "ping") {
           msg.type ===
           "ui.opcode"
         ) {
+
           console.log(
             "RECEIVED ui.opcode:",
             msg
           );
+
+          // -----------------------------
+          // REQUEST VALIDATION
+          // -----------------------------
+          if (
+            !msg.requestId
+          ) {
+
+            ws.send(
+              JSON.stringify({
+                type:
+                  "opcode.result",
+
+                result: {
+                  success:
+                    false,
+
+                  error:
+                    "Missing requestId"
+                }
+              })
+            );
+
+            return;
+          }
 
           // -----------------------------
           // REQUEST DE-DUPE
@@ -323,6 +417,7 @@ if (msg.type === "ping") {
               msg.requestId
             )
           ) {
+
             console.log(
               "⚠ Duplicate request ignored:",
               msg.requestId
@@ -349,6 +444,7 @@ if (msg.type === "ping") {
           // DEVICE NOT FOUND
           // -----------------------------
           if (!device) {
+
             activeRequests.delete(
               msg.requestId
             );
@@ -367,7 +463,8 @@ if (msg.type === "ping") {
                 msg.opcode,
 
               result: {
-                success: false,
+                success:
+                  false,
 
                 error:
                   `Device not found: ${msg.deviceId}`
@@ -381,6 +478,7 @@ if (msg.type === "ping") {
           // TASK EXECUTION
           // -----------------------------
           try {
+
             const task =
               await taskManager.executeOpcode(
                 {
@@ -406,7 +504,6 @@ if (msg.type === "ping") {
               task.id
             );
 
-            // backward compatibility
             sendToUI({
               type:
                 "opcode.result",
@@ -423,7 +520,9 @@ if (msg.type === "ping") {
               result:
                 task.result
             });
+
           } catch (err) {
+
             eventBus.emit(
               "opcode.failed",
               msg
@@ -443,12 +542,16 @@ if (msg.type === "ping") {
                 msg.opcode,
 
               result: {
-                success: false,
+                success:
+                  false,
+
                 error:
                   err.message
               }
             });
+
           } finally {
+
             activeRequests.delete(
               msg.requestId
             );
@@ -463,6 +566,7 @@ if (msg.type === "ping") {
     ws.on(
       "close",
       () => {
+
         console.log(
           "🔴 Session disconnected:",
           ws.sessionId
@@ -471,11 +575,19 @@ if (msg.type === "ping") {
         sessionManager.destroySession(
           ws.sessionId
         );
+      }
+    );
 
-        activeRequests.forEach(
-          id => {
-            // future cleanup hook
-          }
+    // -----------------------------
+    // WS ERROR
+    // -----------------------------
+    ws.on(
+      "error",
+      err => {
+
+        console.log(
+          "❌ WS error:",
+          err.message
         );
       }
     );
@@ -486,11 +598,15 @@ if (msg.type === "ping") {
 // WS HEARTBEAT LOOP
 // -----------------------------
 setInterval(() => {
+
   wss.clients.forEach(
     ws => {
+
       if (
-        ws.isAlive === false
+        ws.isAlive ===
+        false
       ) {
+
         console.log(
           "💀 WS heartbeat timeout:",
           ws.sessionId
@@ -503,14 +619,18 @@ setInterval(() => {
         return ws.terminate();
       }
 
-      ws.isAlive = false;
+      ws.isAlive =
+        false;
 
       try {
+
         ws.ping();
+
       } catch (_) {}
     }
   );
-}, 15000);
+
+}, WS_HEARTBEAT_MS);
 
 // -----------------------------
 // HELPERS
@@ -518,11 +638,13 @@ setInterval(() => {
 function stableStringify(
   obj
 ) {
+
   if (
     obj === null ||
     typeof obj !==
       "object"
   ) {
+
     return JSON.stringify(
       obj
     );
@@ -531,6 +653,7 @@ function stableStringify(
   if (
     Array.isArray(obj)
   ) {
+
     return (
       "[" +
       obj
@@ -562,6 +685,7 @@ function stableStringify(
 function signPacket(
   packet
 ) {
+
   return crypto
     .createHmac(
       "sha256",
@@ -578,6 +702,7 @@ function signPacket(
 function verifySignature(
   packet
 ) {
+
   const sig =
     packet.sig;
 
@@ -594,12 +719,14 @@ function verifySignature(
 }
 
 function genNonce() {
+
   return crypto
     .randomBytes(8)
     .toString("hex");
 }
 
 function genId() {
+
   return (
     "req_" +
     Math.random()
@@ -611,11 +738,13 @@ function genId() {
 function sanitizeDevice(
   device
 ) {
+
   return {
     deviceId:
       device.deviceId,
 
-    ip: device.ip,
+    ip:
+      device.ip,
 
     port:
       device.port,
@@ -656,10 +785,13 @@ let broadcastRequests =
 function serializeRequests(
   obj
 ) {
+
   const clean = {};
 
   for (const id in obj) {
-    const r = obj[id];
+
+    const r =
+      obj[id];
 
     clean[id] = {
       requestId:
@@ -671,7 +803,8 @@ function serializeRequests(
       commandId:
         r.commandId,
 
-      meta: r.meta,
+      meta:
+        r.meta,
 
       retries:
         r.retries,
@@ -679,7 +812,8 @@ function serializeRequests(
       maxRetries:
         r.maxRetries,
 
-      state: r.state,
+      state:
+        r.state,
 
       broadcastId:
         r.broadcastId
@@ -690,6 +824,7 @@ function serializeRequests(
 }
 
 function saveState() {
+
   fs.writeFileSync(
     STATE_FILE,
     JSON.stringify(
@@ -708,11 +843,13 @@ function saveState() {
 }
 
 function loadState() {
+
   if (
     !fs.existsSync(
       STATE_FILE
     )
   ) {
+
     return;
   }
 
@@ -741,14 +878,22 @@ function loadState() {
 // -----------------------------
 udp.on(
   "message",
-  (buf, rinfo) => {
+  (
+    buf,
+    rinfo
+  ) => {
+
     let packet;
 
     try {
-      packet = JSON.parse(
-        buf.toString()
-      );
+
+      packet =
+        JSON.parse(
+          buf.toString()
+        );
+
     } catch {
+
       return;
     }
 
@@ -757,6 +902,7 @@ udp.on(
         packet
       )
     ) {
+
       console.log(
         "❌ Invalid signature → dropped"
       );
@@ -764,21 +910,27 @@ udp.on(
       return;
     }
 
+    // -----------------------------
     // HEARTBEAT
+    // -----------------------------
     if (
       packet.type ===
       "heartbeat"
     ) {
+
       const existing =
         registry.get(
           packet.deviceId
         );
 
       if (existing) {
+
         registry.update(
           packet.deviceId,
           {
-            ip: rinfo.address,
+            ip:
+              rinfo.address,
+
             port:
               rinfo.port,
 
@@ -789,14 +941,17 @@ udp.on(
               "online"
           }
         );
+
       } else {
+
         registry.upsert(
           packet.deviceId,
           {
             deviceId:
               packet.deviceId,
 
-            ip: rinfo.address,
+            ip:
+              rinfo.address,
 
             port:
               rinfo.port,
@@ -825,12 +980,16 @@ udp.on(
       return;
     }
 
+    // -----------------------------
     // ACK
+    // -----------------------------
     if (
       packet.type ===
       "ack"
     ) {
+
       handleAck(packet);
+
       return;
     }
   }
@@ -845,6 +1004,7 @@ function sendPacket(
   device,
   request
 ) {
+
   const packet = {
     type: "cmd",
 
@@ -857,17 +1017,22 @@ function sendPacket(
     commandId:
       request.commandId,
 
-    meta: request.meta,
+    meta:
+      request.meta,
 
-    nonce: genNonce()
+    nonce:
+      genNonce()
   };
 
   packet.sig =
     signPacket(packet);
 
-  const buf = Buffer.from(
-    JSON.stringify(packet)
-  );
+  const buf =
+    Buffer.from(
+      JSON.stringify(
+        packet
+      )
+    );
 
   udp.send(
     buf,
@@ -884,15 +1049,19 @@ function dispatchCommand(
   meta = {},
   broadcastId = null
 ) {
+
   const device =
-    registry.get(deviceId);
+    registry.get(
+      deviceId
+    );
 
   if (!device) {
     return;
   }
 
   const request = {
-    requestId: genId(),
+    requestId:
+      genId(),
 
     deviceId,
 
@@ -904,7 +1073,8 @@ function dispatchCommand(
 
     maxRetries: 0,
 
-    state: "PENDING",
+    state:
+      "PENDING",
 
     broadcastId
   };
@@ -923,7 +1093,10 @@ function dispatchCommand(
   );
 }
 
-function handleAck(packet) {
+function handleAck(
+  packet
+) {
+
   const request =
     pendingRequests[
       packet.requestId
@@ -955,6 +1128,7 @@ function handleAck(packet) {
   if (
     request.broadcastId
   ) {
+
     updateBroadcast(
       request.broadcastId,
       request.deviceId,
@@ -982,6 +1156,7 @@ function handleAck(packet) {
 function scheduleTimeout(
   id
 ) {
+
   const r =
     pendingRequests[id];
 
@@ -1000,6 +1175,7 @@ function scheduleTimeout(
 function handleTimeout(
   id
 ) {
+
   const r =
     pendingRequests[id];
 
@@ -1020,6 +1196,7 @@ function handleTimeout(
     r.retries >=
     r.maxRetries
   ) {
+
     delete pendingRequests[
       id
     ];
@@ -1027,6 +1204,7 @@ function handleTimeout(
     if (
       r.broadcastId
     ) {
+
       updateBroadcast(
         r.broadcastId,
         r.deviceId,
@@ -1052,9 +1230,14 @@ function handleTimeout(
 
   r.retries++;
 
-  sendPacket(device, r);
+  sendPacket(
+    device,
+    r
+  );
 
-  scheduleTimeout(id);
+  scheduleTimeout(
+    id
+  );
 }
 
 // -----------------------------
@@ -1064,6 +1247,7 @@ function broadcastCommand(
   commandId,
   meta = {}
 ) {
+
   const devices =
     registry.getAll();
 
@@ -1078,32 +1262,37 @@ function broadcastCommand(
     id
   );
 
-  broadcastRequests[id] =
-    {
-      broadcastId: id,
+  broadcastRequests[
+    id
+  ] = {
+    broadcastId:
+      id,
 
-      commandId,
+    commandId,
 
-      devices: {},
+    devices: {},
 
-      status:
-        "PENDING"
-    };
+    status:
+      "PENDING"
+  };
 
-  devices.forEach(d => {
-    broadcastRequests[
-      id
-    ].devices[
-      d.deviceId
-    ] = "PENDING";
+  devices.forEach(
+    d => {
 
-    dispatchCommand(
-      d.deviceId,
-      commandId,
-      meta,
-      id
-    );
-  });
+      broadcastRequests[
+        id
+      ].devices[
+        d.deviceId
+      ] = "PENDING";
+
+      dispatchCommand(
+        d.deviceId,
+        commandId,
+        meta,
+        id
+      );
+    }
+  );
 
   saveState();
 }
@@ -1113,6 +1302,7 @@ function updateBroadcast(
   deviceId,
   status
 ) {
+
   const bc =
     broadcastRequests[
       broadcastId
@@ -1136,8 +1326,10 @@ function updateBroadcast(
       s => s === "OK"
     )
   ) {
+
     bc.status =
       "COMPLETED";
+
   } else if (
     states.every(
       s =>
@@ -1145,6 +1337,7 @@ function updateBroadcast(
         "PENDING"
     )
   ) {
+
     bc.status =
       "PARTIAL";
   }
@@ -1153,6 +1346,7 @@ function updateBroadcast(
     bc.status !==
     "PENDING"
   ) {
+
     console.log(
       "📊 BROADCAST DONE:",
       broadcastId,
@@ -1181,6 +1375,7 @@ function updateBroadcast(
 // SNAPSHOT LOOP
 // -----------------------------
 setInterval(() => {
+
   const rawDevices =
     registry.getAll();
 
@@ -1190,7 +1385,8 @@ setInterval(() => {
     );
 
   sendToUI({
-    type: "snapshot",
+    type:
+      "snapshot",
 
     devices,
 
@@ -1198,13 +1394,22 @@ setInterval(() => {
       metrics.snapshot(),
 
     broadcasts:
-      broadcastRequests
+      broadcastRequests,
+
+    sessions:
+      sessionManager.listSessions(),
+
+    activeTasks:
+      taskManager.listTasks()
   });
+
 }, 2000);
 
+// -----------------------------
+// BOOT
 // -----------------------------
 loadState();
 
 console.log(
-  "🚀 Gateway Phase 7.2 running (Session Runtime Stabilized)"
+  "🚀 Gateway Phase 7.3 running (Runtime Persistence + Ownership)"
 );
