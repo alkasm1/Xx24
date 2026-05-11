@@ -2,35 +2,106 @@
 
 const transports = {};
 
-function registerTransport(name, adapter) {
+// -----------------------------
+// REGISTER
+// -----------------------------
+function registerTransport(
+  name,
+  adapter
+) {
   if (!name) {
-    throw new Error("Transport name is required");
+    throw new Error(
+      "Transport name is required"
+    );
   }
 
-  if (!adapter || typeof adapter.run !== "function") {
+  const fn =
+    adapter &&
+    (
+      typeof adapter.run ===
+        "function" ||
+      typeof adapter.execute ===
+        "function"
+    );
+
+  if (!fn) {
     throw new Error(
       `Invalid adapter for transport: ${name}`
     );
   }
 
   transports[name] = adapter;
+
+  return adapter;
 }
 
-function getTransport(name) {
-  return transports[name] || null;
+// -----------------------------
+// GET
+// -----------------------------
+function getTransport(
+  name
+) {
+  return (
+    transports[name] ||
+    null
+  );
 }
 
-function unregisterTransport(name) {
+// -----------------------------
+// EXISTS
+// -----------------------------
+function hasTransport(
+  name
+) {
+  return Boolean(
+    transports[name]
+  );
+}
+
+// -----------------------------
+// UNREGISTER
+// -----------------------------
+function unregisterTransport(
+  name
+) {
   delete transports[name];
 }
 
+// -----------------------------
+// LIST
+// -----------------------------
 function getAllTransports() {
-  return Object.keys(transports);
+  return Object.keys(
+    transports
+  );
+}
+
+// -----------------------------
+// SNAPSHOT
+// -----------------------------
+function snapshot() {
+  return getAllTransports().map(
+    name => ({
+      name,
+
+      methods:
+        Object.keys(
+          transports[name]
+        )
+    })
+  );
 }
 
 module.exports = {
   registerTransport,
+
   getTransport,
+
+  hasTransport,
+
   unregisterTransport,
-  getAllTransports
+
+  getAllTransports,
+
+  snapshot
 };
