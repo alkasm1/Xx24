@@ -51,7 +51,17 @@ function connectWS() {
       "🟢 WS connected"
     );
   };
-
+// -----------------------------
+// WS HEARTBEAT
+// -----------------------------
+setInterval(() => {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      type: "ping",
+      ts: Date.now()
+    }));
+  }
+}, 10000);
   ws.onclose = () => {
     wsStatus.innerText =
       "WS: ❌ disconnected";
