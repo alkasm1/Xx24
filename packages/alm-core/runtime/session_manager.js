@@ -10,7 +10,8 @@ const {
   "../ids/gensessionid"
 );
 
-const SESSION_TIMEOUT_MS = 30000;
+const SESSION_TIMEOUT_MS =
+  30000;
 
 function createSessionManager() {
   // -----------------------------
@@ -24,9 +25,11 @@ function createSessionManager() {
       sessionId:
         genSessionId(),
 
-      createdAt: Date.now(),
+      createdAt:
+        Date.now(),
 
-      lastSeen: Date.now(),
+      lastSeen:
+        Date.now(),
 
       tasks: [],
 
@@ -158,6 +161,11 @@ function createSessionManager() {
           age >
           SESSION_TIMEOUT_MS
         ) {
+          console.log(
+            "🧹 Session expired:",
+            session.sessionId
+          );
+
           destroySession(
             session.sessionId
           );
@@ -175,9 +183,11 @@ function createSessionManager() {
 
   return {
     createSession,
+
     touchSession,
 
     attachTask,
+
     detachTask,
 
     destroySession,
