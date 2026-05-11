@@ -1,73 +1,393 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>ALM v3 Dashboard</title>
-  <style>
-    body { font-family: Arial; padding: 20px; background: #fafafa; }
-    h1 { margin-bottom: 5px; }
-    pre { background: #111; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; }
-    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
-    input { padding: 8px; width: 300px; }
 
-    /* شاشة اختبار الضغط */
-    #stressScreen {
-      display: none;
-      background: #fff;
-      padding: 15px;
-      border: 1px solid #ccc;
-      margin-top: 20px;
-      border-radius: 6px;
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>
+    ALM v3 Dashboard
+  </title>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
     }
+
+    body {
+
+      margin: 0;
+
+      padding: 20px;
+
+      font-family:
+        Arial,
+        sans-serif;
+
+      background:
+        #f4f6f9;
+
+      color:
+        #111;
+    }
+
+    h1,
+    h2,
+    h3 {
+
+      margin-top: 0;
+    }
+
+    .header {
+
+      display: flex;
+
+      justify-content:
+        space-between;
+
+      align-items: center;
+
+      margin-bottom: 20px;
+    }
+
+    .badge {
+
+      padding:
+        10px 16px;
+
+      border-radius: 8px;
+
+      font-size: 16px;
+
+      font-weight: bold;
+
+      color: #fff;
+
+      background: #333;
+    }
+
+    .grid {
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(400px, 1fr)
+        );
+
+      gap: 20px;
+    }
+
+    .card {
+
+      background: #fff;
+
+      border-radius: 10px;
+
+      padding: 18px;
+
+      box-shadow:
+        0 2px 8px
+        rgba(0,0,0,0.08);
+    }
+
+    .row {
+
+      margin-bottom: 14px;
+    }
+
+    label {
+
+      display: block;
+
+      margin-bottom: 6px;
+
+      font-weight: bold;
+    }
+
+    input {
+
+      width: 100%;
+
+      padding: 10px;
+
+      border-radius: 6px;
+
+      border:
+        1px solid #ccc;
+
+      font-size: 14px;
+    }
+
+    button {
+
+      border: none;
+
+      border-radius: 6px;
+
+      padding:
+        10px 16px;
+
+      cursor: pointer;
+
+      font-weight: bold;
+
+      transition:
+        0.2s;
+    }
+
+    button:hover {
+
+      opacity: 0.9;
+    }
+
+    .btn-primary {
+
+      background: #2563eb;
+
+      color: #fff;
+    }
+
+    .btn-stress {
+
+      background: #dc2626;
+
+      color: #fff;
+    }
+
+    .btn-light {
+
+      background: #16a34a;
+
+      color: #fff;
+    }
+
+    .btn-medium {
+
+      background: #ca8a04;
+
+      color: #fff;
+    }
+
+    .btn-heavy {
+
+      background: #ea580c;
+
+      color: #fff;
+    }
+
+    .btn-extreme {
+
+      background: #991b1b;
+
+      color: #fff;
+    }
+
+    pre {
+
+      margin: 0;
+
+      padding: 14px;
+
+      border-radius: 8px;
+
+      background: #111;
+
+      color: #0f0;
+
+      overflow-x: auto;
+
+      overflow-y: auto;
+
+      min-height: 220px;
+
+      max-height: 320px;
+
+      font-size: 13px;
+    }
+
+    .stress-buttons {
+
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 10px;
+
+      margin-bottom: 14px;
+    }
+
+    .footer {
+
+      margin-top: 20px;
+
+      opacity: 0.7;
+
+      font-size: 13px;
+    }
+
   </style>
+
 </head>
 
 <body>
 
-<div id="wsStatus" style="padding:10px;font-size:18px;font-weight:bold;background:#222;color:#fff;margin-bottom:15px;border-radius:6px;">
-  WS: ⏳ connecting...
-</div>
+  <!-- HEADER -->
+  <div class="header">
 
-<h1>📡 ALM v3 Control Dashboard</h1>
+    <div>
 
-<!-- زر فتح شاشة اختبار الضغط -->
-<button id="openStress">🔥 Stress Test</button>
+      <h1>
+        📡 ALM v3 Control Dashboard
+      </h1>
 
-<h2>📡 Send Opcode</h2>
+      <div class="footer">
+        Runtime • Sessions • Tasks • Stress • Live Transport
+      </div>
 
-<div>
-  <label>Device ID:</label>
-  <input id="opcodeDevice" value="router-1"><br><br>
+    </div>
 
-  <label>Opcode:</label>
-  <input id="opcodeInput" value="system.getIdentity"><br><br>
+    <div
+      id="wsStatus"
+      class="badge"
+    >
+      WS: ⏳ connecting...
+    </div>
 
-  <button onclick="sendOpcode()">Send Opcode</button>
-</div>
+  </div>
 
-<h2>📜 Result</h2>
-<pre id="opcodeResult"></pre>
+  <!-- MAIN GRID -->
+  <div class="grid">
 
-<h2>📡 Devices</h2>
-<pre id="devicesBox"></pre>
+    <!-- OPCODE PANEL -->
+    <div class="card">
 
-<h2>📜 Logs</h2>
-<pre id="logs"></pre>
+      <h2>
+        ⚡ Opcode Execution
+      </h2>
 
-<!-- شاشة اختبار الضغط -->
-<div id="stressScreen">
-  <h2>🔥 Stress Test Dashboard</h2>
+      <div class="row">
 
-  <button id="runLight">Light</button>
-  <button id="runMedium">Medium</button>
-  <button id="runHeavy">Heavy</button>
-  <button id="runExtreme">Extreme</button>
+        <label>
+          Device ID
+        </label>
 
-  <h3>📊 Results</h3>
-  <pre id="stressResults"></pre>
-</div>
+        <input
+          id="opcodeDevice"
+          value="router-1"
+        />
 
-<script src="app.js"></script>
+      </div>
+
+      <div class="row">
+
+        <label>
+          Opcode
+        </label>
+
+        <input
+          id="opcodeInput"
+          value="system.getIdentity"
+        />
+
+      </div>
+
+      <button
+        class="btn-primary"
+        onclick="sendOpcode()"
+      >
+        🚀 Execute Opcode
+      </button>
+
+    </div>
+
+    <!-- STRESS PANEL -->
+    <div class="card">
+
+      <h2>
+        🔥 Stress Testing
+      </h2>
+
+      <div class="stress-buttons">
+
+        <button
+          id="runLight"
+          class="btn-light"
+        >
+          Light
+        </button>
+
+        <button
+          id="runMedium"
+          class="btn-medium"
+        >
+          Medium
+        </button>
+
+        <button
+          id="runHeavy"
+          class="btn-heavy"
+        >
+          Heavy
+        </button>
+
+        <button
+          id="runExtreme"
+          class="btn-extreme"
+        >
+          Extreme
+        </button>
+
+      </div>
+
+      <pre id="stressResults"></pre>
+
+    </div>
+
+    <!-- OPCODE RESULT -->
+    <div class="card">
+
+      <h2>
+        📜 Opcode Result
+      </h2>
+
+      <pre id="opcodeResult"></pre>
+
+    </div>
+
+    <!-- DEVICES -->
+    <div class="card">
+
+      <h2>
+        🖧 Devices Snapshot
+      </h2>
+
+      <pre id="devicesBox"></pre>
+
+    </div>
+
+    <!-- LOGS -->
+    <div class="card" style="grid-column: 1 / -1;">
+
+      <h2>
+        📡 Runtime Logs
+      </h2>
+
+      <pre id="logs"></pre>
+
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
 
 </body>
+
 </html>
