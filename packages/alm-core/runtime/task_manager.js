@@ -21,7 +21,7 @@ async function executeOpcode({
     requestId || genTaskId();
 
   // -----------------------------
-  // DEDUPE
+  // REQUEST DE-DUPE
   // -----------------------------
   const existing =
     taskStore.get(id);
@@ -30,6 +30,9 @@ async function executeOpcode({
     return existing;
   }
 
+  // -----------------------------
+  // CREATE TASK
+  // -----------------------------
   const task = new Task({
     id,
 
@@ -48,6 +51,9 @@ async function executeOpcode({
 
   taskStore.add(task);
 
+  // -----------------------------
+  // CREATED EVENT
+  // -----------------------------
   eventBus.emit(
     TASK_EVENTS.CREATED,
     task
@@ -55,6 +61,9 @@ async function executeOpcode({
 
   emitTaskUpdate(task);
 
+  // -----------------------------
+  // RUNNING STATE
+  // -----------------------------
   taskStore.update(task.id, {
     status:
       TASK_STATES.RUNNING,
@@ -75,6 +84,9 @@ async function executeOpcode({
     runningTask
   );
 
+  // -----------------------------
+  // EXECUTION
+  // -----------------------------
   try {
     const rawResult =
       await dispatcher(
@@ -94,12 +106,14 @@ async function executeOpcode({
         : TASK_STATES.FAILED;
 
     taskStore.update(task.id, {
-      status: finalStatus,
+      status:
+        finalStatus,
 
       finishedAt:
         Date.now(),
 
-      result: normalized
+      result:
+        normalized
     });
 
     const finalTask =
@@ -134,7 +148,8 @@ async function executeOpcode({
       finishedAt:
         Date.now(),
 
-      result: normalized
+      result:
+        normalized
     });
 
     const failedTask =
