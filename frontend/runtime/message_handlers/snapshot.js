@@ -1,5 +1,3 @@
-// frontend/runtime/message_handlers/snapshot.js
-
 import {
   runtimeState
 } from "../state.js";
