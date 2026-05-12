@@ -1,16 +1,12 @@
 // frontend/runtime/message_router.js
 
 import {
-  handleSnapshot
-} from "./message_handlers/snapshot.js";
-
-import {
   handleOpcodeResult
 } from "./message_handlers/opcode_result.js";
 
 import {
-  handleTaskUpdate
-} from "./message_handlers/task_update.js";
+  handleSnapshot
+} from "./message_handlers/snapshot.js";
 
 import {
   handleStressUpdate
@@ -20,25 +16,29 @@ import {
   handleTerminal
 } from "./message_handlers/terminal.js";
 
-const handlers = {
+import {
+  handleTaskUpdate
+} from "./message_handlers/task_update.js";
 
-  snapshot:
-    handleSnapshot,
+const handlers = {
 
   "opcode.result":
     handleOpcodeResult,
 
-  "task.update":
-    handleTaskUpdate,
+  "snapshot":
+    handleSnapshot,
 
-  stressUpdate:
+  "stressUpdate":
     handleStressUpdate,
 
-  terminal:
-    handleTerminal
+  "terminal":
+    handleTerminal,
+
+  "task.update":
+    handleTaskUpdate
 };
 
-export function routeMessage(
+function routeMessage(
   msg
 ) {
 
@@ -52,9 +52,11 @@ export function routeMessage(
   const handler =
     handlers[msg.type];
 
-  if (!handler) {
-    return;
+  if (handler) {
+    handler(msg);
   }
-
-  handler(msg);
 }
+
+export {
+  routeMessage
+};
