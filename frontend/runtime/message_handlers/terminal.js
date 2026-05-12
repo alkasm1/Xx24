@@ -1,18 +1,21 @@
 // frontend/runtime/message_handlers/terminal.js
 
-import {
-  logLine
-} from "../logger.js";
-
 export function handleTerminal(
   msg
 ) {
 
-  if (!msg.line) {
+  const logs =
+    document.getElementById(
+      "logs"
+    );
+
+  if (!logs) {
     return;
   }
 
-  logLine(
-    msg.line
-  );
+  logs.textContent +=
+    "\n" + msg.line;
+
+  logs.scrollTop =
+    logs.scrollHeight;
 }
