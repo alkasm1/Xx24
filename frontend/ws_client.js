@@ -1,117 +1,190 @@
 // frontend/ws_client.js
 
-import {
-  runtimeState
-} from "./runtime/state.js";
+let ws = null;
 
-import {
-  logLine
-} from "./runtime/logger.js";
+let reconnectTimer = null;
 
-const wsStatus =
-  document.getElementById(
-    "wsStatus"
+let heartbeatTimer = null;
+
+function startHeartbeat() {
+
+  stopHeartbeat();
+
+  heartbeatTimer =
+    setInterval(() => {
+
+      if (
+        !ws ||
+        ws.readyState !==
+          WebSocket.OPEN
+      ) {
+        return;
+      }
+
+      ws.send(
+        JSON.stringify({
+          type: "ping",
+          ts: Date.now()
+        })
+      );
+
+    }, 10000);
+}
+
+function stopHeartbeat() {
+
+  if (!heartbeatTimer) {
+    return;
+  }
+
+  clearInterval(
+    heartbeatTimer
   );
 
-export function connectWS({
-  onOpen,
-  onClose,
-  onMessage,
-  onError
+  heartbeatTimer =
+    null;
+}
+
+function scheduleReconnect(
+  onMessage
+) {
+
+  if (reconnectTimer) {
+    return;
+  }
+
+  reconnectTimer =
+    setTimeout(() => {
+
+      reconnectTimer =
+        null;
+
+      connectWS({
+        onMessage
+      });
+
+    }, 2000);
+}
+
+function connectWS({
+  onMessage
 }) {
 
+  const statusEl =
+    document.getElementById(
+      "wsStatus"
+    );
+
   if (
-    runtimeState.ws &&
+    ws &&
     (
-      runtimeState.ws.readyState ===
+      ws.readyState ===
         WebSocket.OPEN ||
 
-      runtimeState.ws.readyState ===
+      ws.readyState ===
         WebSocket.CONNECTING
     )
   ) {
-    return runtimeState.ws;
+
+    return ws;
   }
 
-  const ws =
+  ws =
     new WebSocket(
       `ws://${location.hostname}:5001`
     );
 
-  runtimeState.ws =
-    ws;
-
   ws.onopen = () => {
 
-    if (wsStatus) {
+    if (statusEl) {
 
-      wsStatus.innerText =
-        "WS: ✅ connected";
+      statusEl.textContent =
+        "WS: ✅ Connected";
 
-      wsStatus.style.background =
+      statusEl.style.background =
         "#0a0";
     }
 
-    logLine(
-      "🟢 WS connected"
+    startHeartbeat();
+  };
+
+  ws.onerror = err => {
+
+    console.error(
+      "WS error:",
+      err
     );
 
-    if (onOpen) {
-      onOpen(ws);
+    if (statusEl) {
+
+      statusEl.textContent =
+        "WS: ❌ Error";
+
+      statusEl.style.background =
+        "#a00";
     }
   };
 
   ws.onclose = () => {
 
-    if (wsStatus) {
+    stopHeartbeat();
 
-      wsStatus.innerText =
-        "WS: ❌ disconnected";
+    if (statusEl) {
 
-      wsStatus.style.background =
+      statusEl.textContent =
+        "WS: ❌ Closed";
+
+      statusEl.style.background =
         "#a00";
     }
 
-    logLine(
-      "🔴 WS disconnected"
+    scheduleReconnect(
+      onMessage
     );
-
-    if (onClose) {
-      onClose();
-    }
-  };
-
-  ws.onerror = err => {
-
-    logLine(
-      "❌ WS error"
-    );
-
-    if (onError) {
-      onError(err);
-    }
   };
 
   ws.onmessage = event => {
 
-    let msg = null;
-
     try {
 
-      msg =
+      const data =
         JSON.parse(
           event.data
         );
 
-    } catch {
+      onMessage(data);
 
-      return;
-    }
+    } catch (err) {
 
-    if (onMessage) {
-      onMessage(msg);
+      console.error(
+        "WS parse error:",
+        err
+      );
     }
   };
 
   return ws;
 }
+
+function sendWS(data) {
+
+  if (
+    !ws ||
+    ws.readyState !==
+      WebSocket.OPEN
+  ) {
+
+    return false;
+  }
+
+  ws.send(
+    JSON.stringify(data)
+  );
+
+  return true;
+}
+
+export {
+  connectWS,
+  sendWS
+};
