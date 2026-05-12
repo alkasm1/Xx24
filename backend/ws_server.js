@@ -1,9 +1,9 @@
-// backend/ws_server.js
+// backend/gateway/modules/ws_server.js
 
 const WebSocket = require("ws");
-const eventBus = require("./gateway/event_bus");
-const registry = require("./gateway/device_registry");
-const Metrics = require("./gateway/metrics");
+const eventBus = require("../backend/gateway/event_bus");
+const registry = require("../backend/gateway/device_registry");
+const Metrics = require("../backend/gateway/metrics");
 
 const metrics = new Metrics(eventBus, registry);
 
@@ -20,7 +20,7 @@ function broadcast(data) {
   });
 }
 
-wss.on("connection", (ws) => {
+wss.on("connection", ws => {
   console.log("🟢 Dashboard connected");
 
   ws.send(JSON.stringify({
@@ -29,7 +29,7 @@ wss.on("connection", (ws) => {
     devices: registry.getAll()
   }));
 
-  ws.on("message", (msg) => {
+  ws.on("message", msg => {
     try {
       const data = JSON.parse(msg);
 
@@ -58,39 +58,20 @@ wss.on("connection", (ws) => {
 /* =========================
    JOB EVENTS → UI
 ========================= */
-
-eventBus.on("broadcast.job.created", (job) => {
-  broadcast({ type: "job.created", job });
-});
-
-eventBus.on("broadcast.job.update", (job) => {
-  broadcast({ type: "job.update", job });
-});
-
-eventBus.on("broadcast.job.done", (job) => {
-  broadcast({ type: "job.done", job });
-});
+eventBus.on("broadcast.job.created", job => broadcast({ type: "job.created", job }));
+eventBus.on("broadcast.job.update", job => broadcast({ type: "job.update", job }));
+eventBus.on("broadcast.job.done", job => broadcast({ type: "job.done", job }));
 
 /* =========================
    DEVICE + COMMAND EVENTS
 ========================= */
-
-eventBus.on("device.ack", (ack) => {
-  broadcast({ type: "ack", data: ack });
-});
-
-eventBus.on("command.timeout", (info) => {
-  broadcast({ type: "timeout", data: info });
-});
-
-eventBus.on("command.sent", (cmd) => {
-  broadcast({ type: "command", data: cmd });
-});
+eventBus.on("device.ack", ack => broadcast({ type: "ack", data: ack }));
+eventBus.on("command.timeout", info => broadcast({ type: "timeout", data: info }));
+eventBus.on("command.sent", cmd => broadcast({ type: "command", data: cmd }));
 
 /* =========================
    SNAPSHOT EVERY 3s
 ========================= */
-
 setInterval(() => {
   broadcast({
     type: "snapshot",
