@@ -1,28 +1,53 @@
-// frontend/runtime/message_handlers/snapshot.js
+import {
+  runtimeState
+} from "../state.js";
 
-export function handleSnapshot(
+import {
+  logLine
+} from "../logger.js";
+
+export function handleOpcodeResult(
   msg
 ) {
 
-  const devicesBox =
+  const resultBox =
     document.getElementById(
-      "devicesBox"
+      "opcodeResult"
     );
 
-  if (!devicesBox) {
-    return;
+  if (resultBox) {
+
+    resultBox.textContent =
+      JSON.stringify(
+        msg,
+        null,
+        2
+      );
   }
 
-  devicesBox.textContent =
-    JSON.stringify(
-      {
-        devices:
-          msg.devices,
+  runtimeState.activeRequests.delete(
+    msg.requestId
+  );
 
-        metrics:
-          msg.metrics
-      },
-      null,
-      2
-    );
+  runtimeState.opcodeHistory.push({
+
+    requestId:
+      msg.requestId,
+
+    deviceId:
+      msg.deviceId,
+
+    opcode:
+      msg.opcode,
+
+    result:
+      msg.result,
+
+    ts:
+      Date.now()
+  });
+
+  logLine(
+    `✅ OPCODE RESULT → ${msg.opcode}`
+  );
 }
