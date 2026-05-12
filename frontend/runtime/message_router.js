@@ -1,3 +1,5 @@
+// frontend/runtime/message_router.js
+
 import {
   handleSnapshot
 } from "./message_handlers/snapshot.js";
@@ -39,6 +41,13 @@ const handlers = {
 export function routeMessage(
   msg
 ) {
+
+  if (
+    !msg ||
+    !msg.type
+  ) {
+    return;
+  }
 
   const handler =
     handlers[msg.type];
