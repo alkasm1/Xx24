@@ -3,6 +3,10 @@ import {
 } from "../state.js";
 
 import {
+  renderOpcodeResult
+} from "../../renderers/opcode_renderer.js";
+
+import {
   logLine
 } from "../logger.js";
 
@@ -10,20 +14,9 @@ export function handleOpcodeResult(
   msg
 ) {
 
-  const resultBox =
-    document.getElementById(
-      "opcodeResult"
-    );
-
-  if (resultBox) {
-
-    resultBox.textContent =
-      JSON.stringify(
-        msg,
-        null,
-        2
-      );
-  }
+  renderOpcodeResult(
+    msg
+  );
 
   runtimeState.activeRequests.delete(
     msg.requestId
