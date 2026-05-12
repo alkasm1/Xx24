@@ -1,21 +1,27 @@
-// frontend/runtime/message_handlers/opcode_result.js
+// frontend/runtime/message_handlers/snapshot.js
 
-export function handleOpcodeResult(
+export function handleSnapshot(
   msg
 ) {
 
-  const resultBox =
+  const devicesBox =
     document.getElementById(
-      "opcodeResult"
+      "devicesBox"
     );
 
-  if (!resultBox) {
+  if (!devicesBox) {
     return;
   }
 
-  resultBox.textContent =
+  devicesBox.textContent =
     JSON.stringify(
-      msg,
+      {
+        devices:
+          msg.devices,
+
+        metrics:
+          msg.metrics
+      },
       null,
       2
     );
