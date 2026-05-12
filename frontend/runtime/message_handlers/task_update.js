@@ -1,18 +1,21 @@
 // frontend/runtime/message_handlers/task_update.js
 
-import {
-  logLine
-} from "../logger.js";
-
 export function handleTaskUpdate(
   msg
 ) {
 
-  if (!msg.task) {
+  const logs =
+    document.getElementById(
+      "logs"
+    );
+
+  if (!logs) {
     return;
   }
 
-  logLine(
-    `📡 TASK ${msg.task.id} → ${msg.task.status}`
-  );
+  logs.textContent +=
+    `\n📡 TASK ${msg.task.id} → ${msg.task.status}`;
+
+  logs.scrollTop =
+    logs.scrollHeight;
 }
