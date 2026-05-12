@@ -1,52 +1,156 @@
-// frontend/opcode-test/app.js
+import {
+  connectWS
+} from "../ws_client.js";
 
+const wsStatus =
+  document.getElementById(
+    "wsStatus"
+  );
 
-const wsStatus = document.getElementById("wsStatus");
-const resultBox = document.getElementById("opcodeResult");
-const devicesBox = document.getElementById("devicesBox");
-const logs = document.getElementById("logs");
+const resultBox =
+  document.getElementById(
+    "opcodeResult"
+  );
 
-ws.onopen = () => {
-  wsStatus.textContent = "WS: ✅ متصل";
-  wsStatus.style.background = "#0a0";
-};
+const devicesBox =
+  document.getElementById(
+    "devicesBox"
+  );
 
-ws.onclose = () => {
-  wsStatus.textContent = "WS: ❌ غير متصل";
-  wsStatus.style.background = "#a00";
-};
+const logs =
+  document.getElementById(
+    "logs"
+  );
 
-const handlers = {
-  "opcode.result": (msg) => {
-    resultBox.textContent = JSON.stringify(msg, null, 2);
+let ws = null;
+
+// -----------------------------
+// LOG
+// -----------------------------
+function logLine(
+  line
+) {
+
+  logs.textContent +=
+    "\n" + line;
+
+  logs.scrollTop =
+    logs.scrollHeight;
+}
+
+// -----------------------------
+// WS
+// -----------------------------
+ws = connectWS({
+
+  onMessage(msg) {
+
+    // OPCODE RESULT
+    if (
+      msg.type ===
+      "opcode.result"
+    ) {
+
+      resultBox.textContent =
+        JSON.stringify(
+          msg,
+          null,
+          2
+        );
+    }
+
+    // SNAPSHOT
+    if (
+      msg.type ===
+      "snapshot"
+    ) {
+
+      devicesBox.textContent =
+        JSON.stringify(
+          msg.devices,
+          null,
+          2
+        );
+    }
+
+    logLine(
+      JSON.stringify(msg)
+    );
   },
-  "snapshot": (msg) => {
-    devicesBox.textContent = JSON.stringify(msg.devices, null, 2);
+
+  onOpen() {
+
+    wsStatus.textContent =
+      "WS: ✅ متصل";
+
+    wsStatus.style.background =
+      "#0a0";
+  },
+
+  onClose() {
+
+    wsStatus.textContent =
+      "WS: ❌ غير متصل";
+
+    wsStatus.style.background =
+      "#a00";
   }
-};
+});
 
-ws.onmessage = (event) => {
-  const msg = JSON.parse(event.data);
-
-  const handler = handlers[msg.type];
-  if (handler) handler(msg);
-
-  logs.textContent += `\n${event.data}`;
-  logs.scrollTop = logs.scrollHeight;
-};
-
+// -----------------------------
+// SEND OPCODE
+// -----------------------------
 function sendOpcode() {
-  const deviceId = document.getElementById("opcodeDevice").value;
-  const opcode = document.getElementById("opcodeInput").value;
+
+  if (
+    !ws ||
+    ws.readyState !==
+      WebSocket.OPEN
+  ) {
+
+    logLine(
+      "❌ WS غير متصل"
+    );
+
+    return;
+  }
+
+  const deviceId =
+    document.getElementById(
+      "opcodeDevice"
+    ).value;
+
+  const opcode =
+    document.getElementById(
+      "opcodeInput"
+    ).value;
 
   const req = {
-    type: "ui.opcode",
-    requestId: "req-" + Math.random().toString(36).slice(2),
+
+    type:
+      "ui.opcode",
+
+    requestId:
+      "req_" +
+      Math.random()
+        .toString(36)
+        .slice(2),
+
     deviceId,
+
     opcode,
+
     meta: {}
   };
 
-  ws.send(JSON.stringify(req));
-  logs.textContent += `\n📤 SENT OPCODE → ${opcode}`;
+  ws.send(
+    JSON.stringify(req)
+  );
+
+  logLine(
+    `📤 OPCODE → ${opcode}`
+  );
 }
+
+window.sendOpcode =
+  sendOpcode;
