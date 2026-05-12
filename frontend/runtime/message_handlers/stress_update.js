@@ -1,22 +1,27 @@
-// frontend/runtime/message_handlers/stress_update.js
+import {
+  runtimeState
+} from "../state.js";
+
+import {
+  renderStressResults
+} from "../../renderers/stress_renderer.js";
+
+import {
+  logLine
+} from "../logger.js";
 
 export function handleStressUpdate(
   msg
 ) {
 
-  const stressResults =
-    document.getElementById(
-      "stressResults"
-    );
+  runtimeState.stressRunning =
+    false;
 
-  if (!stressResults) {
-    return;
-  }
+  renderStressResults(
+    msg.data
+  );
 
-  stressResults.textContent =
-    JSON.stringify(
-      msg.data,
-      null,
-      2
-    );
+  logLine(
+    "✅ Stress test completed"
+  );
 }
