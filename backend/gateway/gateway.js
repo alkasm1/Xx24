@@ -2,6 +2,12 @@
 
 require("./transports");
 
+const {
+  createAPIServer
+} = require(
+  "../api/server"
+);
+
 const eventBus =
   require("./event_bus");
 
@@ -230,6 +236,12 @@ startUDPRuntime({
   sendToUI
 });
 
+// -----------------------------
+// API SERVER
+// -----------------------------
+createAPIServer({
+  port: 8080
+});
 // -----------------------------
 // BOOT
 // -----------------------------
