@@ -100,3 +100,21 @@ module.exports = {
     );
   }
 };
+// -----------------------------
+// TERMINAL EXEC
+// -----------------------------
+exec(
+  meta = {}
+) {
+
+  if (!meta.command) {
+    throw new Error(
+      "command required"
+    );
+  }
+
+  return buildCommand(
+    meta.command,
+    meta.timeout || 10000
+  );
+}
