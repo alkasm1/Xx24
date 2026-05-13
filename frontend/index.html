@@ -9,9 +9,8 @@
   <title>ALM v3 Dashboard</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -21,19 +20,13 @@
       color: #111;
     }
 
-    h1,
-    h2,
-    h3 {
-      margin-top: 0;
-    }
+    h1, h2, h3 { margin-top: 0; }
 
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
-      gap: 16px;
-      flex-wrap: wrap;
+      margin-bottom: 20px;
     }
 
     .badge {
@@ -51,13 +44,6 @@
       font-size: 13px;
     }
 
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -71,9 +57,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
-    .row {
-      margin-bottom: 14px;
-    }
+    .row { margin-bottom: 14px; }
 
     label {
       display: block;
@@ -96,57 +80,16 @@
       cursor: pointer;
       font-weight: bold;
       transition: 0.2s;
-      font-size: 14px;
     }
 
-    button:hover {
-      opacity: 0.9;
-    }
+    button:hover { opacity: 0.9; }
 
-    .btn-primary {
-      background: #2563eb;
-      color: #fff;
-    }
+    .btn-primary { background: #2563eb; color: #fff; }
 
-    .btn-stress {
-      background: #dc2626;
-      color: #fff;
-    }
-
-    .btn-light {
-      background: #16a34a;
-      color: #fff;
-    }
-
-    .btn-medium {
-      background: #ca8a04;
-      color: #fff;
-    }
-
-    .btn-heavy {
-      background: #ea580c;
-      color: #fff;
-    }
-
-    .btn-extreme {
-      background: #991b1b;
-      color: #fff;
-    }
-
-    .btn-terminal {
-      background: #0f766e;
-      color: #fff;
-    }
-
-    .btn-logs {
-      background: #4b5563;
-      color: #fff;
-    }
-
-    .btn-snapshot {
-      background: #7c3aed;
-      color: #fff;
-    }
+    .btn-light { background: #16a34a; color: #fff; }
+    .btn-medium { background: #ca8a04; color: #fff; }
+    .btn-heavy { background: #ea580c; color: #fff; }
+    .btn-extreme { background: #991b1b; color: #fff; }
 
     pre {
       margin: 0;
@@ -169,119 +112,6 @@
       margin-bottom: 14px;
     }
 
-    .device-card {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 14px;
-      background: #fafafa;
-    }
-
-    .device-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-
-    .device-meta {
-      font-size: 13px;
-      opacity: 0.8;
-      margin-bottom: 12px;
-    }
-
-    .device-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .device-action-btn {
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-
-    .modal-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.55);
-      justify-content: center;
-      align-items: center;
-      z-index: 50;
-    }
-
-    .modal {
-      background: #fff;
-      border-radius: 10px;
-      padding: 18px;
-      width: 95%;
-      max-width: 520px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .modal-title {
-      font-size: 16px;
-      font-weight: bold;
-    }
-
-    .modal-close {
-      border: none;
-      background: transparent;
-      font-size: 20px;
-      cursor: pointer;
-      color: #555;
-    }
-
-    .modal-close:hover {
-      color: #000;
-    }
-
-    .modal-body {
-      margin-top: 4px;
-    }
-
-    .modal-body label {
-      margin-bottom: 4px;
-    }
-
-    .modal-body input {
-      margin-bottom: 10px;
-    }
-
-    .modal-footer {
-      margin-top: 12px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    .btn-secondary {
-      background: #e5e7eb;
-      color: #111;
-    }
-
-    .small-pre {
-      min-height: 160px;
-      max-height: 260px;
-    }
-
-    @media (max-width: 640px) {
-      body {
-        padding: 12px;
-      }
-    }
   </style>
 
 </head>
@@ -291,160 +121,60 @@
   <div class="header">
     <div>
       <h1>📡 ALM v3 Control Dashboard</h1>
-      <div class="footer">
-        Runtime • Sessions • Tasks • Stress • Live Transport
-      </div>
+      <div class="footer">Runtime • Sessions • Tasks • Stress • Live Transport</div>
     </div>
-    <div id="wsStatus" class="badge">
-      WS: ⏳ connecting...
-    </div>
-  </div>
-
-  <div class="toolbar">
-    <button class="btn-primary" onclick="openModal('opcodeModal')">⚡ Opcode</button>
-    <button class="btn-terminal" onclick="openModal('terminalModal')">🖥 Terminal</button>
-    <button class="btn-stress" onclick="openModal('stressModal')">🔥 Stress Tests</button>
-    <button class="btn-logs" onclick="openModal('logsModal')">📡 Logs</button>
-    <button class="btn-snapshot" onclick="openModal('snapshotModal')">📊 Snapshot</button>
+    <div id="wsStatus" class="badge">WS: ⏳ connecting...</div>
   </div>
 
   <div class="grid">
+
+    <div class="card">
+      <h2>⚡ Opcode Execution</h2>
+
+      <div class="row">
+        <label>Device ID</label>
+        <input id="opcodeDevice" value="router-1" />
+      </div>
+
+      <div class="row">
+        <label>Opcode</label>
+        <input id="opcodeInput" value="system.getIdentity" />
+      </div>
+
+      <button class="btn-primary" onclick="sendOpcode()">🚀 Execute Opcode</button>
+    </div>
+
+    <div class="card">
+      <h2>🔥 Stress Testing</h2>
+
+      <div class="stress-buttons">
+        <button id="runLight" class="btn-light">Light</button>
+        <button id="runMedium" class="btn-medium">Medium</button>
+        <button id="runHeavy" class="btn-heavy">Heavy</button>
+        <button id="runExtreme" class="btn-extreme">Extreme</button>
+      </div>
+
+      <pre id="stressResults"></pre>
+    </div>
+
+    <div class="card">
+      <h2>📜 Opcode Result</h2>
+      <pre id="opcodeResult"></pre>
+    </div>
+
     <div class="card">
       <h2>🖧 Runtime Devices</h2>
       <pre id="devicesBox"></pre>
     </div>
-  </div>
 
-  <div id="opcodeModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">⚡ Opcode Execution</div>
-        <button class="modal-close" onclick="closeModal('opcodeModal')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <label>Device ID</label>
-          <input id="opcodeDevice" value="router-1" />
-        </div>
-        <div class="row">
-          <label>Opcode</label>
-          <input id="opcodeInput" value="system.getIdentity" />
-        </div>
-        <button class="btn-primary" onclick="sendOpcode()">🚀 Execute Opcode</button>
-        <div class="row" style="margin-top:14px;">
-          <label>Opcode Result</label>
-          <pre id="opcodeResult" class="small-pre"></pre>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeModal('opcodeModal')">Close</button>
-      </div>
+    <div class="card" style="grid-column: 1 / -1;">
+      <h2>📡 Runtime Logs</h2>
+      <pre id="logs"></pre>
     </div>
-  </div>
 
-  <div id="terminalModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">🖥 Interactive Terminal</div>
-        <button class="modal-close" onclick="closeModal('terminalModal')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <label>Command</label>
-          <input id="terminalInput" value="uname -a" />
-        </div>
-        <button class="btn-terminal" onclick="runTerminal()">▶ Execute Command</button>
-        <div class="row" style="margin-top:14px;">
-          <label>Terminal Output</label>
-          <pre id="terminalOutput" class="small-pre"></pre>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeModal('terminalModal')">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="stressModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">🔥 Stress Testing</div>
-        <button class="modal-close" onclick="closeModal('stressModal')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="stress-buttons">
-          <button id="runLight" class="btn-light">Light</button>
-          <button id="runMedium" class="btn-medium">Medium</button>
-          <button id="runHeavy" class="btn-heavy">Heavy</button>
-          <button id="runExtreme" class="btn-extreme">Extreme</button>
-        </div>
-        <pre id="stressResults" class="small-pre"></pre>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeModal('stressModal')">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="logsModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">📡 Runtime Logs</div>
-        <button class="modal-close" onclick="closeModal('logsModal')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <pre id="logs" class="small-pre"></pre>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeModal('logsModal')">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="snapshotModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">📊 Live Snapshot</div>
-        <button class="modal-close" onclick="closeModal('snapshotModal')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <pre id="snapshotBox" class="small-pre"></pre>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeModal('snapshotModal')">Close</button>
-      </div>
-    </div>
   </div>
 
   <script type="module" src="app.js"></script>
-
-  <script>
-    function openModal(name) {
-      const el = document.getElementById(name + 'Backdrop');
-      if (el) el.style.display = 'flex';
-    }
-
-    function closeModal(name) {
-      const el = document.getElementById(name + 'Backdrop');
-      if (el) el.style.display = 'none';
-    }
-
-    window.addEventListener('click', (e) => {
-      const ids = [
-        'opcodeModalBackdrop',
-        'terminalModalBackdrop',
-        'stressModalBackdrop',
-        'logsModalBackdrop',
-        'snapshotModalBackdrop'
-      ];
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el && e.target === el) {
-          el.style.display = 'none';
-        }
-      });
-    });
-  </script>
 
 </body>
 
