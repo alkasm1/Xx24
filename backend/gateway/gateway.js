@@ -240,7 +240,7 @@ startUDPRuntime({
 // API SERVER
 // -----------------------------
 createAPIServer({
-  port: 8080
+  port: 8000
 });
 // -----------------------------
 // BOOT
