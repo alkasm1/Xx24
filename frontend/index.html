@@ -2,517 +2,462 @@
 <html lang="en">
 
 <head>
-
   <meta charset="UTF-8" />
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
-
-  <title>
-    ALM v3 Dashboard
-  </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ALM v3 Dashboard</title>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
 
     body {
-
       margin: 0;
-
       padding: 20px;
-
-      font-family:
-        Arial,
-        sans-serif;
-
-      background:
-        #0f172a;
-
-      color:
-        #e2e8f0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
     }
 
-    h1,
-    h2,
-    h3 {
-
+    h1, h2, h3 {
       margin-top: 0;
-
-      color:
-        #f8fafc;
+      color: #111827;
     }
 
     .header {
-
       display: flex;
-
-      justify-content:
-        space-between;
-
+      justify-content: space-between;
       align-items: center;
-
-      margin-bottom: 20px;
-
-      gap: 20px;
-
+      margin-bottom: 16px;
+      gap: 16px;
       flex-wrap: wrap;
     }
 
-    .badge {
-
-      padding:
-        10px 16px;
-
+    .ws-badge {
+      padding: 8px 14px;
       border-radius: 8px;
-
-      font-size: 15px;
-
+      font-size: 14px;
       font-weight: bold;
-
       color: #fff;
-
-      background: #1e293b;
-
-      border:
-        1px solid #334155;
+      background: #2563eb;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
 
-    .footer {
-
-      margin-top: 10px;
-
-      color:
-        #94a3b8;
-
+    .subtext {
       font-size: 13px;
+      color: #6b7280;
     }
 
-    .grid {
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
 
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      transition: 0.15s;
+      color: #fff;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-opcode { background: #2563eb; }
+    .btn-terminal { background: #0f766e; }
+    .btn-stress { background: #ea580c; }
+    .btn-logs { background: #4b5563; }
+    .btn-snapshot { background: #7c3aed; }
+
+    .main-grid {
       display: grid;
-
-      grid-template-columns:
-        repeat(
-          auto-fit,
-          minmax(420px, 1fr)
-        );
-
-      gap: 20px;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 16px;
     }
 
     .card {
-
-      background:
-        #111827;
-
-      border:
-        1px solid #1f2937;
-
-      border-radius: 14px;
-
-      padding: 20px;
-
-      box-shadow:
-        0 0 18px
-        rgba(0,0,0,0.25);
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 14px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
 
-    .row {
-
-      margin-bottom: 14px;
-    }
-
-    label {
-
-      display: block;
-
-      margin-bottom: 6px;
-
+    .card-title {
       font-weight: bold;
-
-      color:
-        #cbd5e1;
-    }
-
-    input {
-
-      width: 100%;
-
-      padding: 12px;
-
-      border-radius: 8px;
-
-      border:
-        1px solid #334155;
-
-      background:
-        #0f172a;
-
-      color:
-        #e2e8f0;
-
-      font-size: 14px;
-
-      outline: none;
-    }
-
-    input:focus {
-
-      border-color:
-        #2563eb;
-    }
-
-    button {
-
-      border: none;
-
-      border-radius: 8px;
-
-      padding:
-        10px 16px;
-
-      cursor: pointer;
-
-      font-weight: bold;
-
-      transition:
-        0.2s;
-    }
-
-    button:hover {
-
-      opacity: 0.92;
-
-      transform:
-        translateY(-1px);
-    }
-
-    .btn-primary {
-
-      background:
-        #2563eb;
-
-      color:
-        white;
-    }
-
-    .btn-light {
-
-      background:
-        #16a34a;
-
-      color:
-        white;
-    }
-
-    .btn-medium {
-
-      background:
-        #ca8a04;
-
-      color:
-        white;
-    }
-
-    .btn-heavy {
-
-      background:
-        #ea580c;
-
-      color:
-        white;
-    }
-
-    .btn-extreme {
-
-      background:
-        #991b1b;
-
-      color:
-        white;
-    }
-
-    .stress-buttons {
-
+      margin-bottom: 8px;
       display: flex;
-
-      flex-wrap: wrap;
-
-      gap: 10px;
-
-      margin-bottom: 14px;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
     }
 
     .runtime-terminal {
-
-      background:
-        #020617;
-
-      color:
-        #22c55e;
-
-      border-radius: 12px;
-
-      padding: 16px;
-
-      font-family:
-        monospace;
-
-      font-size: 13px;
-
-      line-height: 1.6;
-
-      overflow-x: auto;
-
-      overflow-y: auto;
-
+      background: #020617;
+      color: #22c55e;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.5;
       white-space: pre-wrap;
+      overflow-y: auto;
+      min-height: 180px;
+      max-height: 260px;
+      border: 1px solid #1f2937;
+    }
 
-      border:
-        1px solid #1e293b;
-
+    .devices-list {
+      background: #0b1120;
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-y: auto;
       min-height: 220px;
-
       max-height: 320px;
+      border: 1px solid #1f2937;
     }
 
-    .runtime-terminal .line {
+    /* MODALS */
 
-      margin-bottom: 6px;
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.65);
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
     }
 
-    @media (
-      max-width: 768px
-    ) {
+    .modal {
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: 12px;
+      padding: 18px 18px 16px;
+      width: 95%;
+      max-width: 520px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+      border: 1px solid #1f2937;
+    }
 
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-close {
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: #e5e7eb;
+    }
+
+    .modal-body label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      color: #cbd5f5;
+    }
+
+    .modal-body input {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 7px;
+      border: 1px solid #334155;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 13px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    .modal-body input:focus {
+      border-color: #2563eb;
+    }
+
+    .modal-footer {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      background: #4b5563;
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      opacity: 0.9;
+    }
+
+    .stress-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      margin-top: 4px;
+    }
+
+    .btn-light { background: #16a34a; }
+    .btn-medium { background: #ca8a04; }
+    .btn-heavy { background: #ea580c; }
+    .btn-extreme { background: #991b1b; }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
       body {
-
         padding: 12px;
       }
-
-      .grid {
-
-        grid-template-columns:
-          1fr;
-      }
     }
-
   </style>
-
 </head>
 
 <body>
 
   <!-- HEADER -->
   <div class="header">
-
     <div>
-
-      <h1>
-        📡 ALM v3 Control Dashboard
-      </h1>
-
-      <div class="footer">
-        Runtime • Sessions • Tasks • Stress • Live Transport
+      <h1>📡 ALM v3 Control Dashboard</h1>
+      <div class="subtext">
+        Unified Runtime • Devices • Terminal • Stress • Logs
       </div>
-
     </div>
 
-    <div
-      id="wsStatus"
-      class="badge"
-    >
+    <div id="wsStatus" class="ws-badge">
       WS: ⏳ Connecting...
     </div>
-
   </div>
 
-  <!-- MAIN GRID -->
-  <div class="grid">
+  <!-- TOOLBAR (BUTTONS TO OPEN MODALS) -->
+  <div class="toolbar">
+    <button class="btn btn-opcode" onclick="openModal('opcodeModal')">
+      ⚡ Opcode
+    </button>
+    <button class="btn btn-terminal" onclick="openModal('terminalModal')">
+      🖥 Terminal
+    </button>
+    <button class="btn btn-stress" onclick="openModal('stressModal')">
+      🔥 Stress Tests
+    </button>
+    <button class="btn btn-logs" onclick="openModal('logsModal')">
+      📜 Logs
+    </button>
+    <button class="btn btn-snapshot" onclick="openModal('snapshotModal')">
+      📊 Snapshot
+    </button>
+  </div>
 
-    <!-- OPCODE -->
+  <!-- MAIN GRID: DEVICES ALWAYS VISIBLE + OPTIONAL SUMMARY -->
+  <div class="main-grid">
+
+    <!-- DEVICES PANEL (ALWAYS VISIBLE) -->
     <div class="card">
-
-      <h2>
-        ⚡ Opcode Execution
-      </h2>
-
-      <div class="row">
-
-        <label>
-          Device ID
-        </label>
-
-        <input
-          id="opcodeDevice"
-          value="router-1"
-        />
-
-      </div>
-
-      <div class="row">
-
-        <label>
-          Opcode
-        </label>
-
-        <input
-          id="opcodeInput"
-          value="system.getIdentity"
-        />
-
-      </div>
-
-      <button
-        class="btn-primary"
-        onclick="sendOpcode()"
-      >
-        🚀 Execute Opcode
-      </button>
-
-    </div>
-
-    <!-- TERMINAL -->
-    <div class="card">
-
-      <h2>
-        🖥 Interactive Terminal
-      </h2>
-
-      <div class="row">
-
-        <label>
-          Command
-        </label>
-
-        <input
-          id="terminalInput"
-          value="uname -a"
-        />
-
-      </div>
-
-      <button
-        class="btn-primary"
-        onclick="runTerminal()"
-      >
-        ▶ Execute Command
-      </button>
-
-      <div
-        id="terminalOutput"
-        class="runtime-terminal"
-        style="margin-top:14px;"
-      ></div>
-
-    </div>
-
-    <!-- STRESS -->
-    <div class="card">
-
-      <h2>
-        🔥 Stress Testing
-      </h2>
-
-      <div class="stress-buttons">
-
-        <button
-          id="runLight"
-          class="btn-light"
-        >
-          Light
-        </button>
-
-        <button
-          id="runMedium"
-          class="btn-medium"
-        >
-          Medium
-        </button>
-
-        <button
-          id="runHeavy"
-          class="btn-heavy"
-        >
-          Heavy
-        </button>
-
-        <button
-          id="runExtreme"
-          class="btn-extreme"
-        >
-          Extreme
-        </button>
-
-      </div>
-
-      <div
-        id="stressResults"
-        class="runtime-terminal"
-      ></div>
-
-    </div>
-
-    <!-- OPCODE RESULT -->
-    <div class="card">
-
-      <h2>
-        📜 Opcode Result
-      </h2>
-
-      <div
-        id="opcodeResult"
-        class="runtime-terminal"
-      ></div>
-
-    </div>
-
-    <!-- DEVICES -->
-    <div class="card">
-
-      <h2>
+      <div class="card-title">
         🖧 Runtime Devices
-      </h2>
-
-      <div
-        id="devicesBox"
-        class="runtime-terminal"
-      ></div>
-
+      </div>
+      <div id="devicesBox" class="devices-list">
+        <!-- Filled by app.js -->
+      </div>
     </div>
 
-    <!-- LOGS -->
-    <div
-      class="card"
-      style="
-        grid-column:
-        1 / -1;
-      "
-    >
-
-      <h2>
-        📡 Runtime Logs
-      </h2>
-
-      <div
-        id="logs"
-        class="runtime-terminal"
-      ></div>
-
+    <!-- OPTIONAL SUMMARY / LAST EVENTS -->
+    <div class="card">
+      <div class="card-title">
+        🧾 Last Runtime Events
+      </div>
+      <div id="summaryBox" class="runtime-terminal" style="color:#e5e7eb;">
+        <!-- يمكن لــ app.js أن يكتب هنا آخر الأحداث / آخر أوامر / آخر اختبارات -->
+      </div>
     </div>
 
   </div>
 
-  <script
-    type="module"
-    src="app.js"
-  ></script>
+  <!-- MODAL: OPCODE -->
+  <div id="opcodeModalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">⚡ Opcode Execution</div>
+        <button class="modal-close" onclick="closeModal('opcodeModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label>Device ID</label>
+        <input id="opcodeDevice" value="router-1" />
+
+        <label>Opcode</label>
+        <input id="opcodeInput" value="system.getIdentity" />
+
+        <button class="btn btn-opcode" style="margin-top:4px;" onclick="sendOpcode()">
+          🚀 Execute Opcode
+        </button>
+
+        <div style="margin-top:10px;">
+          <div style="font-size:13px; margin-bottom:4px;">Result</div>
+          <div id="opcodeResult" class="runtime-terminal"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('opcodeModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TERMINAL -->
+  <div id="terminalModalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🖥 Interactive Terminal</div>
+        <button class="modal-close" onclick="closeModal('terminalModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label>Command</label>
+        <input id="terminalInput" value="uname -a" />
+
+        <button class="btn btn-terminal" style="margin-top:4px;" onclick="runTerminal()">
+          ▶ Execute Command
+        </button>
+
+        <div style="margin-top:10px;">
+          <div style="font-size:13px; margin-bottom:4px;">Output</div>
+          <div id="terminalOutput" class="runtime-terminal"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('terminalModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: STRESS -->
+  <div id="stressModalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🔥 Stress Testing</div>
+        <button class="modal-close" onclick="closeModal('stressModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:13px; margin-bottom:4px;">Select profile</div>
+        <div class="stress-buttons">
+          <button class="btn btn-light" onclick="runStress('light')">Light</button>
+          <button class="btn btn-medium" onclick="runStress('medium')">Medium</button>
+          <button class="btn btn-heavy" onclick="runStress('heavy')">Heavy</button>
+          <button class="btn btn-extreme" onclick="runStress('extreme')">Extreme</button>
+        </div>
+
+        <div style="margin-top:6px;">
+          <div style="font-size:13px; margin-bottom:4px;">Results</div>
+          <div id="stressResults" class="runtime-terminal"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('stressModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LOGS -->
+  <div id="logsModalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">📜 Runtime Logs</div>
+        <button class="modal-close" onclick="closeModal('logsModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="logs" class="runtime-terminal"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('logsModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SNAPSHOT (اختياري – يمكن استخدامه لعرض snapshot JSON) -->
+  <div id="snapshotModalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">📊 Live Snapshot</div>
+        <button class="modal-close" onclick="closeModal('snapshotModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="snapshotBox" class="runtime-terminal"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('snapshotModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+
+  <script>
+    // ربط أسماء بسيطة مع الـbackdrop IDs
+    function openModal(name) {
+      const id = name + 'Backdrop';
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    }
+
+    function closeModal(name) {
+      const id = name + 'Backdrop';
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+
+    // إغلاق عند الضغط خارج النافذة
+    window.addEventListener('click', (e) => {
+      const backdrops = [
+        'opcodeModalBackdrop',
+        'terminalModalBackdrop',
+        'stressModalBackdrop',
+        'logsModalBackdrop',
+        'snapshotModalBackdrop'
+      ];
+      backdrops.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && e.target === el) {
+          el.style.display = 'none';
+        }
+      });
+    });
+  </script>
 
 </body>
-
 </html>
