@@ -4,7 +4,9 @@ function buildCommand(
   command,
   timeout = 5000
 ) {
+
   return {
+
     type: "command",
 
     transport: "ssh",
@@ -20,12 +22,14 @@ function buildCommand(
 }
 
 module.exports = {
+
   // -----------------------------
   // REBOOT
   // -----------------------------
   reboot(
     meta = {}
   ) {
+
     const useSudo =
       meta.sudo !== false;
 
@@ -44,6 +48,7 @@ module.exports = {
   // UNAME
   // -----------------------------
   uname() {
+
     return buildCommand(
       "uname -a",
       3000
@@ -54,6 +59,7 @@ module.exports = {
   // HOSTNAME
   // -----------------------------
   hostname() {
+
     return buildCommand(
       "hostname",
       2000
@@ -64,6 +70,7 @@ module.exports = {
   // UPTIME
   // -----------------------------
   uptime() {
+
     return buildCommand(
       "uptime",
       3000
@@ -74,6 +81,7 @@ module.exports = {
   // MEMORY INFO
   // -----------------------------
   memory() {
+
     return buildCommand(
       "free -m",
       3000
@@ -84,6 +92,7 @@ module.exports = {
   // DISK INFO
   // -----------------------------
   disk() {
+
     return buildCommand(
       "df -h",
       4000
@@ -94,27 +103,30 @@ module.exports = {
   // CPU INFO
   // -----------------------------
   cpu() {
+
     return buildCommand(
       "cat /proc/cpuinfo",
       4000
     );
-  }
-};
-// -----------------------------
-// TERMINAL EXEC
-// -----------------------------
-exec(
-  meta = {}
-) {
+  },
 
-  if (!meta.command) {
-    throw new Error(
-      "command required"
+  // -----------------------------
+  // TERMINAL EXEC
+  // -----------------------------
+  exec(
+    meta = {}
+  ) {
+
+    if (!meta.command) {
+
+      throw new Error(
+        "command required"
+      );
+    }
+
+    return buildCommand(
+      meta.command,
+      meta.timeout || 10000
     );
   }
-
-  return buildCommand(
-    meta.command,
-    meta.timeout || 10000
-  );
-}
+};
