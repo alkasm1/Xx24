@@ -96,7 +96,68 @@ function createHandlers({
 
       return;
     }
+// -----------------------------
+// TERMINAL EXECUTION
+// -----------------------------
+if (
+  msg.type ===
+  "ui.terminal.exec"
+) {
 
+  try {
+
+    const result =
+      await executeTerminalCommand({
+
+        deviceId:
+          msg.deviceId,
+
+        command:
+          msg.command,
+
+        requestId:
+          msg.requestId
+      });
+
+    sender.send(ws, {
+      type:
+        "terminal.output",
+
+      requestId:
+        msg.requestId,
+
+      deviceId:
+        msg.deviceId,
+
+      command:
+        msg.command,
+
+      output:
+        result.result
+    });
+
+  } catch (err) {
+
+    sender.send(ws, {
+      type:
+        "terminal.output",
+
+      requestId:
+        msg.requestId,
+
+      deviceId:
+        msg.deviceId,
+
+      command:
+        msg.command,
+
+      error:
+        err.message
+    });
+  }
+
+  return;
+}
     // -----------------------------
     // OPCODE EXECUTION
     // -----------------------------
