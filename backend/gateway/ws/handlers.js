@@ -1,5 +1,10 @@
 // backend/gateway/ws/handlers.js
 
+const {
+  executeTerminalCommand
+} = require(
+  "../terminal/terminal_executor"
+);
 const registry = require(
   "../device_registry"
 );
