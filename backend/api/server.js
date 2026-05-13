@@ -1,10 +1,11 @@
-// backend/api/server.js
-
 const express =
   require("express");
 
 const cors =
   require("cors");
+
+const path =
+  require("path");
 
 const router =
   require("./router");
@@ -31,11 +32,43 @@ function createAPIServer({
   );
 
   // -----------------------------
-  // ROUTES
+  // FRONTEND STATIC
+  // -----------------------------
+  app.use(
+    express.static(
+      path.join(
+        process.cwd(),
+        "frontend"
+      )
+    )
+  );
+
+  // -----------------------------
+  // API ROUTES
   // -----------------------------
   app.use(
     "/api",
     router
+  );
+
+  // -----------------------------
+  // INDEX
+  // -----------------------------
+  app.get(
+    "/",
+    (
+      req,
+      res
+    ) => {
+
+      res.sendFile(
+        path.join(
+          process.cwd(),
+          "frontend",
+          "index.html"
+        )
+      );
+    }
   );
 
   // -----------------------------
