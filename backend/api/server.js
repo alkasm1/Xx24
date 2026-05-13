@@ -12,7 +12,7 @@ const router =
 
 function createAPIServer({
 
-  port = 8080
+  port = 8000
 } = {}) {
 
   const app =
@@ -32,18 +32,6 @@ function createAPIServer({
   );
 
   // -----------------------------
-  // FRONTEND STATIC
-  // -----------------------------
-  app.use(
-    express.static(
-      path.join(
-        process.cwd(),
-        "frontend"
-      )
-    )
-  );
-
-  // -----------------------------
   // API ROUTES
   // -----------------------------
   app.use(
@@ -52,30 +40,11 @@ function createAPIServer({
   );
 
   // -----------------------------
-  // INDEX
-  // -----------------------------
-  app.get(
-    "/",
-    (
-      req,
-      res
-    ) => {
-
-      res.sendFile(
-        path.join(
-          process.cwd(),
-          "frontend",
-          "index.html"
-        )
-      );
-    }
-  );
-
-  // -----------------------------
   // START
   // -----------------------------
   app.listen(
     port,
+    "0.0.0.0",
     () => {
 
       console.log(
