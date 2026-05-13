@@ -1,11 +1,14 @@
-// frontend/ws_client.js
-
 let ws = null;
 
-let reconnectTimer = null;
+let reconnectTimer =
+  null;
 
-let heartbeatTimer = null;
+let heartbeatTimer =
+  null;
 
+// -----------------------------
+// HEARTBEAT
+// -----------------------------
 function startHeartbeat() {
 
   stopHeartbeat();
@@ -23,7 +26,9 @@ function startHeartbeat() {
 
       ws.send(
         JSON.stringify({
+
           type: "ping",
+
           ts: Date.now()
         })
       );
@@ -45,6 +50,9 @@ function stopHeartbeat() {
     null;
 }
 
+// -----------------------------
+// RECONNECT
+// -----------------------------
 function scheduleReconnect(
   onMessage
 ) {
@@ -66,6 +74,9 @@ function scheduleReconnect(
     }, 2000);
 }
 
+// -----------------------------
+// CONNECT
+// -----------------------------
 function connectWS({
   onMessage
 }) {
@@ -76,7 +87,9 @@ function connectWS({
     );
 
   if (
+
     ws &&
+
     (
       ws.readyState ===
         WebSocket.OPEN ||
@@ -94,7 +107,14 @@ function connectWS({
       `ws://${location.hostname}:5001`
     );
 
+  // -----------------------------
+  // OPEN
+  // -----------------------------
   ws.onopen = () => {
+
+    console.log(
+      "WS connected"
+    );
 
     if (statusEl) {
 
@@ -102,12 +122,15 @@ function connectWS({
         "WS: ✅ Connected";
 
       statusEl.style.background =
-        "#0a0";
+        "#15803d";
     }
 
     startHeartbeat();
   };
 
+  // -----------------------------
+  // ERROR
+  // -----------------------------
   ws.onerror = err => {
 
     console.error(
@@ -121,11 +144,18 @@ function connectWS({
         "WS: ❌ Error";
 
       statusEl.style.background =
-        "#a00";
+        "#b91c1c";
     }
   };
 
+  // -----------------------------
+  // CLOSE
+  // -----------------------------
   ws.onclose = () => {
+
+    console.log(
+      "WS closed"
+    );
 
     stopHeartbeat();
 
@@ -135,7 +165,7 @@ function connectWS({
         "WS: ❌ Closed";
 
       statusEl.style.background =
-        "#a00";
+        "#991b1b";
     }
 
     scheduleReconnect(
@@ -143,6 +173,9 @@ function connectWS({
     );
   };
 
+  // -----------------------------
+  // MESSAGE
+  // -----------------------------
   ws.onmessage = event => {
 
     try {
@@ -152,7 +185,42 @@ function connectWS({
           event.data
         );
 
-      onMessage(data);
+      console.log(
+        "WS message:",
+        data
+      );
+
+      // -----------------------------
+      // STRESS RESULT
+      // -----------------------------
+      if (
+        data.type ===
+        "stressUpdate"
+      ) {
+
+        const el =
+          document.getElementById(
+            "stressResults"
+          );
+
+        if (el) {
+
+          el.textContent =
+            JSON.stringify(
+              data.data,
+              null,
+              2
+            );
+        }
+      }
+
+      // -----------------------------
+      // ROUTE
+      // -----------------------------
+      if (onMessage) {
+
+        onMessage(data);
+      }
 
     } catch (err) {
 
@@ -166,13 +234,22 @@ function connectWS({
   return ws;
 }
 
+// -----------------------------
+// SEND
+// -----------------------------
 function sendWS(data) {
 
   if (
+
     !ws ||
+
     ws.readyState !==
       WebSocket.OPEN
   ) {
+
+    console.error(
+      "WS not connected"
+    );
 
     return false;
   }
@@ -185,6 +262,8 @@ function sendWS(data) {
 }
 
 export {
+
   connectWS,
+
   sendWS
 };
