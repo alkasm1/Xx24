@@ -54,7 +54,24 @@ module.exports = {
       4000
     );
   },
+// -----------------------------
+// TERMINAL EXEC
+// -----------------------------
+exec(
+  meta = {}
+) {
 
+  if (!meta.command) {
+    throw new Error(
+      "command required"
+    );
+  }
+
+  return buildCommand(
+    meta.command,
+    meta.timeout || 10000
+  );
+}
   // -----------------------------
   // GET RESOURCE INFO
   // -----------------------------
