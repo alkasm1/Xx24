@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 
 <head>
 
@@ -18,9 +18,11 @@
       font-family: Arial, sans-serif;
       background: #f4f6f9;
       color: #111;
+      direction: rtl;
+      text-align: right;
     }
 
-    h1, h2, h3 { margin-top: 0; }
+    h1, h2 { margin-top: 0; }
 
     .header {
       display: flex;
@@ -36,12 +38,6 @@
       font-weight: bold;
       color: #fff;
       background: #333;
-    }
-
-    .footer {
-      margin-top: 4px;
-      opacity: 0.7;
-      font-size: 13px;
     }
 
     .grid {
@@ -80,6 +76,7 @@
       cursor: pointer;
       font-weight: bold;
       transition: 0.2s;
+      font-size: 14px;
     }
 
     button:hover { opacity: 0.9; }
@@ -120,19 +117,25 @@
 
   <div class="header">
     <div>
-      <h1>📡 ALM v3 Control Dashboard</h1>
-      <div class="footer">Runtime • Sessions • Tasks • Stress • Live Transport</div>
+      <h1>📡 لوحة تحكم ALM v3</h1>
+      <div style="opacity:0.7; font-size:13px;">Runtime • Sessions • Tasks • Stress • Live Transport</div>
     </div>
-    <div id="wsStatus" class="badge">WS: ⏳ connecting...</div>
+    <div id="wsStatus" class="badge">WS: ⏳ جاري الاتصال...</div>
+  </div>
+
+  <!-- الأزرار خارج بطاقة الأجهزة -->
+  <div style="margin-bottom: 20px; display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="btn-primary" onclick="sendOpcode()">system.getIdentity</button>
+    <button class="btn-primary" onclick="rebootDevice()">إعادة تشغيل النظام</button>
   </div>
 
   <div class="grid">
 
     <div class="card">
-      <h2>⚡ Opcode Execution</h2>
+      <h2>⚡ تنفيذ Opcode</h2>
 
       <div class="row">
-        <label>Device ID</label>
+        <label>معرّف الجهاز</label>
         <input id="opcodeDevice" value="router-1" />
       </div>
 
@@ -141,34 +144,34 @@
         <input id="opcodeInput" value="system.getIdentity" />
       </div>
 
-      <button class="btn-primary" onclick="sendOpcode()">🚀 Execute Opcode</button>
+      <button class="btn-primary" onclick="sendOpcode()">🚀 تنفيذ</button>
     </div>
 
     <div class="card">
-      <h2>🔥 Stress Testing</h2>
+      <h2>🔥 اختبار الضغط</h2>
 
       <div class="stress-buttons">
-        <button id="runLight" class="btn-light">Light</button>
-        <button id="runMedium" class="btn-medium">Medium</button>
-        <button id="runHeavy" class="btn-heavy">Heavy</button>
-        <button id="runExtreme" class="btn-extreme">Extreme</button>
+        <button id="runLight" class="btn-light">خفيف</button>
+        <button id="runMedium" class="btn-medium">متوسط</button>
+        <button id="runHeavy" class="btn-heavy">ثقيل</button>
+        <button id="runExtreme" class="btn-extreme">عنيف</button>
       </div>
 
       <pre id="stressResults"></pre>
     </div>
 
     <div class="card">
-      <h2>📜 Opcode Result</h2>
+      <h2>📜 نتيجة Opcode</h2>
       <pre id="opcodeResult"></pre>
     </div>
 
     <div class="card">
-      <h2>🖧 Runtime Devices</h2>
+      <h2>🖧 أجهزة وقت التشغيل</h2>
       <pre id="devicesBox"></pre>
     </div>
 
     <div class="card" style="grid-column: 1 / -1;">
-      <h2>📡 Runtime Logs</h2>
+      <h2>📡 سجلات وقت التشغيل</h2>
       <pre id="logs"></pre>
     </div>
 
