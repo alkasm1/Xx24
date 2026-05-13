@@ -20,12 +20,14 @@ function buildCommand(
 }
 
 module.exports = {
+
   // -----------------------------
   // REBOOT
   // -----------------------------
   reboot(
     meta = {}
   ) {
+
     const delay =
       Number(
         meta.delay || 0
@@ -35,6 +37,7 @@ module.exports = {
       "/system reboot";
 
     if (delay > 0) {
+
       command =
         `:delay ${delay}; ${command}`;
     }
@@ -49,33 +52,38 @@ module.exports = {
   // GET IDENTITY
   // -----------------------------
   getIdentity() {
+
     return buildCommand(
       "/system identity print",
       4000
     );
   },
-// -----------------------------
-// TERMINAL EXEC
-// -----------------------------
-exec(
-  meta = {}
-) {
 
-  if (!meta.command) {
-    throw new Error(
-      "command required"
+  // -----------------------------
+  // TERMINAL EXEC
+  // -----------------------------
+  exec(
+    meta = {}
+  ) {
+
+    if (!meta.command) {
+
+      throw new Error(
+        "command required"
+      );
+    }
+
+    return buildCommand(
+      meta.command,
+      meta.timeout || 10000
     );
-  }
+  },
 
-  return buildCommand(
-    meta.command,
-    meta.timeout || 10000
-  );
-}
   // -----------------------------
   // GET RESOURCE INFO
   // -----------------------------
   getResources() {
+
     return buildCommand(
       "/system resource print",
       4000
@@ -86,6 +94,7 @@ exec(
   // GET CLOCK
   // -----------------------------
   getClock() {
+
     return buildCommand(
       "/system clock print",
       3000
@@ -96,6 +105,7 @@ exec(
   // GET ROUTERBOARD INFO
   // -----------------------------
   getBoardInfo() {
+
     return buildCommand(
       "/system routerboard print",
       4000
