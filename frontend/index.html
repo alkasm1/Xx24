@@ -54,6 +54,10 @@
       align-items: center;
 
       margin-bottom: 20px;
+
+      gap: 20px;
+
+      flex-wrap: wrap;
     }
 
     .badge {
@@ -79,7 +83,7 @@
       grid-template-columns:
         repeat(
           auto-fit,
-          minmax(400px, 1fr)
+          minmax(420px, 1fr)
         );
 
       gap: 20px;
@@ -89,12 +93,12 @@
 
       background: #fff;
 
-      border-radius: 10px;
+      border-radius: 16px;
 
-      padding: 18px;
+      padding: 20px;
 
       box-shadow:
-        0 2px 8px
+        0 4px 18px
         rgba(0,0,0,0.08);
     }
 
@@ -116,21 +120,28 @@
 
       width: 100%;
 
-      padding: 10px;
+      padding: 12px;
 
-      border-radius: 6px;
+      border-radius: 8px;
 
       border:
-        1px solid #ccc;
+        1px solid #d1d5db;
 
       font-size: 14px;
+
+      outline: none;
+    }
+
+    input:focus {
+
+      border-color: #2563eb;
     }
 
     button {
 
       border: none;
 
-      border-radius: 6px;
+      border-radius: 8px;
 
       padding:
         10px 16px;
@@ -145,19 +156,15 @@
 
     button:hover {
 
-      opacity: 0.9;
+      opacity: 0.92;
+
+      transform:
+        translateY(-1px);
     }
 
     .btn-primary {
 
       background: #2563eb;
-
-      color: #fff;
-    }
-
-    .btn-stress {
-
-      background: #dc2626;
 
       color: #fff;
     }
@@ -190,29 +197,6 @@
       color: #fff;
     }
 
-    pre {
-
-      margin: 0;
-
-      padding: 14px;
-
-      border-radius: 8px;
-
-      background: #111;
-
-      color: #0f0;
-
-      overflow-x: auto;
-
-      overflow-y: auto;
-
-      min-height: 220px;
-
-      max-height: 320px;
-
-      font-size: 13px;
-    }
-
     .stress-buttons {
 
       display: flex;
@@ -226,72 +210,132 @@
 
     .footer {
 
-      margin-top: 20px;
+      margin-top: 10px;
 
       opacity: 0.7;
 
       font-size: 13px;
     }
-.device-card {
 
-  border:
-    1px solid #ddd;
+    .device-card {
 
-  border-radius: 10px;
+      border:
+        1px solid #ddd;
 
-  padding: 14px;
+      border-radius: 10px;
 
-  margin-bottom: 14px;
+      padding: 14px;
 
-  background: #fafafa;
-}
+      margin-bottom: 14px;
 
-.device-header {
+      background: #fafafa;
+    }
 
-  display: flex;
+    .device-header {
 
-  justify-content:
-    space-between;
+      display: flex;
 
-  margin-bottom: 10px;
-}
+      justify-content:
+        space-between;
 
-.device-meta {
+      margin-bottom: 10px;
+    }
 
-  font-size: 13px;
+    .device-meta {
 
-  opacity: 0.8;
+      font-size: 13px;
 
-  margin-bottom: 12px;
-}
+      opacity: 0.8;
 
-.device-actions {
+      margin-bottom: 12px;
+    }
 
-  display: flex;
+    .device-actions {
 
-  flex-wrap: wrap;
+      display: flex;
 
-  gap: 8px;
-}
+      flex-wrap: wrap;
 
-.device-action-btn {
+      gap: 8px;
+    }
 
-  background: #2563eb;
+    .device-action-btn {
 
-  color: white;
+      background: #2563eb;
 
-  border: none;
+      color: white;
 
-  border-radius: 6px;
+      border: none;
 
-  padding:
-    8px 12px;
+      border-radius: 6px;
 
-  cursor: pointer;
+      padding:
+        8px 12px;
 
-  font-size: 12px;
-}
-    
+      cursor: pointer;
+
+      font-size: 12px;
+    }
+
+    /* TERMINAL STYLE */
+
+    .runtime-terminal {
+
+      background: #0b1220;
+
+      color: #d1fae5;
+
+      border-radius: 14px;
+
+      padding: 16px;
+
+      font-family: monospace;
+
+      font-size: 13px;
+
+      line-height: 1.7;
+
+      overflow-x: auto;
+
+      overflow-y: auto;
+
+      white-space: pre-wrap;
+
+      direction: ltr;
+
+      unicode-bidi: plaintext;
+
+      text-align: left;
+
+      border:
+        1px solid #1f2937;
+
+      min-height: 220px;
+
+      max-height: 320px;
+    }
+
+    .runtime-terminal .line {
+
+      margin-bottom: 8px;
+    }
+
+    @media (
+      max-width: 768px
+    ) {
+
+      body {
+
+        padding: 12px;
+      }
+
+      .grid {
+
+        grid-template-columns:
+          1fr;
+      }
+    }
+
   </style>
 
 </head>
@@ -327,35 +371,6 @@
 
     <!-- OPCODE PANEL -->
     <div class="card">
-
-      <!-- TERMINAL PANEL -->
-<div class="card">
-
-  <h2>
-    🖥 Interactive Terminal
-  </h2>
-
-  <div class="row">
-
-    <label>
-      Command
-    </label>
-
-    <input
-      id="terminalInput"
-      value="uname -a"
-    />
-
-  </div>
-
-  <button
-    class="btn-primary"
-    onclick="runTerminal()"
-  >
-    ▶ Execute Command
-  </button>
-
-</div>
 
       <h2>
         ⚡ Opcode Execution
@@ -393,6 +408,41 @@
       >
         🚀 Execute Opcode
       </button>
+
+    </div>
+
+    <!-- TERMINAL PANEL -->
+    <div class="card">
+
+      <h2>
+        🖥 Interactive Terminal
+      </h2>
+
+      <div class="row">
+
+        <label>
+          Command
+        </label>
+
+        <input
+          id="terminalInput"
+          value="uname -a"
+        />
+
+      </div>
+
+      <button
+        class="btn-primary"
+        onclick="runTerminal()"
+      >
+        ▶ Execute Command
+      </button>
+
+      <div
+        id="terminalOutput"
+        class="runtime-terminal"
+        style="margin-top:14px;"
+      ></div>
 
     </div>
 
@@ -435,7 +485,10 @@
 
       </div>
 
-      <pre id="stressResults"></pre>
+      <div
+        id="stressResults"
+        class="runtime-terminal"
+      ></div>
 
     </div>
 
@@ -446,7 +499,10 @@
         📜 Opcode Result
       </h2>
 
-      <pre id="opcodeResult"></pre>
+      <div
+        id="opcodeResult"
+        class="runtime-terminal"
+      ></div>
 
     </div>
 
@@ -457,27 +513,39 @@
         🖧 Runtime Devices
       </h2>
 
-      <pre id="devicesBox"></pre>
+      <div
+        id="devicesBox"
+        class="runtime-terminal"
+      ></div>
 
     </div>
 
     <!-- LOGS -->
-    <div class="card" style="grid-column: 1 / -1;">
+    <div
+      class="card"
+      style="
+        grid-column:
+        1 / -1;
+      "
+    >
 
       <h2>
         📡 Runtime Logs
       </h2>
 
-      <pre id="logs"></pre>
+      <div
+        id="logs"
+        class="runtime-terminal"
+      ></div>
 
     </div>
 
   </div>
 
   <script
-  type="module"
-  src="app.js">
-</script>
+    type="module"
+    src="app.js"
+  ></script>
 
 </body>
 
