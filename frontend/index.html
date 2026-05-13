@@ -1,275 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ALM v3 Dashboard</title>
 
-    <style>
-      * {
-        box-sizing: border-box;
-      }
+<head>
 
-      :root {
-        --bg: #0b1220;
-        --panel: rgba(17, 24, 39, 0.75);
-        --panel-solid: #111827;
-        --border: rgba(148, 163, 184, 0.18);
-        --text: #e5e7eb;
-        --muted: #94a3b8;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        --blue: #2563eb;
-        --green: #16a34a;
-        --amber: #ca8a04;
-        --orange: #ea580c;
-        --red: #991b1b;
+  <title>ALM v3 Dashboard</title>
 
-        --shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-        --radius: 14px;
-      }
+  <style>
 
-      body {
-        margin: 0;
-        padding: 20px;
-        font-family: Arial, sans-serif;
-        background: radial-gradient(1200px 600px at 10% -10%, rgba(37, 99, 235, 0.25), transparent 55%),
-          radial-gradient(900px 500px at 95% 0%, rgba(234, 88, 12, 0.18), transparent 50%),
-          var(--bg);
-        color: var(--text);
-      }
+    * { box-sizing: border-box; }
 
-      h1,
-      h2,
-      h3 {
-        margin: 0;
-        color: #f8fafc;
-      }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 18px;
-        gap: 18px;
-        flex-wrap: wrap;
-      }
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      background: #111827;
+      border-right: 1px solid #1f2937;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
 
-      .title-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
+    .sidebar h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #f8fafc;
+    }
 
-      .header h1 {
-        font-size: 22px;
-        letter-spacing: 0.2px;
-        line-height: 1.2;
-      }
+    .side-btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      cursor: pointer;
+      text-align: right;
+      font-size: 14px;
+      transition: 0.2s;
+    }
 
-      .footer {
-        color: var(--muted);
-        font-size: 13px;
-      }
+    .side-btn:hover {
+      background: #334155;
+    }
 
-      .badge {
-        padding: 10px 14px;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 700;
-        color: #fff;
-        background: rgba(30, 41, 59, 0.9);
-        border: 1px solid rgba(51, 65, 85, 0.7);
-        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
-        white-space: nowrap;
-      }
+    /* MAIN AREA */
+    .main {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
 
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-        gap: 18px;
-      }
+    /* TOP BAR */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
 
-      .card {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 18px;
-        box-shadow: var(--shadow);
-        position: relative;
-        overflow: hidden;
-      }
+    .badge {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #fff;
+      background: #1e293b;
+      border: 1px solid #334155;
+    }
 
-      .card::before {
-        content: "";
-        position: absolute;
-        inset: -2px;
-        background: radial-gradient(400px 120px at 15% 0%, rgba(37, 99, 235, 0.18), transparent 60%),
-          radial-gradient(300px 140px at 90% 20%, rgba(234, 88, 12, 0.12), transparent 55%);
-        pointer-events: none;
-      }
+    /* CARDS (unchanged from your code) */
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 0 18px rgba(0,0,0,0.25);
+      margin-bottom: 20px;
+    }
 
-      .card > * {
-        position: relative;
-      }
+    .row { margin-bottom: 14px; }
 
-      .card h2 {
-        font-size: 16px;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+      color: #cbd5e1;
+    }
 
-      .row {
-        margin-bottom: 12px;
-      }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+    }
 
-      label {
-        display: block;
-        margin-bottom: 6px;
-        font-weight: 800;
-        color: #cbd5e1;
-        font-size: 13px;
-      }
+    input:focus { border-color: #2563eb; }
 
-      input {
-        width: 100%;
-        padding: 12px;
-        border-radius: 10px;
-        border: 1px solid rgba(51, 65, 85, 0.9);
-        background: rgba(15, 23, 42, 0.7);
-        color: var(--text);
-        font-size: 14px;
-        outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-      }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
 
-      input:focus {
-        border-color: rgba(37, 99, 235, 1);
-        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
-      }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-light { background: #16a34a; color: white; }
+    .btn-medium { background: #ca8a04; color: white; }
+    .btn-heavy { background: #ea580c; color: white; }
+    .btn-extreme { background: #991b1b; color: white; }
 
-      button {
-        border: none;
-        border-radius: 10px;
-        padding: 10px 16px;
-        cursor: pointer;
-        font-weight: 800;
-        transition: 0.18s ease;
-        transform: translateY(0);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
-      }
+    .stress-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
 
-      button:hover {
-        opacity: 0.95;
-        transform: translateY(-1px);
-      }
+    .runtime-terminal {
+      background: #020617;
+      color: #22c55e;
+      border-radius: 12px;
+      padding: 16px;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      border: 1px solid #1e293b;
+      min-height: 220px;
+      max-height: 320px;
+    }
 
-      button:active {
-        transform: translateY(0);
-      }
+    /* Hide all pages initially */
+    .page { display: none; }
 
-      .btn-primary {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 1), rgba(59, 130, 246, 1));
-        color: white;
-      }
+    /* Show active page */
+    .active { display: block; }
 
-      .btn-light {
-        background: linear-gradient(135deg, rgba(22, 163, 74, 1), rgba(34, 197, 94, 1));
-        color: white;
-      }
+  </style>
 
-      .btn-medium {
-        background: linear-gradient(135deg, rgba(202, 138, 4, 1), rgba(245, 158, 11, 1));
-        color: white;
-      }
+</head>
 
-      .btn-heavy {
-        background: linear-gradient(135deg, rgba(234, 88, 12, 1), rgba(251, 146, 60, 1));
-        color: white;
-      }
+<body>
 
-      .btn-extreme {
-        background: linear-gradient(135deg, rgba(153, 27, 27, 1), rgba(220, 38, 38, 1));
-        color: white;
-      }
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>القائمة</h2>
 
-      /* Toggle button style */
-      .btn-toggle {
-        background: rgba(37, 99, 235, 0.12);
-        border: 1px solid rgba(37, 99, 235, 0.5);
-        color: #dbeafe;
-      }
+    <button class="side-btn" onclick="showPage('pageOpcode')">⚡ تنفيذ Opcode</button>
+    <button class="side-btn" onclick="showPage('pageTerminal')">🖥 الطرفية</button>
+    <button class="side-btn" onclick="showPage('pageStress')">🔥 اختبار الضغط</button>
+    <button class="side-btn" onclick="showPage('pageDevices')">🖧 الأجهزة</button>
+    <button class="side-btn" onclick="showPage('pageLogs')">📡 السجلات</button>
+  </div>
 
-      /* Stress controls area (hidden until Test clicked) */
-      .stress-controls {
-        display: none; /* Hidden by default */
-        margin-top: 10px;
-      }
+  <!-- MAIN AREA -->
+  <div class="main">
 
-      .stress-controls.show {
-        display: block;
-      }
-
-      .stress-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 12px;
-      }
-
-      .runtime-terminal {
-        background: rgba(2, 6, 23, 0.85);
-        color: #22c55e;
-        border-radius: 12px;
-        padding: 14px;
-        font-family: monospace;
-        font-size: 13px;
-        line-height: 1.6;
-        overflow-x: auto;
-        overflow-y: auto;
-        white-space: pre-wrap;
-        border: 1px solid rgba(30, 41, 59, 0.9);
-        min-height: 220px;
-        max-height: 320px;
-      }
-
-      .runtime-terminal .line {
-        margin-bottom: 6px;
-      }
-
-      /* small hint */
-      .hint {
-        color: var(--muted);
-        font-size: 12.5px;
-        margin-top: 6px;
-      }
-
-      @media (max-width: 768px) {
-        body {
-          padding: 12px;
-        }
-        .grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <!-- HEADER -->
-    <div class="header">
-      <div class="title-wrap">
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div>
         <h1>📡 ALM v3 Control Dashboard</h1>
-        <div class="footer">Runtime • Sessions • Tasks • Stress • Live Transport</div>
+        <div style="opacity:0.7; font-size:13px;">Runtime • Sessions • Tasks • Stress • Live Transport</div>
       </div>
 
       <div id="wsStatus" class="badge">WS: ⏳ Connecting...</div>
     </div>
 
-    <!-- MAIN GRID -->
-    <div class="grid">
-      <!-- OPCODE -->
+    <!-- PAGES -->
+
+    <!-- OPCODE PAGE -->
+    <div id="pageOpcode" class="page active">
       <div class="card">
         <h2>⚡ Opcode Execution</h2>
 
@@ -283,12 +203,14 @@
           <input id="opcodeInput" value="system.getIdentity" />
         </div>
 
-        <button class="btn-primary" onclick="sendOpcode()">
-          🚀 Execute Opcode
-        </button>
-      </div>
+        <button class="btn-primary" onclick="sendOpcode()">🚀 Execute Opcode</button>
 
-      <!-- TERMINAL -->
+        <div id="opcodeResult" class="runtime-terminal" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- TERMINAL PAGE -->
+    <div id="pageTerminal" class="page">
       <div class="card">
         <h2>🖥 Interactive Terminal</h2>
 
@@ -297,82 +219,55 @@
           <input id="terminalInput" value="uname -a" />
         </div>
 
-        <button class="btn-primary" onclick="runTerminal()">
-          ▶ Execute Command
-        </button>
+        <button class="btn-primary" onclick="runTerminal()">▶ Execute Command</button>
 
-        <div
-          id="terminalOutput"
-          class="runtime-terminal"
-          style="margin-top:14px;"
-        ></div>
+        <div id="terminalOutput" class="runtime-terminal" style="margin-top:14px;"></div>
       </div>
+    </div>
 
-      <!-- STRESS -->
+    <!-- STRESS PAGE -->
+    <div id="pageStress" class="page">
       <div class="card">
         <h2>🔥 Stress Testing</h2>
 
-        <!-- Test button (shows stress controls + terminal) -->
-        <button
-          id="stressTestToggle"
-          class="btn-toggle"
-          type="button"
-          aria-expanded="false"
-        >
-          🧪 Test (Show Controls)
-        </button>
-        <div class="hint">اضغط زر الـ Test لإظهار أزرار الاختبار وشاشة المخرجات.</div>
-
-        <!-- Hidden by default -->
-        <div id="stressControlsWrap" class="stress-controls">
-          <div class="stress-buttons">
-            <button id="runLight" class="btn-light">Light</button>
-            <button id="runMedium" class="btn-medium">Medium</button>
-            <button id="runHeavy" class="btn-heavy">Heavy</button>
-            <button id="runExtreme" class="btn-extreme">Extreme</button>
-          </div>
-
-          <div id="stressResults" class="runtime-terminal"></div>
+        <div class="stress-buttons">
+          <button id="runLight" class="btn-light">Light</button>
+          <button id="runMedium" class="btn-medium">Medium</button>
+          <button id="runHeavy" class="btn-heavy">Heavy</button>
+          <button id="runExtreme" class="btn-extreme">Extreme</button>
         </div>
-      </div>
 
-      <!-- OPCODE RESULT -->
-      <div class="card">
-        <h2>📜 Opcode Result</h2>
-        <div id="opcodeResult" class="runtime-terminal"></div>
+        <div id="stressResults" class="runtime-terminal"></div>
       </div>
+    </div>
 
-      <!-- DEVICES -->
+    <!-- DEVICES PAGE -->
+    <div id="pageDevices" class="page">
       <div class="card">
         <h2>🖧 Runtime Devices</h2>
         <div id="devicesBox" class="runtime-terminal"></div>
       </div>
+    </div>
 
-      <!-- LOGS -->
-      <div
-        class="card"
-        style="grid-column: 1 / -1;"
-      >
+    <!-- LOGS PAGE -->
+    <div id="pageLogs" class="page">
+      <div class="card">
         <h2>📡 Runtime Logs</h2>
         <div id="logs" class="runtime-terminal"></div>
       </div>
     </div>
 
-    <script type="module" src="app.js"></script>
+  </div>
 
-    <!-- Inline toggle logic for the Stress UI only -->
-    <script>
-      const toggleBtn = document.getElementById("stressTestToggle");
-      const wrap = document.getElementById("stressControlsWrap");
+  <script type="module" src="app.js"></script>
 
-      // Default hidden; show on click
-      toggleBtn.addEventListener("click", () => {
-        const isOpen = wrap.classList.toggle("show");
-        toggleBtn.setAttribute("aria-expanded", String(isOpen));
-        toggleBtn.textContent = isOpen
-          ? "✅ Test (Hide Controls)"
-          : "🧪 Test (Show Controls)";
-      });
-    </script>
-  </body>
+  <script>
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+  </script>
+
+</body>
+
 </html>
