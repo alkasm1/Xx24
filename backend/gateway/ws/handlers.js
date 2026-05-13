@@ -96,13 +96,45 @@ function createHandlers({
 
       return;
     }
-// -----------------------------
+    // -----------------------------
 // TERMINAL EXECUTION
 // -----------------------------
 if (
   msg.type ===
   "ui.terminal.exec"
 ) {
+
+  // -----------------------------
+  // REQUEST ID REQUIRED
+  // -----------------------------
+  if (
+    !msg.requestId
+  ) {
+
+    return sender.send(ws, {
+      type:
+        "terminal.output",
+
+      error:
+        "Missing requestId"
+    });
+  }
+
+  // -----------------------------
+  // DEDUPE
+  // -----------------------------
+  if (
+    activeRequests.has(
+      msg.requestId
+    )
+  ) {
+
+    return;
+  }
+
+  activeRequests.add(
+    msg.requestId
+  );
 
   try {
 
@@ -154,10 +186,17 @@ if (
       error:
         err.message
     });
+
+  } finally {
+
+    activeRequests.delete(
+      msg.requestId
+    );
   }
 
   return;
 }
+
     // -----------------------------
     // OPCODE EXECUTION
     // -----------------------------
