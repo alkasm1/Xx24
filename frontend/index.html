@@ -1,184 +1,378 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ALM v3 Dashboard</title>
 
-<head>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
 
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      :root {
+        --bg: #0b1220;
+        --panel: rgba(17, 24, 39, 0.75);
+        --panel-solid: #111827;
+        --border: rgba(148, 163, 184, 0.18);
+        --text: #e5e7eb;
+        --muted: #94a3b8;
 
-  <title>ALM v3 Dashboard</title>
+        --blue: #2563eb;
+        --green: #16a34a;
+        --amber: #ca8a04;
+        --orange: #ea580c;
+        --red: #991b1b;
 
-  <style>
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        --radius: 14px;
+      }
 
-    * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+        background: radial-gradient(1200px 600px at 10% -10%, rgba(37, 99, 235, 0.25), transparent 55%),
+          radial-gradient(900px 500px at 95% 0%, rgba(234, 88, 12, 0.18), transparent 50%),
+          var(--bg);
+        color: var(--text);
+      }
 
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      background: #f4f6f9;
-      color: #111;
-      direction: rtl;
-      text-align: right;
-    }
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        color: #f8fafc;
+      }
 
-    h1, h2 { margin-top: 0; }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
+      .title-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
 
-    .badge {
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      color: #fff;
-      background: #333;
-    }
+      .header h1 {
+        font-size: 22px;
+        letter-spacing: 0.2px;
+        line-height: 1.2;
+      }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 20px;
-    }
+      .footer {
+        color: var(--muted);
+        font-size: 13px;
+      }
 
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 18px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
+      .badge {
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        background: rgba(30, 41, 59, 0.9);
+        border: 1px solid rgba(51, 65, 85, 0.7);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+        white-space: nowrap;
+      }
 
-    .row { margin-bottom: 14px; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        gap: 18px;
+      }
 
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: bold;
-    }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
 
-    input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        background: radial-gradient(400px 120px at 15% 0%, rgba(37, 99, 235, 0.18), transparent 60%),
+          radial-gradient(300px 140px at 90% 20%, rgba(234, 88, 12, 0.12), transparent 55%);
+        pointer-events: none;
+      }
 
-    button {
-      border: none;
-      border-radius: 6px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: 0.2s;
-      font-size: 14px;
-    }
+      .card > * {
+        position: relative;
+      }
 
-    button:hover { opacity: 0.9; }
+      .card h2 {
+        font-size: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-    .btn-primary { background: #2563eb; color: #fff; }
+      .row {
+        margin-bottom: 12px;
+      }
 
-    .btn-light { background: #16a34a; color: #fff; }
-    .btn-medium { background: #ca8a04; color: #fff; }
-    .btn-heavy { background: #ea580c; color: #fff; }
-    .btn-extreme { background: #991b1b; color: #fff; }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 800;
+        color: #cbd5e1;
+        font-size: 13px;
+      }
 
-    pre {
-      margin: 0;
-      padding: 14px;
-      border-radius: 8px;
-      background: #111;
-      color: #0f0;
-      overflow-x: auto;
-      overflow-y: auto;
-      min-height: 220px;
-      max-height: 320px;
-      font-size: 13px;
-      white-space: pre-wrap;
-    }
+      input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(51, 65, 85, 0.9);
+        background: rgba(15, 23, 42, 0.7);
+        color: var(--text);
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      }
 
-    .stress-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
+      input:focus {
+        border-color: rgba(37, 99, 235, 1);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
+      }
 
-  </style>
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-weight: 800;
+        transition: 0.18s ease;
+        transform: translateY(0);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+      }
 
-</head>
+      button:hover {
+        opacity: 0.95;
+        transform: translateY(-1px);
+      }
 
-<body>
+      button:active {
+        transform: translateY(0);
+      }
 
-  <div class="header">
-    <div>
-      <h1>📡 لوحة تحكم ALM v3</h1>
-      <div style="opacity:0.7; font-size:13px;">Runtime • Sessions • Tasks • Stress • Live Transport</div>
-    </div>
-    <div id="wsStatus" class="badge">WS: ⏳ جاري الاتصال...</div>
-  </div>
+      .btn-primary {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 1), rgba(59, 130, 246, 1));
+        color: white;
+      }
 
-  <!-- الأزرار خارج بطاقة الأجهزة -->
-  <div style="margin-bottom: 20px; display:flex; gap:10px; flex-wrap:wrap;">
-    <button class="btn-primary" onclick="sendOpcode()">system.getIdentity</button>
-    <button class="btn-primary" onclick="rebootDevice()">إعادة تشغيل النظام</button>
-  </div>
+      .btn-light {
+        background: linear-gradient(135deg, rgba(22, 163, 74, 1), rgba(34, 197, 94, 1));
+        color: white;
+      }
 
-  <div class="grid">
+      .btn-medium {
+        background: linear-gradient(135deg, rgba(202, 138, 4, 1), rgba(245, 158, 11, 1));
+        color: white;
+      }
 
-    <div class="card">
-      <h2>⚡ تنفيذ Opcode</h2>
+      .btn-heavy {
+        background: linear-gradient(135deg, rgba(234, 88, 12, 1), rgba(251, 146, 60, 1));
+        color: white;
+      }
 
-      <div class="row">
-        <label>معرّف الجهاز</label>
-        <input id="opcodeDevice" value="router-1" />
+      .btn-extreme {
+        background: linear-gradient(135deg, rgba(153, 27, 27, 1), rgba(220, 38, 38, 1));
+        color: white;
+      }
+
+      /* Toggle button style */
+      .btn-toggle {
+        background: rgba(37, 99, 235, 0.12);
+        border: 1px solid rgba(37, 99, 235, 0.5);
+        color: #dbeafe;
+      }
+
+      /* Stress controls area (hidden until Test clicked) */
+      .stress-controls {
+        display: none; /* Hidden by default */
+        margin-top: 10px;
+      }
+
+      .stress-controls.show {
+        display: block;
+      }
+
+      .stress-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .runtime-terminal {
+        background: rgba(2, 6, 23, 0.85);
+        color: #22c55e;
+        border-radius: 12px;
+        padding: 14px;
+        font-family: monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-x: auto;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        border: 1px solid rgba(30, 41, 59, 0.9);
+        min-height: 220px;
+        max-height: 320px;
+      }
+
+      .runtime-terminal .line {
+        margin-bottom: 6px;
+      }
+
+      /* small hint */
+      .hint {
+        color: var(--muted);
+        font-size: 12.5px;
+        margin-top: 6px;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 12px;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- HEADER -->
+    <div class="header">
+      <div class="title-wrap">
+        <h1>📡 ALM v3 Control Dashboard</h1>
+        <div class="footer">Runtime • Sessions • Tasks • Stress • Live Transport</div>
       </div>
 
-      <div class="row">
-        <label>Opcode</label>
-        <input id="opcodeInput" value="system.getIdentity" />
+      <div id="wsStatus" class="badge">WS: ⏳ Connecting...</div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="grid">
+      <!-- OPCODE -->
+      <div class="card">
+        <h2>⚡ Opcode Execution</h2>
+
+        <div class="row">
+          <label>Device ID</label>
+          <input id="opcodeDevice" value="router-1" />
+        </div>
+
+        <div class="row">
+          <label>Opcode</label>
+          <input id="opcodeInput" value="system.getIdentity" />
+        </div>
+
+        <button class="btn-primary" onclick="sendOpcode()">
+          🚀 Execute Opcode
+        </button>
       </div>
 
-      <button class="btn-primary" onclick="sendOpcode()">🚀 تنفيذ</button>
-    </div>
+      <!-- TERMINAL -->
+      <div class="card">
+        <h2>🖥 Interactive Terminal</h2>
 
-    <div class="card">
-      <h2>🔥 اختبار الضغط</h2>
+        <div class="row">
+          <label>Command</label>
+          <input id="terminalInput" value="uname -a" />
+        </div>
 
-      <div class="stress-buttons">
-        <button id="runLight" class="btn-light">خفيف</button>
-        <button id="runMedium" class="btn-medium">متوسط</button>
-        <button id="runHeavy" class="btn-heavy">ثقيل</button>
-        <button id="runExtreme" class="btn-extreme">عنيف</button>
+        <button class="btn-primary" onclick="runTerminal()">
+          ▶ Execute Command
+        </button>
+
+        <div
+          id="terminalOutput"
+          class="runtime-terminal"
+          style="margin-top:14px;"
+        ></div>
       </div>
 
-      <pre id="stressResults"></pre>
+      <!-- STRESS -->
+      <div class="card">
+        <h2>🔥 Stress Testing</h2>
+
+        <!-- Test button (shows stress controls + terminal) -->
+        <button
+          id="stressTestToggle"
+          class="btn-toggle"
+          type="button"
+          aria-expanded="false"
+        >
+          🧪 Test (Show Controls)
+        </button>
+        <div class="hint">اضغط زر الـ Test لإظهار أزرار الاختبار وشاشة المخرجات.</div>
+
+        <!-- Hidden by default -->
+        <div id="stressControlsWrap" class="stress-controls">
+          <div class="stress-buttons">
+            <button id="runLight" class="btn-light">Light</button>
+            <button id="runMedium" class="btn-medium">Medium</button>
+            <button id="runHeavy" class="btn-heavy">Heavy</button>
+            <button id="runExtreme" class="btn-extreme">Extreme</button>
+          </div>
+
+          <div id="stressResults" class="runtime-terminal"></div>
+        </div>
+      </div>
+
+      <!-- OPCODE RESULT -->
+      <div class="card">
+        <h2>📜 Opcode Result</h2>
+        <div id="opcodeResult" class="runtime-terminal"></div>
+      </div>
+
+      <!-- DEVICES -->
+      <div class="card">
+        <h2>🖧 Runtime Devices</h2>
+        <div id="devicesBox" class="runtime-terminal"></div>
+      </div>
+
+      <!-- LOGS -->
+      <div
+        class="card"
+        style="grid-column: 1 / -1;"
+      >
+        <h2>📡 Runtime Logs</h2>
+        <div id="logs" class="runtime-terminal"></div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>📜 نتيجة Opcode</h2>
-      <pre id="opcodeResult"></pre>
-    </div>
+    <script type="module" src="app.js"></script>
 
-    <div class="card">
-      <h2>🖧 أجهزة وقت التشغيل</h2>
-      <pre id="devicesBox"></pre>
-    </div>
+    <!-- Inline toggle logic for the Stress UI only -->
+    <script>
+      const toggleBtn = document.getElementById("stressTestToggle");
+      const wrap = document.getElementById("stressControlsWrap");
 
-    <div class="card" style="grid-column: 1 / -1;">
-      <h2>📡 سجلات وقت التشغيل</h2>
-      <pre id="logs"></pre>
-    </div>
-
-  </div>
-
-  <script type="module" src="app.js"></script>
-
-</body>
-
+      // Default hidden; show on click
+      toggleBtn.addEventListener("click", () => {
+        const isOpen = wrap.classList.toggle("show");
+        toggleBtn.setAttribute("aria-expanded", String(isOpen));
+        toggleBtn.textContent = isOpen
+          ? "✅ Test (Hide Controls)"
+          : "🧪 Test (Show Controls)";
+      });
+    </script>
+  </body>
 </html>
