@@ -37,12 +37,13 @@ const handlers = {
 
   "terminal":
     handleTerminal,
+  
+  "terminal.output":
+  handleTerminalOutput,
 
   "task.update":
     handleTaskUpdate
     
-  "terminal.output":
-  handleTerminalOutput,
 };
 
 function routeMessage(
