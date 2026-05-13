@@ -11,7 +11,10 @@ const router =
 
 function createAPIServer({
 
-  port = 8080
+  port = 8080,
+
+  host = "0.0.0.0"
+
 } = {}) {
 
   const app =
@@ -39,14 +42,29 @@ function createAPIServer({
   );
 
   // -----------------------------
+  // ROOT
+  // -----------------------------
+  app.get(
+    "/",
+    (_, res) => {
+
+      res.json({
+        success: true,
+        service: "alm-api-root"
+      });
+    }
+  );
+
+  // -----------------------------
   // START
   // -----------------------------
   app.listen(
     port,
+    host,
     () => {
 
       console.log(
-        `🌐 API server running on :${port}`
+        `🌐 API server running on ${host}:${port}`
       );
     }
   );
