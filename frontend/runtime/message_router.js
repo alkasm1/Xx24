@@ -1,6 +1,10 @@
 // frontend/runtime/message_router.js
 
 import {
+  handleTerminalOutput
+} from "./message_handlers/terminal_output.js";
+
+import {
   handleOpcodeResult
 } from "./message_handlers/opcode_result.js";
 
@@ -36,6 +40,9 @@ const handlers = {
 
   "task.update":
     handleTaskUpdate
+    
+  "terminal.output":
+  handleTerminalOutput,
 };
 
 function routeMessage(
