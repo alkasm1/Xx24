@@ -217,18 +217,24 @@
       font-size: 13px;
     }
 
+    /* -----------------------------
+       DEVICE CARDS
+    ----------------------------- */
+
     .device-card {
 
-      border:
-        1px solid #ddd;
+      background: #0b1220;
 
-      border-radius: 10px;
+      color: #d1fae5;
+
+      border:
+        1px solid #1f2937;
+
+      border-radius: 14px;
 
       padding: 14px;
 
       margin-bottom: 14px;
-
-      background: #fafafa;
     }
 
     .device-header {
@@ -239,15 +245,19 @@
         space-between;
 
       margin-bottom: 10px;
+
+      color: #fff;
     }
 
     .device-meta {
 
       font-size: 13px;
 
-      opacity: 0.8;
+      color: #9ca3af;
 
       margin-bottom: 12px;
+
+      line-height: 1.7;
     }
 
     .device-actions {
@@ -277,7 +287,14 @@
       font-size: 12px;
     }
 
-    /* TERMINAL STYLE */
+    .device-action-btn:hover {
+
+      opacity: 0.9;
+    }
+
+    /* -----------------------------
+       TERMINAL STYLE
+    ----------------------------- */
 
     .runtime-terminal {
 
@@ -318,6 +335,41 @@
     .runtime-terminal .line {
 
       margin-bottom: 8px;
+    }
+
+    #devicesBox {
+
+      background: #0b1220;
+
+      color: #d1fae5;
+    }
+
+    #logs {
+
+      background: #020617;
+
+      color: #22c55e;
+    }
+
+    #stressResults {
+
+      background: #111827;
+
+      color: #f8fafc;
+    }
+
+    #opcodeResult {
+
+      background: #111827;
+
+      color: #f8fafc;
+    }
+
+    #terminalOutput {
+
+      background: #020617;
+
+      color: #22c55e;
     }
 
     @media (
