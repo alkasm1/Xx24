@@ -1,3 +1,5 @@
+// frontend/app.js
+
 import {
   executeTerminalCommand
 } from "./runtime/terminal.js";
@@ -12,6 +14,22 @@ import {
 } from "./runtime/message_router.js";
 
 // -----------------------------
+// HELPERS
+// -----------------------------
+function genRequestId(
+  prefix = "req"
+) {
+
+  return (
+    prefix +
+    "_" +
+    Math.random()
+      .toString(36)
+      .slice(2)
+  );
+}
+
+// -----------------------------
 // WS CONNECT
 // -----------------------------
 connectWS({
@@ -22,61 +40,78 @@ connectWS({
 // -----------------------------
 // OPCODE EXECUTION
 // -----------------------------
-window.sendOpcode =
-  function () {
+function sendOpcode() {
 
-    const deviceId =
-      document.getElementById(
-        "opcodeDevice"
-      ).value;
+  const deviceId =
+    document.getElementById(
+      "opcodeDevice"
+    )?.value;
 
-    const opcode =
-      document.getElementById(
-        "opcodeInput"
-      ).value;
+  const opcode =
+    document.getElementById(
+      "opcodeInput"
+    )?.value;
 
-    const requestId =
-      "req_" +
-      Math.random()
-        .toString(36)
-        .slice(2);
+  if (
+    !deviceId ||
+    !opcode
+  ) {
 
-    sendWS({
+    console.warn(
+      "Missing opcode params"
+    );
 
-      type:
-        "ui.opcode",
+    return;
+  }
 
-      requestId,
+  sendWS({
 
-      deviceId,
+    type:
+      "ui.opcode",
 
-      opcode,
+    requestId:
+      genRequestId(),
 
-      meta: {}
-    });
-  };
+    deviceId,
+
+    opcode,
+
+    meta: {}
+  });
+}
 
 // -----------------------------
 // TERMINAL EXECUTION
 // -----------------------------
-window.runTerminal =
-  function () {
+function runTerminal() {
 
-    const deviceId =
-      document.getElementById(
-        "opcodeDevice"
-      ).value;
+  const deviceId =
+    document.getElementById(
+      "opcodeDevice"
+    )?.value;
 
-    const command =
-      document.getElementById(
-        "terminalInput"
-      ).value;
+  const command =
+    document.getElementById(
+      "terminalInput"
+    )?.value;
 
-    executeTerminalCommand({
-      deviceId,
-      command
-    });
-  };
+  if (
+    !deviceId ||
+    !command
+  ) {
+
+    console.warn(
+      "Missing terminal params"
+    );
+
+    return;
+  }
+
+  executeTerminalCommand({
+    deviceId,
+    command
+  });
+}
 
 // -----------------------------
 // STRESS EXECUTION
@@ -90,57 +125,95 @@ function runStress(
     type:
       "ui.stress.run",
 
+    requestId:
+      genRequestId("stress"),
+
     profile
   });
 }
 
 // -----------------------------
-// STRESS BUTTONS
+// UI EVENTS
 // -----------------------------
-document
-  .getElementById(
-    "runLight"
-  )
-  ?.addEventListener(
-    "click",
-    () =>
-      runStress(
-        "light"
-      )
-  );
+function bindUI() {
 
-document
-  .getElementById(
-    "runMedium"
-  )
-  ?.addEventListener(
-    "click",
-    () =>
-      runStress(
-        "medium"
-      )
-  );
+  // OPCODE BUTTON
+  document
+    .getElementById(
+      "runOpcodeBtn"
+    )
+    ?.addEventListener(
+      "click",
+      sendOpcode
+    );
 
-document
-  .getElementById(
-    "runHeavy"
-  )
-  ?.addEventListener(
-    "click",
-    () =>
-      runStress(
-        "heavy"
-      )
-  );
+  // TERMINAL BUTTON
+  document
+    .getElementById(
+      "runTerminalBtn"
+    )
+    ?.addEventListener(
+      "click",
+      runTerminal
+    );
 
-document
-  .getElementById(
-    "runExtreme"
-  )
-  ?.addEventListener(
-    "click",
-    () =>
-      runStress(
-        "extreme"
-      )
-  );
+  // STRESS BUTTONS
+  document
+    .getElementById(
+      "runLight"
+    )
+    ?.addEventListener(
+      "click",
+      () =>
+        runStress(
+          "light"
+        )
+    );
+
+  document
+    .getElementById(
+      "runMedium"
+    )
+    ?.addEventListener(
+      "click",
+      () =>
+        runStress(
+          "medium"
+        )
+    );
+
+  document
+    .getElementById(
+      "runHeavy"
+    )
+    ?.addEventListener(
+      "click",
+      () =>
+        runStress(
+          "heavy"
+        )
+    );
+
+  document
+    .getElementById(
+      "runExtreme"
+    )
+    ?.addEventListener(
+      "click",
+      () =>
+        runStress(
+          "extreme"
+        )
+    );
+}
+
+// -----------------------------
+// INIT
+// -----------------------------
+window.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    bindUI();
+  }
+);
