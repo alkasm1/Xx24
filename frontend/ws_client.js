@@ -1,14 +1,11 @@
+// frontend/ws_client.js
+
 let ws = null;
 
-let reconnectTimer =
-  null;
+let reconnectTimer = null;
 
-let heartbeatTimer =
-  null;
+let heartbeatTimer = null;
 
-// -----------------------------
-// HEARTBEAT
-// -----------------------------
 function startHeartbeat() {
 
   stopHeartbeat();
@@ -18,17 +15,14 @@ function startHeartbeat() {
 
       if (
         !ws ||
-        ws.readyState !==
-          WebSocket.OPEN
+        ws.readyState !== WebSocket.OPEN
       ) {
         return;
       }
 
       ws.send(
         JSON.stringify({
-
           type: "ping",
-
           ts: Date.now()
         })
       );
@@ -42,20 +36,12 @@ function stopHeartbeat() {
     return;
   }
 
-  clearInterval(
-    heartbeatTimer
-  );
+  clearInterval(heartbeatTimer);
 
-  heartbeatTimer =
-    null;
+  heartbeatTimer = null;
 }
 
-// -----------------------------
-// RECONNECT
-// -----------------------------
-function scheduleReconnect(
-  onMessage
-) {
+function scheduleReconnect(onMessage, host) {
 
   if (reconnectTimer) {
     return;
@@ -64,21 +50,24 @@ function scheduleReconnect(
   reconnectTimer =
     setTimeout(() => {
 
-      reconnectTimer =
-        null;
+      reconnectTimer = null;
 
       connectWS({
+        host,
         onMessage
       });
 
     }, 2000);
 }
 
-// -----------------------------
-// CONNECT
-// -----------------------------
 function connectWS({
+
+  host = location.hostname,
+
+  port = 5001,
+
   onMessage
+
 }) {
 
   const statusEl =
@@ -87,29 +76,26 @@ function connectWS({
     );
 
   if (
-
     ws &&
-
     (
-      ws.readyState ===
-        WebSocket.OPEN ||
-
-      ws.readyState ===
-        WebSocket.CONNECTING
+      ws.readyState === WebSocket.OPEN ||
+      ws.readyState === WebSocket.CONNECTING
     )
   ) {
 
     return ws;
   }
 
-  ws =
-    new WebSocket(
-      `ws://${host}:5001`
-    );
+  const wsURL =
+    `ws://${host}:${port}`;
 
-  // -----------------------------
-  // OPEN
-  // -----------------------------
+  console.log(
+    "Connecting WS:",
+    wsURL
+  );
+
+  ws = new WebSocket(wsURL);
+
   ws.onopen = () => {
 
     console.log(
@@ -122,15 +108,12 @@ function connectWS({
         "WS: ✅ Connected";
 
       statusEl.style.background =
-        "#15803d";
+        "#16a34a";
     }
 
     startHeartbeat();
   };
 
-  // -----------------------------
-  // ERROR
-  // -----------------------------
   ws.onerror = err => {
 
     console.error(
@@ -144,13 +127,10 @@ function connectWS({
         "WS: ❌ Error";
 
       statusEl.style.background =
-        "#b91c1c";
+        "#dc2626";
     }
   };
 
-  // -----------------------------
-  // CLOSE
-  // -----------------------------
   ws.onclose = () => {
 
     console.log(
@@ -169,13 +149,11 @@ function connectWS({
     }
 
     scheduleReconnect(
-      onMessage
+      onMessage,
+      host
     );
   };
 
-  // -----------------------------
-  // MESSAGE
-  // -----------------------------
   ws.onmessage = event => {
 
     try {
@@ -185,40 +163,7 @@ function connectWS({
           event.data
         );
 
-      console.log(
-        "WS message:",
-        data
-      );
-
-      // -----------------------------
-      // STRESS RESULT
-      // -----------------------------
-      if (
-        data.type ===
-        "stressUpdate"
-      ) {
-
-        const el =
-          document.getElementById(
-            "stressResults"
-          );
-
-        if (el) {
-
-          el.textContent =
-            JSON.stringify(
-              data.data,
-              null,
-              2
-            );
-        }
-      }
-
-      // -----------------------------
-      // ROUTE
-      // -----------------------------
       if (onMessage) {
-
         onMessage(data);
       }
 
@@ -234,17 +179,11 @@ function connectWS({
   return ws;
 }
 
-// -----------------------------
-// SEND
-// -----------------------------
 function sendWS(data) {
 
   if (
-
     !ws ||
-
-    ws.readyState !==
-      WebSocket.OPEN
+    ws.readyState !== WebSocket.OPEN
   ) {
 
     console.error(
@@ -262,8 +201,6 @@ function sendWS(data) {
 }
 
 export {
-
   connectWS,
-
   sendWS
 };
