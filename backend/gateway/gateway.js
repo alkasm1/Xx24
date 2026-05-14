@@ -239,7 +239,9 @@ startUDPRuntime({
 // -----------------------------
 // API SERVER
 // -----------------------------
-createAPIServer({
+const {
+  server
+} = createAPIServer({
   port: 8000
 });
 // -----------------------------
