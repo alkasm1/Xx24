@@ -7,12 +7,7 @@
 
   <meta
     name="viewport"
-    content="
-      width=device-width,
-      initial-scale=1.0,
-      maximum-scale=1.0,
-      user-scalable=no
-    "
+    content="width=device-width, initial-scale=1.0"
   />
 
   <title>
@@ -22,44 +17,29 @@
   <style>
 
     * {
-
-      box-sizing: border-box;
-
       margin: 0;
-
       padding: 0;
-
-      -webkit-tap-highlight-color:
-        transparent;
+      box-sizing: border-box;
     }
 
     :root {
 
-      --sidebar-bg:
-        #9ca3af;
+      --bg:
+        #eef2f7;
 
-      --sidebar-bg-dark:
-        #8b95a1;
+      --panel:
+        #ffffff;
 
-      --main-bg:
-        #e8ecf0;
-
-      --panel-bg:
-        #f4f6f8;
-
-      --panel-border:
-        #cfd6dd;
-
-      --panel-border-dark:
-        #b7c0c9;
+      --border:
+        #d7dee7;
 
       --text:
         #111827;
 
-      --text-muted:
-        #4b5563;
+      --muted:
+        #6b7280;
 
-      --accent:
+      --primary:
         #2563eb;
 
       --success:
@@ -74,14 +54,11 @@
       --extreme:
         #991b1b;
 
-      --terminal-bg:
+      --terminal:
         #0b1220;
 
-      --terminal-text:
+      --terminalText:
         #22c55e;
-
-      --terminal-border:
-        #1e293b;
     }
 
     body {
@@ -91,296 +68,315 @@
         sans-serif;
 
       background:
-        var(--main-bg);
+        var(--bg);
 
       color:
         var(--text);
 
-      display: flex;
+      min-height:
+        100vh;
 
-      min-height: 100vh;
+      display:
+        flex;
     }
 
     /* SIDEBAR */
 
     .sidebar {
 
-      width: 230px;
+      width:
+        240px;
 
       background:
         linear-gradient(
           180deg,
-          var(--sidebar-bg),
-          var(--sidebar-bg-dark)
+          #a8b0ba,
+          #9099a5
         );
 
-      padding: 14px;
-
-      display: flex;
-
-      flex-direction: column;
-
-      gap: 8px;
+      padding:
+        14px;
 
       border-left:
-        1px solid rgba(0,0,0,.15);
+        1px solid
+        rgba(0,0,0,.15);
+
+      overflow-y:
+        auto;
     }
 
-    .sidebar-header {
+    .sidebar h2 {
 
-      background:
-        rgba(255,255,255,.15);
+      font-size:
+        16px;
 
-      border-radius: 10px;
+      margin-bottom:
+        14px;
 
-      padding: 12px;
+      color:
+        white;
 
-      text-align: center;
-
-      font-weight: bold;
-
-      color: #fff;
-
-      margin-bottom: 10px;
+      text-align:
+        center;
     }
 
     .side-btn {
 
-      border: none;
+      width:
+        100%;
 
-      border-radius: 8px;
+      border:
+        none;
 
-      padding: 12px;
-
-      text-align: right;
-
-      cursor: pointer;
-
-      font-weight: bold;
+      border-radius:
+        10px;
 
       background:
-        rgba(255,255,255,.12);
+        rgba(255,255,255,.18);
+
+      padding:
+        12px;
+
+      margin-bottom:
+        8px;
+
+      cursor:
+        pointer;
+
+      font-weight:
+        bold;
 
       color:
         #1f2937;
 
-      transition: .2s;
+      transition:
+        .2s;
+
+      text-align:
+        right;
     }
 
     .side-btn:hover {
 
       background:
-        rgba(255,255,255,.25);
-    }
-
-    .side-btn.active {
-
-      background:
-        rgba(255,255,255,.4);
-
-      outline:
-        2px solid rgba(37,99,235,.3);
+        rgba(255,255,255,.35);
     }
 
     /* MAIN */
 
     .main {
 
-      flex: 1;
+      flex:
+        1;
 
-      display: flex;
+      display:
+        flex;
 
-      flex-direction: column;
+      flex-direction:
+        column;
     }
-
-    /* TOPBAR */
 
     .topbar {
 
       background:
-        linear-gradient(
-          180deg,
-          #f7f9fb,
-          #eef2f6
-        );
+        #fff;
 
       border-bottom:
-        1px solid var(--panel-border);
+        1px solid
+        var(--border);
 
-      padding: 14px 18px;
+      padding:
+        16px 20px;
 
-      display: flex;
+      display:
+        flex;
 
       justify-content:
         space-between;
 
-      align-items: center;
+      align-items:
+        center;
     }
 
     .topbar h1 {
 
-      font-size: 18px;
-
-      margin-bottom: 4px;
+      font-size:
+        22px;
     }
 
-    .topbar-sub {
+    .subtitle {
 
-      font-size: 12px;
+      font-size:
+        13px;
 
       color:
-        var(--text-muted);
+        var(--muted);
+
+      margin-top:
+        4px;
     }
 
-    .ws-status {
+    .ws-badge {
+
+      background:
+        #111827;
+
+      color:
+        white;
 
       padding:
-        8px 14px;
+        10px 14px;
 
-      border-radius: 8px;
+      border-radius:
+        10px;
 
-      color: white;
+      font-size:
+        14px;
 
-      font-weight: bold;
-
-      font-size: 13px;
-    }
-
-    .ws-online {
-
-      background:
-        var(--success);
-    }
-
-    .ws-offline {
-
-      background:
-        var(--extreme);
+      font-weight:
+        bold;
     }
 
     /* CONTENT */
 
-    .dashboard {
+    .content {
 
-      padding: 16px;
+      padding:
+        16px;
 
-      display: grid;
+      display:
+        flex;
 
-      grid-template-columns:
-        repeat(
-          auto-fit,
-          minmax(420px, 1fr)
-        );
+      flex-direction:
+        column;
 
-      gap: 16px;
+      gap:
+        16px;
     }
-
-    /* WINDOW */
 
     .window {
 
       background:
-        var(--panel-bg);
+        var(--panel);
 
       border:
-        1px solid var(--panel-border);
+        1px solid
+        var(--border);
 
-      border-radius: 12px;
+      border-radius:
+        14px;
 
-      overflow: hidden;
+      overflow:
+        hidden;
 
       box-shadow:
-        0 2px 8px
+        0 3px 10px
         rgba(0,0,0,.05);
     }
 
     .window-header {
 
       padding:
-        12px 14px;
+        14px 18px;
 
       background:
         linear-gradient(
           180deg,
-          #e5e7eb,
-          #d1d5db
+          #eef1f5,
+          #dfe5ec
         );
 
       border-bottom:
-        1px solid var(--panel-border-dark);
+        1px solid
+        var(--border);
 
-      font-weight: bold;
+      font-weight:
+        bold;
+
+      font-size:
+        15px;
     }
 
     .window-body {
 
-      padding: 14px;
+      padding:
+        18px;
     }
 
-    /* FORM */
+    .row {
+
+      margin-bottom:
+        14px;
+    }
 
     label {
 
-      display: block;
+      display:
+        block;
 
-      margin-bottom: 6px;
+      margin-bottom:
+        6px;
 
-      font-weight: bold;
+      font-size:
+        13px;
 
-      font-size: 13px;
+      font-weight:
+        bold;
     }
 
     input {
 
-      width: 100%;
+      width:
+        100%;
 
-      padding: 10px;
+      padding:
+        11px;
 
-      border-radius: 8px;
+      border-radius:
+        8px;
 
       border:
-        1px solid var(--panel-border-dark);
+        1px solid
+        #cbd5e1;
 
-      margin-bottom: 12px;
-
-      font-size: 14px;
-    }
-
-    input:focus {
-
-      outline: none;
-
-      border-color:
-        var(--accent);
+      font-size:
+        14px;
     }
 
     button {
 
-      border: none;
+      border:
+        none;
 
-      border-radius: 8px;
+      border-radius:
+        8px;
 
       padding:
-        10px 14px;
+        10px 16px;
 
-      cursor: pointer;
+      cursor:
+        pointer;
 
-      font-weight: bold;
+      font-weight:
+        bold;
 
-      transition: .2s;
+      transition:
+        .2s;
     }
 
     button:hover {
 
-      opacity: .92;
+      opacity:
+        .92;
     }
 
     .btn-primary {
 
       background:
-        var(--accent);
+        var(--primary);
 
-      color: white;
+      color:
+        white;
     }
 
     .btn-light {
@@ -388,7 +384,8 @@
       background:
         var(--success);
 
-      color: white;
+      color:
+        white;
     }
 
     .btn-medium {
@@ -396,7 +393,8 @@
       background:
         var(--warning);
 
-      color: white;
+      color:
+        white;
     }
 
     .btn-heavy {
@@ -404,7 +402,8 @@
       background:
         var(--danger);
 
-      color: white;
+      color:
+        white;
     }
 
     .btn-extreme {
@@ -412,18 +411,23 @@
       background:
         var(--extreme);
 
-      color: white;
+      color:
+        white;
     }
 
     .stress-buttons {
 
-      display: flex;
+      display:
+        flex;
 
-      flex-wrap: wrap;
+      flex-wrap:
+        wrap;
 
-      gap: 10px;
+      gap:
+        10px;
 
-      margin-bottom: 12px;
+      margin-bottom:
+        12px;
     }
 
     /* TERMINAL */
@@ -431,35 +435,144 @@
     .runtime-terminal {
 
       background:
-        var(--terminal-bg);
+        var(--terminal);
 
       color:
-        var(--terminal-text);
+        var(--terminalText);
 
       border:
-        1px solid var(--terminal-border);
+        1px solid
+        #1f2937;
 
-      border-radius: 10px;
+      border-radius:
+        10px;
 
-      padding: 14px;
-
-      min-height: 220px;
-
-      max-height: 320px;
-
-      overflow: auto;
+      padding:
+        14px;
 
       font-family:
         monospace;
 
-      font-size: 13px;
+      font-size:
+        13px;
 
-      line-height: 1.6;
+      line-height:
+        1.5;
 
-      white-space: pre-wrap;
+      white-space:
+        pre-wrap;
+
+      overflow:
+        auto;
+
+      min-height:
+        180px;
+
+      max-height:
+        320px;
     }
 
-    /* MOBILE */
+    /* DEVICE LIST */
+
+    .device-list {
+
+      display:
+        flex;
+
+      flex-direction:
+        column;
+
+      gap:
+        10px;
+    }
+
+    .device-item {
+
+      background:
+        #111827;
+
+      border:
+        1px solid
+        #1f2937;
+
+      border-radius:
+        10px;
+
+      padding:
+        14px;
+
+      color:
+        #e5e7eb;
+    }
+
+    .device-title {
+
+      font-size:
+        15px;
+
+      font-weight:
+        bold;
+
+      margin-bottom:
+        10px;
+
+      color:
+        #22c55e;
+    }
+
+    .device-grid {
+
+      display:
+        grid;
+
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(180px,1fr)
+        );
+
+      gap:
+        8px;
+    }
+
+    .device-field {
+
+      background:
+        rgba(255,255,255,.04);
+
+      border-radius:
+        8px;
+
+      padding:
+        8px 10px;
+
+      line-height:
+        1.4;
+    }
+
+    .device-label {
+
+      color:
+        #9ca3af;
+
+      font-size:
+        11px;
+
+      margin-bottom:
+        4px;
+    }
+
+    .device-value {
+
+      color:
+        #f9fafb;
+
+      font-size:
+        13px;
+
+      word-break:
+        break-word;
+    }
 
     @media (
       max-width: 768px
@@ -467,22 +580,32 @@
 
       body {
 
-        flex-direction: column;
+        flex-direction:
+          column;
       }
 
       .sidebar {
 
-        width: 100%;
+        width:
+          100%;
 
-        flex-direction: row;
+        display:
+          flex;
 
-        overflow-x: auto;
+        gap:
+          8px;
+
+        overflow-x:
+          auto;
       }
 
-      .dashboard {
+      .side-btn {
 
-        grid-template-columns:
-          1fr;
+        min-width:
+          120px;
+
+        margin:
+          0;
       }
     }
 
@@ -493,49 +616,40 @@
 <body>
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
 
-    <div class="sidebar-header">
-      📡 ALM v3
-    </div>
+  <div class="sidebar">
 
-    <button
-      class="side-btn active"
-    >
+    <h2>
+      📋 القائمة
+    </h2>
+
+    <button class="side-btn">
       ⚡ Opcode
     </button>
 
-    <button
-      class="side-btn"
-    >
+    <button class="side-btn">
       🖥 Terminal
     </button>
 
-    <button
-      class="side-btn"
-    >
+    <button class="side-btn">
       🔥 Stress
     </button>
 
-    <button
-      class="side-btn"
-    >
+    <button class="side-btn">
       🖧 Devices
     </button>
 
-    <button
-      class="side-btn"
-    >
-      📋 Logs
+    <button class="side-btn">
+      📡 Logs
     </button>
 
-  </aside>
+  </div>
 
   <!-- MAIN -->
-  <main class="main">
 
-    <!-- TOPBAR -->
-    <header class="topbar">
+  <div class="main">
+
+    <div class="topbar">
 
       <div>
 
@@ -543,28 +657,25 @@
           📡 ALM v3 Dashboard
         </h1>
 
-        <div class="topbar-sub">
-          Runtime • Sessions • Tasks • Gateway
+        <div class="subtitle">
+          Runtime • Sessions • Tasks • Stress • Live Transport
         </div>
 
       </div>
 
       <div
         id="wsStatus"
-        class="
-          ws-status
-          ws-offline
-        "
+        class="ws-badge"
       >
         WS: Connecting...
       </div>
 
-    </header>
+    </div>
 
-    <!-- DASHBOARD -->
-    <section class="dashboard">
+    <div class="content">
 
       <!-- OPCODE -->
+
       <div class="window">
 
         <div class="window-header">
@@ -573,44 +684,45 @@
 
         <div class="window-body">
 
-          <label>
-            Device ID
-          </label>
+          <div class="row">
 
-          <input
-            id="opcodeDevice"
-            value="router-1"
-          />
+            <label>
+              Device ID
+            </label>
 
-          <label>
-            Opcode
-          </label>
+            <input
+              id="opcodeDevice"
+              value="router-1"
+            />
 
-          <input
-            id="opcodeInput"
-            value="system.getIdentity"
-          />
+          </div>
+
+          <div class="row">
+
+            <label>
+              Opcode
+            </label>
+
+            <input
+              id="opcodeInput"
+              value="system.getIdentity"
+            />
+
+          </div>
 
           <button
-            id="runOpcodeBtn"
             class="btn-primary"
+            onclick="sendOpcode()"
           >
-            Execute Opcode
+            🚀 Execute
           </button>
-
-          <div
-            id="opcodeResult"
-            class="runtime-terminal"
-            style="
-              margin-top:14px;
-            "
-          ></div>
 
         </div>
 
       </div>
 
       <!-- TERMINAL -->
+
       <div class="window">
 
         <div class="window-header">
@@ -619,28 +731,30 @@
 
         <div class="window-body">
 
-          <label>
-            Command
-          </label>
+          <div class="row">
 
-          <input
-            id="terminalInput"
-            value="uname -a"
-          />
+            <label>
+              Command
+            </label>
+
+            <input
+              id="terminalInput"
+              value="uname -a"
+            />
+
+          </div>
 
           <button
-            id="runTerminalBtn"
             class="btn-primary"
+            onclick="runTerminal()"
           >
-            Execute Command
+            ▶ Execute Command
           </button>
 
           <div
             id="terminalOutput"
             class="runtime-terminal"
-            style="
-              margin-top:14px;
-            "
+            style="margin-top:14px;"
           ></div>
 
         </div>
@@ -648,10 +762,11 @@
       </div>
 
       <!-- STRESS -->
+
       <div class="window">
 
         <div class="window-header">
-          🔥 Stress Runtime
+          🔥 Stress Testing
         </div>
 
         <div class="window-body">
@@ -698,36 +813,109 @@
       </div>
 
       <!-- DEVICES -->
+
       <div class="window">
 
         <div class="window-header">
           🖧 Runtime Devices
         </div>
 
-        <div
-          id="devicesBox"
-          class="runtime-terminal"
-        ></div>
+        <div class="window-body">
+
+          <div id="devicesBox">
+
+            <div class="device-list">
+
+              <div class="device-item">
+
+                <div class="device-title">
+                  router-1
+                </div>
+
+                <div class="device-grid">
+
+                  <div class="device-field">
+
+                    <div class="device-label">
+                      IP
+                    </div>
+
+                    <div class="device-value">
+                      192.168.88.1
+                    </div>
+
+                  </div>
+
+                  <div class="device-field">
+
+                    <div class="device-label">
+                      Method
+                    </div>
+
+                    <div class="device-value">
+                      SSH
+                    </div>
+
+                  </div>
+
+                  <div class="device-field">
+
+                    <div class="device-label">
+                      Profile
+                    </div>
+
+                    <div class="device-value">
+                      Linux
+                    </div>
+
+                  </div>
+
+                  <div class="device-field">
+
+                    <div class="device-label">
+                      Status
+                    </div>
+
+                    <div class="device-value">
+                      Online
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
 
       <!-- LOGS -->
+
       <div class="window">
 
         <div class="window-header">
-          📋 Runtime Logs
+          📡 Runtime Logs
         </div>
 
-        <div
-          id="logs"
-          class="runtime-terminal"
-        ></div>
+        <div class="window-body">
+
+          <div
+            id="logs"
+            class="runtime-terminal"
+          ></div>
+
+        </div>
 
       </div>
 
-    </section>
+    </div>
 
-  </main>
+  </div>
 
   <script
     type="module"
