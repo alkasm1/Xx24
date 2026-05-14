@@ -17,11 +17,8 @@ import {
 // CONFIG
 // ========================================
 
-// ضع IP الجهاز الذي يعمل عليه Gateway
-// مثال:
-// 192.168.1.10
-// 10.0.0.5
-const GATEWAY_HOST = "192.168.88.245";   // ضع IP جهاز الـGateway
+const GATEWAY_HOST =
+  window.location.hostname;
 
 // ========================================
 // WS CONNECT
