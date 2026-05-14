@@ -1,5 +1,3 @@
-// frontend/app.js
-
 import {
   executeTerminalCommand
 } from "./runtime/terminal.js";
@@ -13,207 +11,314 @@ import {
   routeMessage
 } from "./runtime/message_router.js";
 
-// -----------------------------
-// HELPERS
-// -----------------------------
-function genRequestId(
-  prefix = "req"
-) {
+// ------------------------------------
+// CONNECT WS
+// ------------------------------------
 
-  return (
-    prefix +
-    "_" +
-    Math.random()
-      .toString(36)
-      .slice(2)
-  );
-}
-
-// -----------------------------
-// WS CONNECT
-// -----------------------------
 connectWS({
   onMessage:
-    routeMessage
+    handleMessage
 });
 
-// -----------------------------
-// OPCODE EXECUTION
-// -----------------------------
-function sendOpcode() {
+// ------------------------------------
+// HANDLE MESSAGES
+// ------------------------------------
 
-  const deviceId =
-    document.getElementById(
-      "opcodeDevice"
-    )?.value;
+function handleMessage(
+  data
+) {
 
-  const opcode =
-    document.getElementById(
-      "opcodeInput"
-    )?.value;
+  routeMessage(data);
 
   if (
-    !deviceId ||
-    !opcode
+    data.type ===
+    "runtime.snapshot"
   ) {
 
-    console.warn(
-      "Missing opcode params"
+    renderDevices(
+      data.devices || []
     );
-
-    return;
   }
-
-  sendWS({
-
-    type:
-      "ui.opcode",
-
-    requestId:
-      genRequestId(),
-
-    deviceId,
-
-    opcode,
-
-    meta: {}
-  });
-}
-
-// -----------------------------
-// TERMINAL EXECUTION
-// -----------------------------
-function runTerminal() {
-
-  const deviceId =
-    document.getElementById(
-      "opcodeDevice"
-    )?.value;
-
-  const command =
-    document.getElementById(
-      "terminalInput"
-    )?.value;
 
   if (
-    !deviceId ||
-    !command
+    data.type ===
+    "runtime.log"
   ) {
 
-    console.warn(
-      "Missing terminal params"
+    appendLog(
+      data.message
     );
-
-    return;
   }
 
-  executeTerminalCommand({
-    deviceId,
-    command
-  });
+  if (
+    data.type ===
+    "terminal.output"
+  ) {
+
+    const box =
+      document.getElementById(
+        "terminalOutput"
+      );
+
+    box.textContent +=
+      data.line + "\n";
+  }
+
+  if (
+    data.type ===
+    "stress.result"
+  ) {
+
+    document.getElementById(
+      "stressResults"
+    ).textContent =
+      JSON.stringify(
+        data,
+        null,
+        2
+      );
+  }
 }
 
-// -----------------------------
-// STRESS EXECUTION
-// -----------------------------
+// ------------------------------------
+// OPCODE
+// ------------------------------------
+
+window.sendOpcode =
+  function () {
+
+    const deviceId =
+      document.getElementById(
+        "opcodeDevice"
+      ).value;
+
+    const opcode =
+      document.getElementById(
+        "opcodeInput"
+      ).value;
+
+    sendWS({
+
+      type:
+        "ui.opcode",
+
+      requestId:
+        "req_" +
+        Date.now(),
+
+      deviceId,
+
+      opcode
+    });
+  };
+
+// ------------------------------------
+// TERMINAL
+// ------------------------------------
+
+window.runTerminal =
+  function () {
+
+    const deviceId =
+      document.getElementById(
+        "opcodeDevice"
+      ).value;
+
+    const command =
+      document.getElementById(
+        "terminalInput"
+      ).value;
+
+    const box =
+      document.getElementById(
+        "terminalOutput"
+      );
+
+    box.textContent =
+      "$ " +
+      command +
+      "\n\n";
+
+    executeTerminalCommand({
+
+      deviceId,
+      command
+    });
+  };
+
+// ------------------------------------
+// STRESS
+// ------------------------------------
+
 function runStress(
   profile
 ) {
+
+  const box =
+    document.getElementById(
+      "stressResults"
+    );
+
+  box.textContent =
+    "Running stress profile: " +
+    profile +
+    "...";
 
   sendWS({
 
     type:
       "ui.stress.run",
 
-    requestId:
-      genRequestId("stress"),
-
     profile
   });
 }
 
-// -----------------------------
-// UI EVENTS
-// -----------------------------
-function bindUI() {
+document
+  .getElementById(
+    "runLight"
+  )
+  ?.addEventListener(
+    "click",
+    () =>
+      runStress(
+        "light"
+      )
+  );
 
-  // OPCODE BUTTON
-  document
-    .getElementById(
-      "runOpcodeBtn"
-    )
-    ?.addEventListener(
-      "click",
-      sendOpcode
+document
+  .getElementById(
+    "runMedium"
+  )
+  ?.addEventListener(
+    "click",
+    () =>
+      runStress(
+        "medium"
+      )
+  );
+
+document
+  .getElementById(
+    "runHeavy"
+  )
+  ?.addEventListener(
+    "click",
+    () =>
+      runStress(
+        "heavy"
+      )
+  );
+
+document
+  .getElementById(
+    "runExtreme"
+  )
+  ?.addEventListener(
+    "click",
+    () =>
+      runStress(
+        "extreme"
+      )
+  );
+
+// ------------------------------------
+// DEVICES RENDER
+// ------------------------------------
+
+function renderDevices(
+  devices
+) {
+
+  const box =
+    document.getElementById(
+      "devicesBox"
     );
 
-  // TERMINAL BUTTON
-  document
-    .getElementById(
-      "runTerminalBtn"
-    )
-    ?.addEventListener(
-      "click",
-      runTerminal
-    );
+  if (
+    !devices.length
+  ) {
 
-  // STRESS BUTTONS
-  document
-    .getElementById(
-      "runLight"
-    )
-    ?.addEventListener(
-      "click",
-      () =>
-        runStress(
-          "light"
-        )
-    );
+    box.innerHTML =
+      `
+      <div class="runtime-terminal">
+        No runtime devices detected.
+      </div>
+      `;
 
-  document
-    .getElementById(
-      "runMedium"
-    )
-    ?.addEventListener(
-      "click",
-      () =>
-        runStress(
-          "medium"
-        )
-    );
+    return;
+  }
 
-  document
-    .getElementById(
-      "runHeavy"
-    )
-    ?.addEventListener(
-      "click",
-      () =>
-        runStress(
-          "heavy"
-        )
-    );
+  box.innerHTML =
+    devices.map(device => {
 
-  document
-    .getElementById(
-      "runExtreme"
-    )
-    ?.addEventListener(
-      "click",
-      () =>
-        runStress(
-          "extreme"
-        )
-    );
+      return `
+        <div class="device-item">
+
+          <div class="device-title">
+            ${device.deviceId || "Unknown"}
+          </div>
+
+          <div class="device-grid">
+
+            <div class="device-field">
+              <div class="device-label">
+                IP
+              </div>
+              <div class="device-value">
+                ${device.ip || "-"}
+              </div>
+            </div>
+
+            <div class="device-field">
+              <div class="device-label">
+                Port
+              </div>
+              <div class="device-value">
+                ${device.port || "-"}
+              </div>
+            </div>
+
+            <div class="device-field">
+              <div class="device-label">
+                Method
+              </div>
+              <div class="device-value">
+                ${device.method || "-"}
+              </div>
+            </div>
+
+            <div class="device-field">
+              <div class="device-label">
+                Profile
+              </div>
+              <div class="device-value">
+                ${device.profile || "-"}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      `;
+    }).join("");
 }
 
-// -----------------------------
-// INIT
-// -----------------------------
-window.addEventListener(
-  "DOMContentLoaded",
-  () => {
+// ------------------------------------
+// LOGS
+// ------------------------------------
 
-    bindUI();
-  }
-);
+function appendLog(
+  line
+) {
+
+  const box =
+    document.getElementById(
+      "logs"
+    );
+
+  box.textContent +=
+    line + "\n";
+
+  box.scrollTop =
+    box.scrollHeight;
+}
