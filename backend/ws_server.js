@@ -1,81 +1,320 @@
 // backend/gateway/modules/ws_server.js
 
-const WebSocket = require("ws");
-const eventBus = require("../backend/gateway/event_bus");
-const registry = require("../backend/gateway/device_registry");
-const Metrics = require("../backend/gateway/metrics");
+const WebSocket =
+  require("ws");
 
-const metrics = new Metrics(eventBus, registry);
+const eventBus =
+  require("../backend/gateway/event_bus");
 
-const wss = new WebSocket.Server({ port: 8080 });
+const registry =
+  require("../backend/gateway/device_registry");
 
-console.log("🌐 WS Dashboard running on ws://localhost:8080");
+const Metrics =
+  require("../backend/gateway/metrics");
+
+// ======================================
+// METRICS
+// ======================================
+
+const metrics =
+  new Metrics(
+    eventBus,
+    registry
+  );
+
+// ======================================
+// WS SERVER
+// ======================================
+
+const WS_PORT = 5001;
+
+const wss =
+  new WebSocket.Server({
+
+    host: "0.0.0.0",
+
+    port: WS_PORT
+  });
+
+console.log(
+  `🌐 WS Dashboard running on ws://0.0.0.0:${WS_PORT}`
+);
+
+// ======================================
+// BROADCAST
+// ======================================
 
 function broadcast(data) {
-  const msg = JSON.stringify(data);
-  wss.clients.forEach(c => {
-    if (c.readyState === WebSocket.OPEN) {
-      c.send(msg);
+
+  const msg =
+    JSON.stringify(data);
+
+  wss.clients.forEach(client => {
+
+    if (
+      client.readyState ===
+      WebSocket.OPEN
+    ) {
+
+      client.send(msg);
     }
   });
 }
 
-wss.on("connection", ws => {
-  console.log("🟢 Dashboard connected");
+// ======================================
+// CONNECTION
+// ======================================
 
-  ws.send(JSON.stringify({
-    type: "snapshot",
-    metrics: metrics.snapshot(),
-    devices: registry.getAll()
-  }));
+wss.on(
+  "connection",
+  ws => {
 
-  ws.on("message", msg => {
-    try {
-      const data = JSON.parse(msg);
+    console.log(
+      "🟢 Dashboard connected"
+    );
 
-      if (data.type === "command") {
-        eventBus.emit("ui.command", {
-          command: data.command,
-          deviceId: data.deviceId,
-          params: data.params
-        });
+    // INITIAL SNAPSHOT
+    ws.send(
+      JSON.stringify({
+
+        type: "snapshot",
+
+        metrics:
+          metrics.snapshot(),
+
+        devices:
+          registry.getAll()
+      })
+    );
+
+    // ==========================
+    // MESSAGE
+    // ==========================
+
+    ws.on(
+      "message",
+      raw => {
+
+        try {
+
+          const data =
+            JSON.parse(raw);
+
+          // ----------------------
+          // PING
+          // ----------------------
+
+          if (
+            data.type ===
+            "ping"
+          ) {
+
+            ws.send(
+              JSON.stringify({
+
+                type: "pong",
+
+                ts:
+                  Date.now()
+              })
+            );
+
+            return;
+          }
+
+          // ----------------------
+          // OPCODE
+          // ----------------------
+
+          if (
+            data.type ===
+            "ui.opcode"
+          ) {
+
+            eventBus.emit(
+              "ui.command",
+              {
+
+                requestId:
+                  data.requestId,
+
+                deviceId:
+                  data.deviceId,
+
+                opcode:
+                  data.opcode,
+
+                meta:
+                  data.meta || {}
+              }
+            );
+
+            return;
+          }
+
+          // ----------------------
+          // TERMINAL
+          // ----------------------
+
+          if (
+            data.type ===
+            "ui.terminal.exec"
+          ) {
+
+            eventBus.emit(
+              "ui.terminal.exec",
+              data
+            );
+
+            return;
+          }
+
+          // ----------------------
+          // STRESS
+          // ----------------------
+
+          if (
+            data.type ===
+            "ui.stress.run"
+          ) {
+
+            eventBus.emit(
+              "ui.stress.run",
+              {
+
+                profile:
+                  data.profile
+              }
+            );
+
+            return;
+          }
+
+        } catch (err) {
+
+          console.error(
+            "WS parse error:",
+            err.message
+          );
+        }
       }
+    );
 
-      if (data.type === "broadcast") {
-        eventBus.emit("ui.broadcast", {
-          command: data.command,
-          groupId: data.groupId,
-          params: data.params
-        });
+    // ==========================
+    // CLOSE
+    // ==========================
+
+    ws.on(
+      "close",
+      () => {
+
+        console.log(
+          "🔴 Dashboard disconnected"
+        );
       }
+    );
+  }
+);
 
-    } catch (e) {
-      console.error("WS parse error:", e.message);
-    }
-  });
-});
+// ======================================
+// EVENT BUS → UI
+// ======================================
 
-/* =========================
-   JOB EVENTS → UI
-========================= */
-eventBus.on("broadcast.job.created", job => broadcast({ type: "job.created", job }));
-eventBus.on("broadcast.job.update", job => broadcast({ type: "job.update", job }));
-eventBus.on("broadcast.job.done", job => broadcast({ type: "job.done", job }));
+eventBus.on(
+  "broadcast.job.created",
+  job =>
+    broadcast({
 
-/* =========================
-   DEVICE + COMMAND EVENTS
-========================= */
-eventBus.on("device.ack", ack => broadcast({ type: "ack", data: ack }));
-eventBus.on("command.timeout", info => broadcast({ type: "timeout", data: info }));
-eventBus.on("command.sent", cmd => broadcast({ type: "command", data: cmd }));
+      type:
+        "job.created",
 
-/* =========================
-   SNAPSHOT EVERY 3s
-========================= */
+      job
+    })
+);
+
+eventBus.on(
+  "broadcast.job.update",
+  job =>
+    broadcast({
+
+      type:
+        "job.update",
+
+      job
+    })
+);
+
+eventBus.on(
+  "broadcast.job.done",
+  job =>
+    broadcast({
+
+      type:
+        "job.done",
+
+      job
+    })
+);
+
+eventBus.on(
+  "device.ack",
+  ack =>
+    broadcast({
+
+      type: "ack",
+
+      data: ack
+    })
+);
+
+eventBus.on(
+  "command.timeout",
+  info =>
+    broadcast({
+
+      type: "timeout",
+
+      data: info
+    })
+);
+
+eventBus.on(
+  "command.sent",
+  cmd =>
+    broadcast({
+
+      type: "command",
+
+      data: cmd
+    })
+);
+
+// ======================================
+// SNAPSHOT LOOP
+// ======================================
+
 setInterval(() => {
+
   broadcast({
+
     type: "snapshot",
-    metrics: metrics.snapshot(),
-    devices: registry.getAll()
+
+    metrics:
+      metrics.snapshot(),
+
+    devices:
+      registry.getAll()
   });
+
 }, 3000);
+
+// ======================================
+// EXPORT
+// ======================================
+
+module.exports = {
+
+  wss,
+
+  broadcast
+};
