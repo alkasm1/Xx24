@@ -13,42 +13,92 @@ const router =
 function createAPIServer({
 
   port = 8000
+
 } = {}) {
 
   const app =
     express();
 
-  // -----------------------------
+  // =============================
   // MIDDLEWARE
-  // -----------------------------
+  // =============================
+
   app.use(
     cors()
   );
 
   app.use(
     express.json({
+
       limit: "5mb"
     })
   );
 
-  // -----------------------------
-  // API ROUTES
-  // -----------------------------
+  // =============================
+  // API
+  // =============================
+
   app.use(
     "/api",
     router
   );
 
-  // -----------------------------
+  // =============================
+  // FRONTEND STATIC
+  // =============================
+
+  const frontendPath =
+    path.join(
+
+      __dirname,
+
+      "../../frontend"
+    );
+
+  app.use(
+    express.static(
+      frontendPath
+    )
+  );
+
+  // =============================
+  // INDEX.HTML
+  // =============================
+
+  app.get(
+    "*",
+    (
+      req,
+      res
+    ) => {
+
+      res.sendFile(
+
+        path.join(
+
+          frontendPath,
+
+          "index.html"
+        )
+      );
+    }
+  );
+
+  // =============================
   // START
-  // -----------------------------
+  // =============================
+
   app.listen(
+
     port,
+
     "0.0.0.0",
+
     () => {
 
       console.log(
-        `🌐 API server running on :${port}`
+
+        `🌐 API + Frontend running on http://0.0.0.0:${port}`
       );
     }
   );
@@ -57,5 +107,6 @@ function createAPIServer({
 }
 
 module.exports = {
+
   createAPIServer
 };
