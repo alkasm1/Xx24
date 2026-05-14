@@ -4,10 +4,13 @@ import {
   sendWS
 } from "../ws_client.js";
 
-function genId() {
+function genRequestId(
+  prefix = "term"
+) {
 
   return (
-    "term_" +
+    prefix +
+    "_" +
     Math.random()
       .toString(36)
       .slice(2)
@@ -18,6 +21,7 @@ export function executeTerminalCommand({
 
   deviceId,
   command
+
 }) {
 
   return sendWS({
@@ -26,7 +30,7 @@ export function executeTerminalCommand({
       "ui.terminal.exec",
 
     requestId:
-      genId(),
+      genRequestId(),
 
     deviceId,
 
