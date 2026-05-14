@@ -21,10 +21,7 @@ import {
 // مثال:
 // 192.168.1.10
 // 10.0.0.5
-
-const GATEWAY_HOST =
-  localStorage.getItem("alm_gateway_host")
-  || location.hostname;
+const GATEWAY_HOST = "192.168.88.245";   // ضع IP جهاز الـGateway
 
 // ========================================
 // WS CONNECT
