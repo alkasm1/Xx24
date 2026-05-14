@@ -1,3 +1,5 @@
+// backend/api/server.js
+
 const express =
   require("express");
 
@@ -35,7 +37,7 @@ function createAPIServer({
   );
 
   // =============================
-  // API
+  // API ROUTES
   // =============================
 
   app.use(
@@ -62,25 +64,24 @@ function createAPIServer({
   );
 
   // =============================
-  // INDEX.HTML
+  // FALLBACK
   // =============================
 
-  app.get("/*", (req,res)=>{
+  app.use((req, res) => {
 
-      res.sendFile(
+    res.sendFile(
 
-        path.join(
+      path.join(
 
-          frontendPath,
+        frontendPath,
 
-          "index.html"
-        )
-      );
-    }
-  );
+        "index.html"
+      )
+    );
+  });
 
   // =============================
-  // START
+  // START SERVER
   // =============================
 
   app.listen(
