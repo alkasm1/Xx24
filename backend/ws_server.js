@@ -4,13 +4,13 @@ const WebSocket =
   require("ws");
 
 const eventBus =
-  require("../backend/gateway/event_bus");
+  require("../event_bus");
 
 const registry =
-  require("../backend/gateway/device_registry");
+  require("../device_registry");
 
 const Metrics =
-  require("../backend/gateway/metrics");
+  require("../metrics");
 
 // ======================================
 // METRICS
@@ -23,21 +23,29 @@ const metrics =
   );
 
 // ======================================
-// WS SERVER
+// WS CONFIG
 // ======================================
 
-const WS_PORT = 5001;
+const WS_HOST =
+  "0.0.0.0";
+
+const WS_PORT =
+  5001;
+
+// ======================================
+// WS SERVER
+// ======================================
 
 const wss =
   new WebSocket.Server({
 
-    host: "0.0.0.0",
+    host: WS_HOST,
 
     port: WS_PORT
   });
 
 console.log(
-  `🌐 WS Dashboard running on ws://0.0.0.0:${WS_PORT}`
+  `🌐 WS Dashboard running on ws://${WS_HOST}:${WS_PORT}`
 );
 
 // ======================================
@@ -46,7 +54,7 @@ console.log(
 
 function broadcast(data) {
 
-  const msg =
+  const payload =
     JSON.stringify(data);
 
   wss.clients.forEach(client => {
@@ -56,24 +64,29 @@ function broadcast(data) {
       WebSocket.OPEN
     ) {
 
-      client.send(msg);
+      try {
+
+        client.send(payload);
+
+      } catch (err) {
+
+        console.error(
+          "WS send error:",
+          err.message
+        );
+      }
     }
   });
 }
 
 // ======================================
-// CONNECTION
+// SEND SNAPSHOT
 // ======================================
 
-wss.on(
-  "connection",
-  ws => {
+function sendSnapshot(ws) {
 
-    console.log(
-      "🟢 Dashboard connected"
-    );
+  try {
 
-    // INITIAL SNAPSHOT
     ws.send(
       JSON.stringify({
 
@@ -87,9 +100,36 @@ wss.on(
       })
     );
 
-    // ==========================
+  } catch (err) {
+
+    console.error(
+      "Snapshot send error:",
+      err.message
+    );
+  }
+}
+
+// ======================================
+// WS CONNECTION
+// ======================================
+
+wss.on(
+  "connection",
+  (ws, req) => {
+
+    const ip =
+      req.socket.remoteAddress;
+
+    console.log(
+      `🟢 Dashboard connected: ${ip}`
+    );
+
+    // INITIAL SNAPSHOT
+    sendSnapshot(ws);
+
+    // ==================================
     // MESSAGE
-    // ==========================
+    // ==================================
 
     ws.on(
       "message",
@@ -100,9 +140,9 @@ wss.on(
           const data =
             JSON.parse(raw);
 
-          // ----------------------
-          // PING
-          // ----------------------
+          // ------------------------------
+          // HEARTBEAT
+          // ------------------------------
 
           if (
             data.type ===
@@ -122,9 +162,9 @@ wss.on(
             return;
           }
 
-          // ----------------------
+          // ------------------------------
           // OPCODE
-          // ----------------------
+          // ------------------------------
 
           if (
             data.type ===
@@ -152,9 +192,9 @@ wss.on(
             return;
           }
 
-          // ----------------------
+          // ------------------------------
           // TERMINAL
-          // ----------------------
+          // ------------------------------
 
           if (
             data.type ===
@@ -163,15 +203,25 @@ wss.on(
 
             eventBus.emit(
               "ui.terminal.exec",
-              data
+              {
+
+                requestId:
+                  data.requestId,
+
+                deviceId:
+                  data.deviceId,
+
+                command:
+                  data.command
+              }
             );
 
             return;
           }
 
-          // ----------------------
+          // ------------------------------
           // STRESS
-          // ----------------------
+          // ------------------------------
 
           if (
             data.type ===
@@ -190,6 +240,15 @@ wss.on(
             return;
           }
 
+          // ------------------------------
+          // UNKNOWN
+          // ------------------------------
+
+          console.log(
+            "Unknown WS message:",
+            data.type
+          );
+
         } catch (err) {
 
           console.error(
@@ -200,16 +259,31 @@ wss.on(
       }
     );
 
-    // ==========================
+    // ==================================
     // CLOSE
-    // ==========================
+    // ==================================
 
     ws.on(
       "close",
       () => {
 
         console.log(
-          "🔴 Dashboard disconnected"
+          `🔴 Dashboard disconnected: ${ip}`
+        );
+      }
+    );
+
+    // ==================================
+    // ERROR
+    // ==================================
+
+    ws.on(
+      "error",
+      err => {
+
+        console.error(
+          "WS client error:",
+          err.message
         );
       }
     );
@@ -261,7 +335,8 @@ eventBus.on(
   ack =>
     broadcast({
 
-      type: "ack",
+      type:
+        "ack",
 
       data: ack
     })
@@ -272,7 +347,8 @@ eventBus.on(
   info =>
     broadcast({
 
-      type: "timeout",
+      type:
+        "timeout",
 
       data: info
     })
@@ -283,9 +359,46 @@ eventBus.on(
   cmd =>
     broadcast({
 
-      type: "command",
+      type:
+        "command",
 
       data: cmd
+    })
+);
+
+eventBus.on(
+  "terminal.output",
+  data =>
+    broadcast({
+
+      type:
+        "terminal.output",
+
+      ...data
+    })
+);
+
+eventBus.on(
+  "stress.result",
+  data =>
+    broadcast({
+
+      type:
+        "stress.result",
+
+      ...data
+    })
+);
+
+eventBus.on(
+  "log",
+  message =>
+    broadcast({
+
+      type:
+        "log",
+
+      message
     })
 );
 
