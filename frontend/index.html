@@ -9,7 +9,9 @@
     name="viewport"
     content="
       width=device-width,
-      initial-scale=1.0
+      initial-scale=1.0,
+      maximum-scale=1.0,
+      user-scalable=no
     "
   />
 
@@ -17,10 +19,474 @@
     ALM v3 Dashboard
   </title>
 
-  <link
-    rel="stylesheet"
-    href="./styles/main.css"
-  />
+  <style>
+
+    * {
+
+      box-sizing: border-box;
+
+      margin: 0;
+
+      padding: 0;
+
+      -webkit-tap-highlight-color:
+        transparent;
+    }
+
+    :root {
+
+      --sidebar-bg:
+        #9ca3af;
+
+      --sidebar-bg-dark:
+        #8b95a1;
+
+      --main-bg:
+        #e8ecf0;
+
+      --panel-bg:
+        #f4f6f8;
+
+      --panel-border:
+        #cfd6dd;
+
+      --panel-border-dark:
+        #b7c0c9;
+
+      --text:
+        #111827;
+
+      --text-muted:
+        #4b5563;
+
+      --accent:
+        #2563eb;
+
+      --success:
+        #16a34a;
+
+      --warning:
+        #ca8a04;
+
+      --danger:
+        #ea580c;
+
+      --extreme:
+        #991b1b;
+
+      --terminal-bg:
+        #0b1220;
+
+      --terminal-text:
+        #22c55e;
+
+      --terminal-border:
+        #1e293b;
+    }
+
+    body {
+
+      font-family:
+        Arial,
+        sans-serif;
+
+      background:
+        var(--main-bg);
+
+      color:
+        var(--text);
+
+      display: flex;
+
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+
+    .sidebar {
+
+      width: 230px;
+
+      background:
+        linear-gradient(
+          180deg,
+          var(--sidebar-bg),
+          var(--sidebar-bg-dark)
+        );
+
+      padding: 14px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 8px;
+
+      border-left:
+        1px solid rgba(0,0,0,.15);
+    }
+
+    .sidebar-header {
+
+      background:
+        rgba(255,255,255,.15);
+
+      border-radius: 10px;
+
+      padding: 12px;
+
+      text-align: center;
+
+      font-weight: bold;
+
+      color: #fff;
+
+      margin-bottom: 10px;
+    }
+
+    .side-btn {
+
+      border: none;
+
+      border-radius: 8px;
+
+      padding: 12px;
+
+      text-align: right;
+
+      cursor: pointer;
+
+      font-weight: bold;
+
+      background:
+        rgba(255,255,255,.12);
+
+      color:
+        #1f2937;
+
+      transition: .2s;
+    }
+
+    .side-btn:hover {
+
+      background:
+        rgba(255,255,255,.25);
+    }
+
+    .side-btn.active {
+
+      background:
+        rgba(255,255,255,.4);
+
+      outline:
+        2px solid rgba(37,99,235,.3);
+    }
+
+    /* MAIN */
+
+    .main {
+
+      flex: 1;
+
+      display: flex;
+
+      flex-direction: column;
+    }
+
+    /* TOPBAR */
+
+    .topbar {
+
+      background:
+        linear-gradient(
+          180deg,
+          #f7f9fb,
+          #eef2f6
+        );
+
+      border-bottom:
+        1px solid var(--panel-border);
+
+      padding: 14px 18px;
+
+      display: flex;
+
+      justify-content:
+        space-between;
+
+      align-items: center;
+    }
+
+    .topbar h1 {
+
+      font-size: 18px;
+
+      margin-bottom: 4px;
+    }
+
+    .topbar-sub {
+
+      font-size: 12px;
+
+      color:
+        var(--text-muted);
+    }
+
+    .ws-status {
+
+      padding:
+        8px 14px;
+
+      border-radius: 8px;
+
+      color: white;
+
+      font-weight: bold;
+
+      font-size: 13px;
+    }
+
+    .ws-online {
+
+      background:
+        var(--success);
+    }
+
+    .ws-offline {
+
+      background:
+        var(--extreme);
+    }
+
+    /* CONTENT */
+
+    .dashboard {
+
+      padding: 16px;
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(420px, 1fr)
+        );
+
+      gap: 16px;
+    }
+
+    /* WINDOW */
+
+    .window {
+
+      background:
+        var(--panel-bg);
+
+      border:
+        1px solid var(--panel-border);
+
+      border-radius: 12px;
+
+      overflow: hidden;
+
+      box-shadow:
+        0 2px 8px
+        rgba(0,0,0,.05);
+    }
+
+    .window-header {
+
+      padding:
+        12px 14px;
+
+      background:
+        linear-gradient(
+          180deg,
+          #e5e7eb,
+          #d1d5db
+        );
+
+      border-bottom:
+        1px solid var(--panel-border-dark);
+
+      font-weight: bold;
+    }
+
+    .window-body {
+
+      padding: 14px;
+    }
+
+    /* FORM */
+
+    label {
+
+      display: block;
+
+      margin-bottom: 6px;
+
+      font-weight: bold;
+
+      font-size: 13px;
+    }
+
+    input {
+
+      width: 100%;
+
+      padding: 10px;
+
+      border-radius: 8px;
+
+      border:
+        1px solid var(--panel-border-dark);
+
+      margin-bottom: 12px;
+
+      font-size: 14px;
+    }
+
+    input:focus {
+
+      outline: none;
+
+      border-color:
+        var(--accent);
+    }
+
+    button {
+
+      border: none;
+
+      border-radius: 8px;
+
+      padding:
+        10px 14px;
+
+      cursor: pointer;
+
+      font-weight: bold;
+
+      transition: .2s;
+    }
+
+    button:hover {
+
+      opacity: .92;
+    }
+
+    .btn-primary {
+
+      background:
+        var(--accent);
+
+      color: white;
+    }
+
+    .btn-light {
+
+      background:
+        var(--success);
+
+      color: white;
+    }
+
+    .btn-medium {
+
+      background:
+        var(--warning);
+
+      color: white;
+    }
+
+    .btn-heavy {
+
+      background:
+        var(--danger);
+
+      color: white;
+    }
+
+    .btn-extreme {
+
+      background:
+        var(--extreme);
+
+      color: white;
+    }
+
+    .stress-buttons {
+
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 10px;
+
+      margin-bottom: 12px;
+    }
+
+    /* TERMINAL */
+
+    .runtime-terminal {
+
+      background:
+        var(--terminal-bg);
+
+      color:
+        var(--terminal-text);
+
+      border:
+        1px solid var(--terminal-border);
+
+      border-radius: 10px;
+
+      padding: 14px;
+
+      min-height: 220px;
+
+      max-height: 320px;
+
+      overflow: auto;
+
+      font-family:
+        monospace;
+
+      font-size: 13px;
+
+      line-height: 1.6;
+
+      white-space: pre-wrap;
+    }
+
+    /* MOBILE */
+
+    @media (
+      max-width: 768px
+    ) {
+
+      body {
+
+        flex-direction: column;
+      }
+
+      .sidebar {
+
+        width: 100%;
+
+        flex-direction: row;
+
+        overflow-x: auto;
+      }
+
+      .dashboard {
+
+        grid-template-columns:
+          1fr;
+      }
+    }
+
+  </style>
 
 </head>
 
@@ -35,35 +501,30 @@
 
     <button
       class="side-btn active"
-      data-window="opcodeWindow"
     >
       ⚡ Opcode
     </button>
 
     <button
       class="side-btn"
-      data-window="terminalWindow"
     >
       🖥 Terminal
     </button>
 
     <button
       class="side-btn"
-      data-window="stressWindow"
     >
       🔥 Stress
     </button>
 
     <button
       class="side-btn"
-      data-window="devicesWindow"
     >
       🖧 Devices
     </button>
 
     <button
       class="side-btn"
-      data-window="logsWindow"
     >
       📋 Logs
     </button>
@@ -79,32 +540,32 @@
       <div>
 
         <h1>
-          ALM Runtime Dashboard
+          📡 ALM v3 Dashboard
         </h1>
 
-        <div class="sub">
-          Gateway • Runtime • Sessions • Tasks
+        <div class="topbar-sub">
+          Runtime • Sessions • Tasks • Gateway
         </div>
 
       </div>
 
       <div
         id="wsStatus"
-        class="ws-status offline"
+        class="
+          ws-status
+          ws-offline
+        "
       >
-        WS: Offline
+        WS: Connecting...
       </div>
 
     </header>
 
-    <!-- CONTENT -->
-    <section class="content">
+    <!-- DASHBOARD -->
+    <section class="dashboard">
 
       <!-- OPCODE -->
-      <div
-        class="window"
-        id="opcodeWindow"
-      >
+      <div class="window">
 
         <div class="window-header">
           ⚡ Opcode Execution
@@ -130,13 +591,19 @@
             value="system.getIdentity"
           />
 
-          <button id="runOpcodeBtn">
-            Execute
+          <button
+            id="runOpcodeBtn"
+            class="btn-primary"
+          >
+            Execute Opcode
           </button>
 
           <div
             id="opcodeResult"
-            class="terminal"
+            class="runtime-terminal"
+            style="
+              margin-top:14px;
+            "
           ></div>
 
         </div>
@@ -144,10 +611,7 @@
       </div>
 
       <!-- TERMINAL -->
-      <div
-        class="window"
-        id="terminalWindow"
-      >
+      <div class="window">
 
         <div class="window-header">
           🖥 Interactive Terminal
@@ -164,13 +628,19 @@
             value="uname -a"
           />
 
-          <button id="runTerminalBtn">
-            Execute
+          <button
+            id="runTerminalBtn"
+            class="btn-primary"
+          >
+            Execute Command
           </button>
 
           <div
             id="terminalOutput"
-            class="terminal"
+            class="runtime-terminal"
+            style="
+              margin-top:14px;
+            "
           ></div>
 
         </div>
@@ -178,10 +648,7 @@
       </div>
 
       <!-- STRESS -->
-      <div
-        class="window"
-        id="stressWindow"
-      >
+      <div class="window">
 
         <div class="window-header">
           🔥 Stress Runtime
@@ -192,29 +659,29 @@
           <div class="stress-buttons">
 
             <button
-              class="stress-btn"
-              data-level="light"
+              id="runLight"
+              class="btn-light"
             >
               Light
             </button>
 
             <button
-              class="stress-btn"
-              data-level="medium"
+              id="runMedium"
+              class="btn-medium"
             >
               Medium
             </button>
 
             <button
-              class="stress-btn"
-              data-level="heavy"
+              id="runHeavy"
+              class="btn-heavy"
             >
               Heavy
             </button>
 
             <button
-              class="stress-btn"
-              data-level="extreme"
+              id="runExtreme"
+              class="btn-extreme"
             >
               Extreme
             </button>
@@ -222,8 +689,8 @@
           </div>
 
           <div
-            id="stressOutput"
-            class="terminal"
+            id="stressResults"
+            class="runtime-terminal"
           ></div>
 
         </div>
@@ -231,35 +698,29 @@
       </div>
 
       <!-- DEVICES -->
-      <div
-        class="window"
-        id="devicesWindow"
-      >
+      <div class="window">
 
         <div class="window-header">
           🖧 Runtime Devices
         </div>
 
         <div
-          id="devicesOutput"
-          class="terminal"
+          id="devicesBox"
+          class="runtime-terminal"
         ></div>
 
       </div>
 
       <!-- LOGS -->
-      <div
-        class="window"
-        id="logsWindow"
-      >
+      <div class="window">
 
         <div class="window-header">
           📋 Runtime Logs
         </div>
 
         <div
-          id="logsOutput"
-          class="terminal"
+          id="logs"
+          class="runtime-terminal"
         ></div>
 
       </div>
@@ -270,7 +731,7 @@
 
   <script
     type="module"
-    src="./app.js"
+    src="app.js"
   ></script>
 
 </body>
