@@ -32,7 +32,7 @@ function createWSServer({
 }) {
 
   // =====================================
-  // WS SERVER ON TOP OF HTTP SERVER
+  // WS SERVER ATTACHED TO HTTP SERVER
   // =====================================
 
   const wss =
