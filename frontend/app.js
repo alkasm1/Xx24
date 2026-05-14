@@ -1,3 +1,5 @@
+// frontend/app.js
+
 import {
   executeTerminalCommand
 } from "./runtime/terminal.js";
@@ -11,110 +13,38 @@ import {
   routeMessage
 } from "./runtime/message_router.js";
 
-// ------------------------------------
-// CONNECT WS
-// ------------------------------------
+// ========================================
+// CONFIG
+// ========================================
+
+// ضع IP الجهاز الذي يعمل عليه Gateway
+// مثال:
+// 192.168.1.10
+// 10.0.0.5
+
+const GATEWAY_HOST =
+  localStorage.getItem("alm_gateway_host")
+  || location.hostname;
+
+// ========================================
+// WS CONNECT
+// ========================================
 
 connectWS({
-  onMessage:
-    handleMessage
+
+  host: GATEWAY_HOST,
+
+  onMessage(data) {
+
+    routeMessage(data);
+
+    handleUIMessage(data);
+  }
 });
 
-// ------------------------------------
-// HANDLE MESSAGES
-// ------------------------------------
-
-function handleMessage(
-  data
-) {
-
-  routeMessage(data);
-
-  if (
-    data.type ===
-    "runtime.snapshot"
-  ) {
-
-    renderDevices(
-      data.devices || []
-    );
-  }
-
-  if (
-    data.type ===
-    "runtime.log"
-  ) {
-
-    appendLog(
-      data.message
-    );
-  }
-
-  if (
-    data.type ===
-    "terminal.output"
-  ) {
-
-    const box =
-      document.getElementById(
-        "terminalOutput"
-      );
-
-    box.textContent +=
-      data.line + "\n";
-  }
-
-  if (
-    data.type ===
-    "stress.result"
-  ) {
-
-    document.getElementById(
-      "stressResults"
-    ).textContent =
-      JSON.stringify(
-        data,
-        null,
-        2
-      );
-  }
-}
-
-// ------------------------------------
-// OPCODE
-// ------------------------------------
-
-window.sendOpcode =
-  function () {
-
-    const deviceId =
-      document.getElementById(
-        "opcodeDevice"
-      ).value;
-
-    const opcode =
-      document.getElementById(
-        "opcodeInput"
-      ).value;
-
-    sendWS({
-
-      type:
-        "ui.opcode",
-
-      requestId:
-        "req_" +
-        Date.now(),
-
-      deviceId,
-
-      opcode
-    });
-  };
-
-// ------------------------------------
+// ========================================
 // TERMINAL
-// ------------------------------------
+// ========================================
 
 window.runTerminal =
   function () {
@@ -122,47 +52,104 @@ window.runTerminal =
     const deviceId =
       document.getElementById(
         "opcodeDevice"
-      ).value;
+      )?.value?.trim();
 
     const command =
       document.getElementById(
         "terminalInput"
-      ).value;
+      )?.value?.trim();
 
-    const box =
-      document.getElementById(
-        "terminalOutput"
+    if (
+      !deviceId ||
+      !command
+    ) {
+
+      appendTerminal(
+        "❌ missing deviceId or command"
       );
 
-    box.textContent =
-      "$ " +
-      command +
-      "\n\n";
+      return;
+    }
+
+    appendTerminal(
+      `$ ${command}`
+    );
 
     executeTerminalCommand({
 
       deviceId,
+
       command
     });
   };
 
-// ------------------------------------
+// ========================================
+// OPCODE
+// ========================================
+
+window.sendOpcode =
+  function () {
+
+    const deviceId =
+      document.getElementById(
+        "opcodeDevice"
+      )?.value?.trim();
+
+    const opcode =
+      document.getElementById(
+        "opcodeInput"
+      )?.value?.trim();
+
+    if (
+      !deviceId ||
+      !opcode
+    ) {
+
+      setBoxContent(
+        "opcodeResult",
+        "❌ missing fields"
+      );
+
+      return;
+    }
+
+    sendWS({
+
+      type:
+        "ui.opcode",
+
+      requestId:
+        genId(),
+
+      deviceId,
+
+      opcode,
+
+      meta: {}
+    });
+
+    setBoxContent(
+
+      "opcodeResult",
+
+      `🚀 Executing:\n\n${opcode}`
+    );
+  };
+
+// ========================================
 // STRESS
-// ------------------------------------
+// ========================================
 
 function runStress(
   profile
 ) {
 
-  const box =
-    document.getElementById(
-      "stressResults"
-    );
+  setBoxContent(
 
-  box.textContent =
-    "Running stress profile: " +
-    profile +
-    "...";
+    "stressResults",
+
+    `🔥 Running ${profile} stress...`
+  );
 
   sendWS({
 
@@ -173,57 +160,110 @@ function runStress(
   });
 }
 
-document
-  .getElementById(
-    "runLight"
-  )
-  ?.addEventListener(
-    "click",
-    () =>
-      runStress(
-        "light"
-      )
-  );
+window.runStress =
+  runStress;
 
-document
-  .getElementById(
-    "runMedium"
-  )
-  ?.addEventListener(
-    "click",
-    () =>
-      runStress(
-        "medium"
-      )
-  );
+// ========================================
+// STRESS BUTTONS
+// ========================================
 
-document
-  .getElementById(
-    "runHeavy"
-  )
-  ?.addEventListener(
-    "click",
-    () =>
-      runStress(
-        "heavy"
-      )
-  );
+bindStressButton(
+  "runLight",
+  "light"
+);
 
-document
-  .getElementById(
-    "runExtreme"
-  )
-  ?.addEventListener(
-    "click",
-    () =>
-      runStress(
-        "extreme"
-      )
-  );
+bindStressButton(
+  "runMedium",
+  "medium"
+);
 
-// ------------------------------------
+bindStressButton(
+  "runHeavy",
+  "heavy"
+);
+
+bindStressButton(
+  "runExtreme",
+  "extreme"
+);
+
+function bindStressButton(
+  id,
+  profile
+) {
+
+  const el =
+    document.getElementById(id);
+
+  if (!el) {
+    return;
+  }
+
+  el.onclick =
+    () =>
+      runStress(profile);
+}
+
+// ========================================
+// MESSAGE HANDLER
+// ========================================
+
+function handleUIMessage(
+  data
+) {
+
+  if (!data) {
+    return;
+  }
+
+  switch (data.type) {
+
+    case "terminal.output":
+
+      appendTerminal(
+        data.line ||
+        JSON.stringify(data)
+      );
+
+      break;
+
+    case "stress.result":
+
+      setBoxContent(
+
+        "stressResults",
+
+        JSON.stringify(
+          data,
+          null,
+          2
+        )
+      );
+
+      break;
+
+    case "snapshot":
+
+      renderDevices(
+        data.devices || []
+      );
+
+      break;
+
+    case "log":
+
+      appendLogs(
+        data.message ||
+        JSON.stringify(data)
+      );
+
+      break;
+  }
+}
+
+// ========================================
 // DEVICES RENDER
-// ------------------------------------
+// ========================================
 
 function renderDevices(
   devices
@@ -234,14 +274,18 @@ function renderDevices(
       "devicesBox"
     );
 
+  if (!box) {
+    return;
+  }
+
   if (
     !devices.length
   ) {
 
     box.innerHTML =
       `
-      <div class="runtime-terminal">
-        No runtime devices detected.
+      <div class="empty-state">
+        No devices connected
       </div>
       `;
 
@@ -249,76 +293,119 @@ function renderDevices(
   }
 
   box.innerHTML =
-    devices.map(device => {
+    devices.map(device => `
 
-      return `
-        <div class="device-item">
+      <div class="runtime-device">
 
-          <div class="device-title">
-            ${device.deviceId || "Unknown"}
-          </div>
-
-          <div class="device-grid">
-
-            <div class="device-field">
-              <div class="device-label">
-                IP
-              </div>
-              <div class="device-value">
-                ${device.ip || "-"}
-              </div>
-            </div>
-
-            <div class="device-field">
-              <div class="device-label">
-                Port
-              </div>
-              <div class="device-value">
-                ${device.port || "-"}
-              </div>
-            </div>
-
-            <div class="device-field">
-              <div class="device-label">
-                Method
-              </div>
-              <div class="device-value">
-                ${device.method || "-"}
-              </div>
-            </div>
-
-            <div class="device-field">
-              <div class="device-label">
-                Profile
-              </div>
-              <div class="device-value">
-                ${device.profile || "-"}
-              </div>
-            </div>
-
-          </div>
-
+        <div class="runtime-device-title">
+          ${device.deviceId || "unknown"}
         </div>
-      `;
-    }).join("");
+
+        <div class="runtime-device-meta">
+          ${device.ip || "-"}
+        </div>
+
+        <div class="runtime-device-meta">
+          ${device.profile || "-"}
+        </div>
+
+      </div>
+
+    `).join("");
 }
 
-// ------------------------------------
-// LOGS
-// ------------------------------------
+// ========================================
+// TERMINAL UI
+// ========================================
 
-function appendLog(
-  line
+function appendTerminal(
+  text
 ) {
 
   const box =
     document.getElementById(
-      "logs"
+      "terminalOutput"
     );
 
-  box.textContent +=
-    line + "\n";
+  if (!box) {
+    return;
+  }
+
+  box.innerHTML +=
+    `
+    <div class="line">
+      ${escapeHtml(text)}
+    </div>
+    `;
 
   box.scrollTop =
     box.scrollHeight;
+}
+
+// ========================================
+// LOGS
+// ========================================
+
+function appendLogs(
+  text
+) {
+
+  const box =
+    document.getElementById(
+      "logsBox"
+    );
+
+  if (!box) {
+    return;
+  }
+
+  box.innerHTML +=
+    `
+    <div class="line">
+      ${escapeHtml(text)}
+    </div>
+    `;
+
+  box.scrollTop =
+    box.scrollHeight;
+}
+
+// ========================================
+// HELPERS
+// ========================================
+
+function setBoxContent(
+  id,
+  text
+) {
+
+  const el =
+    document.getElementById(id);
+
+  if (!el) {
+    return;
+  }
+
+  el.textContent =
+    text;
+}
+
+function genId() {
+
+  return (
+    "req_" +
+    Math.random()
+      .toString(36)
+      .slice(2)
+  );
+}
+
+function escapeHtml(
+  text
+) {
+
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
