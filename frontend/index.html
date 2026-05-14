@@ -1,825 +1,278 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ALM v3 Dashboard</title>
-  <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin:0; padding:0; }
 
-    :root{
-      --sidebar-bg: #9ca3af;
-      --sidebar-bg-dark: #8b95a1;
-      --sidebar-text: #1f2937;
-      --sidebar-hover: rgba(255,255,255,.25);
-      --sidebar-active: rgba(255,255,255,.40);
-      --sidebar-active-border: rgba(37,99,235,.35);
+  <meta
+    name="viewport"
+    content="
+      width=device-width,
+      initial-scale=1.0
+    "
+  />
 
-      --main-bg: #e8ecf0;
-      --panel-bg: #f4f6f8;
-      --panel-border: #cfd6dd;
-      --panel-border-2: #b7c0c9;
-      --text: #111827;
-      --text-muted: #4b5563;
+  <title>
+    ALM v3 Dashboard
+  </title>
 
-      --btn-bg: #d1d5db;
-      --btn-hover: #9ca3af;
-      --btn-text: #1f2937;
+  <link
+    rel="stylesheet"
+    href="./styles/main.css"
+  />
 
-      --accent: #2563eb;
-      --accent-light: rgba(37,99,235,.15);
-      --success: #16a34a;
-      --warning: #ca8a04;
-      --danger: #ea580c;
-      --extreme: #991b1b;
-
-      --terminal-bg: #0b1220;
-      --terminal-text: #22c55e;
-      --terminal-border: #1e293b;
-    }
-
-    body{
-      font-family: Arial, 'Segoe UI', sans-serif;
-      min-height: 100vh;
-      background: var(--main-bg);
-      color: var(--text);
-      display: flex;
-    }
-
-    /* ========== SIDEBAR ========== */
-    .sidebar{
-      width: 240px;
-      min-width: 240px;
-      background: linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-dark));
-      border-left: 1px solid rgba(0,0,0,.18);
-      box-shadow: inset -1px 0 0 rgba(255,255,255,.2);
-      padding: 12px 10px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      align-self: flex-start;
-    }
-
-    .sidebar-header{
-      background: rgba(0,0,0,.08);
-      border: 1px solid rgba(0,0,0,.15);
-      border-radius: 8px;
-      padding: 10px 12px;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-
-    .sidebar-header h2{
-      margin:0;
-      font-size: 15px;
-      color: #fff;
-      letter-spacing:.2px;
-      font-weight: 800;
-    }
-
-    .side-btn{
-      width:100%;
-      border-radius: 7px;
-      border: 1px solid rgba(255,255,255,.22);
-      background: rgba(0,0,0,.04);
-      color: var(--sidebar-text);
-      text-align: right;
-      padding: 10px 12px;
-      cursor:pointer;
-      font-weight: 700;
-      margin: 2px 0;
-      transition: .15s ease;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      box-shadow: 0 1px 0 rgba(255,255,255,.15);
-      font-size: 13.5px;
-      white-space: nowrap;
-    }
-
-    .side-btn:hover{ background: var(--sidebar-hover); color: #111827; }
-    .side-btn.active{
-      background: var(--sidebar-active);
-      outline: 2px solid var(--sidebar-active-border);
-      color: #111827;
-    }
-    .side-btn .icon{ font-size: 16px; flex-shrink: 0; }
-
-    /* ========== MAIN ========== */
-    .main{
-      flex:1;
-      display:flex;
-      flex-direction:column;
-      min-width:0;
-    }
-
-    .topbar{
-      background: linear-gradient(180deg, #f7f9fb, #eef2f6);
-      border-bottom: 1px solid var(--panel-border);
-      padding: 12px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-shrink: 0;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .top-title{ display:flex; flex-direction:column; gap:3px; }
-    .top-title h1{ margin:0; font-size: 17px; letter-spacing:.2px; font-weight: 800; }
-    .top-sub{ font-size: 12px; color: var(--text-muted); }
-
-    .ws-badge{
-      padding: 7px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--panel-border-2);
-      background: #fff;
-      font-weight: 700;
-      color: #0f172a;
-      white-space:nowrap;
-      box-shadow: 0 2px 0 rgba(0,0,0,.05);
-      font-size: 13px;
-    }
-
-    /* ========== DASHBOARD CONTENT ========== */
-    .dashboard-content{
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    /* ========== WINDOW / PANEL ========== */
-    .window{
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      border-radius: 10px;
-      box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 2px 8px rgba(0,0,0,.06);
-    }
-
-    .window-header{
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px;
-      background: linear-gradient(180deg, #e5e7eb, #d1d5db);
-      border-bottom: 1px solid var(--panel-border-2);
-      border-radius: 10px 10px 0 0;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .window-header:hover{
-      background: linear-gradient(180deg, #d1d5db, #b7c0c9);
-    }
-
-    .window-title{
-      font-size: 14px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text);
-    }
-
-    .window-toggle{
-      font-size: 16px;
-      font-weight: 900;
-      color: var(--text-muted);
-      transition: .2s;
-    }
-
-    .window.collapsed .window-toggle{
-      transform: rotate(-90deg);
-    }
-
-    .window-body{
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .window.collapsed .window-body{
-      display: none;
-    }
-
-    /* ========== TERMINAL ========== */
-    .runtime-terminal{
-      background: var(--terminal-bg);
-      color: var(--terminal-text);
-      border-radius: 8px;
-      border: 1px solid var(--terminal-border);
-      padding: 12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 12.5px;
-      line-height: 1.5;
-      overflow: auto;
-      min-height: 120px;
-      max-height: 300px;
-      white-space: pre-wrap;
-      box-shadow: inset 0 2px 8px rgba(0,0,0,.4);
-    }
-
-    .runtime-terminal::-webkit-scrollbar { width: 6px; height: 6px; }
-    .runtime-terminal::-webkit-scrollbar-track { background: #0f172a; }
-    .runtime-terminal::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-
-    /* ========== FORM ELEMENTS ========== */
-    label{
-      display:block;
-      margin-bottom: 4px;
-      font-weight: 800;
-      color: #374151;
-      font-size: 12px;
-    }
-
-    input{
-      width:100%;
-      padding: 8px 10px;
-      border-radius: 7px;
-      border: 1px solid var(--panel-border-2);
-      background: #f9fafb;
-      color: var(--text);
-      font-size: 13px;
-      outline:none;
-      font-family: inherit;
-    }
-    input:focus{
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-light);
-      background:#fff;
-    }
-
-    .btn{
-      border: 1px solid rgba(0,0,0,.12);
-      background: var(--btn-bg);
-      color: var(--btn-text);
-      padding: 8px 12px;
-      border-radius: 7px;
-      cursor:pointer;
-      font-weight: 800;
-      transition: .15s ease;
-      box-shadow: 0 2px 0 rgba(0,0,0,.08);
-      font-size: 13px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-family: inherit;
-    }
-    .btn:hover{ background: var(--btn-hover); transform: translateY(-1px); }
-    .btn:active{ transform: translateY(0px); box-shadow: 0 1px 0 rgba(0,0,0,.08); }
-
-    .btn-primary{ background: var(--accent); color:#fff; border-color: rgba(37,99,235,.45); }
-    .btn-primary:hover{ background: #1d4ed8; }
-    .btn-light{ background: var(--success); color:#fff; border-color: rgba(22,163,74,.45); }
-    .btn-light:hover{ background: #15803d; }
-    .btn-medium{ background: var(--warning); color:#fff; border-color: rgba(202,138,4,.45); }
-    .btn-medium:hover{ background: #a16207; }
-    .btn-heavy{ background: var(--danger); color:#fff; border-color: rgba(234,88,12,.45); }
-    .btn-heavy:hover{ background: #c2410c; }
-    .btn-extreme{ background: var(--extreme); color:#fff; border-color: rgba(153,27,27,.45); }
-    .btn-extreme:hover{ background: #7f1d1d; }
-
-    .stress-buttons{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom: 8px; }
-
-    /* ========== TABLE ========== */
-    .data-table{
-      width:100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-    .data-table th{
-      background: linear-gradient(180deg, #e5e7eb, #d1d5db);
-      border: 1px solid var(--panel-border-2);
-      padding: 6px 8px;
-      text-align: right;
-      font-weight: 800;
-      font-size: 11px;
-      color: #374151;
-    }
-    .data-table td{
-      border: 1px solid var(--panel-border);
-      padding: 6px 8px;
-      background: #fff;
-      color: var(--text);
-    }
-    .data-table tr:hover td{ background: #f3f4f6; }
-
-    /* ========== EMPTY STATE ========== */
-    .empty-state{
-      text-align: center;
-      padding: 20px 12px;
-      color: #64748b;
-      font-size: 12px;
-    }
-    .empty-state .icon{ font-size: 24px; margin-bottom: 6px; opacity: .5; }
-
-    /* ========== FOOTER / DEVELOPER NAME ========== */
-    .footer{
-      text-align: center;
-      padding: 16px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-      border-top: 1px solid var(--panel-border);
-      background: linear-gradient(180deg, var(--panel-bg), #e5e7eb);
-      margin-top: 4px;
-    }
-
-    .footer .dev-icon{
-      font-size: 16px;
-      margin-left: 4px;
-    }
-
-    /* ========== TOAST ========== */
-    .toast-container{
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 3000;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      pointer-events: none;
-    }
-    .toast{
-      background: #fff;
-      color: var(--text);
-      padding: 10px 18px;
-      border-radius: 10px;
-      box-shadow: 0 8px 30px rgba(0,0,0,.15);
-      border: 1px solid var(--panel-border);
-      font-size: 13px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      animation: toastIn .25s ease, toastOut .25s ease 2.75s forwards;
-      pointer-events: auto;
-      white-space: nowrap;
-    }
-    @keyframes toastIn { from { opacity:0; transform: translateY(-12px); } to { opacity:1; transform: translateY(0); } }
-    @keyframes toastOut { from { opacity:1; transform: translateY(0); } to { opacity:0; transform: translateY(-12px); } }
-
-    /* ========== STATUS DOT ========== */
-    .status-dot{
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #22c55e;
-      display: inline-block;
-      margin-left: 6px;
-      box-shadow: 0 0 6px rgba(34,197,94,.5);
-      animation: pulse 2s infinite;
-    }
-    .status-dot.offline{
-      background: #ef4444;
-      box-shadow: 0 0 6px rgba(239,68,68,.5);
-      animation: none;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-
-    /* ========== RESPONSIVE ========== */
-    @media (max-width: 768px){
-      body{ flex-direction: column; }
-
-      .sidebar{
-        width: 100%;
-        min-width: auto;
-        flex-direction: row;
-        gap: 4px;
-        padding: 8px 10px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        flex-shrink: 0;
-        border-left: none;
-        border-bottom: 1px solid rgba(0,0,0,.18);
-        position: static;
-        height: auto;
-      }
-      .sidebar-header{ display: none; }
-      .side-btn{
-        flex: 1 0 auto;
-        justify-content: center;
-        padding: 8px 10px;
-        font-size: 12px;
-        margin: 0;
-      }
-      .side-btn .text{ display: none; }
-      .side-btn .icon{ font-size: 20px; }
-
-      .topbar{ padding: 10px 12px; position: static; }
-      .top-title h1{ font-size: 15px; }
-      .top-sub{ font-size: 11px; }
-
-      .dashboard-content{
-        padding: 10px;
-        gap: 10px;
-      }
-
-      .window-title{ font-size: 13px; }
-
-      input{ font-size: 16px; }
-      .btn{ padding: 9px 12px; font-size: 12px; }
-      .stress-buttons{ flex-direction: column; }
-      .stress-buttons .btn{ width: 100%; justify-content: center; }
-
-      .runtime-terminal{ font-size: 11.5px; min-height: 120px; }
-
-      .footer{ font-size: 12px; padding: 12px; }
-    }
-  </style>
-<base target="_blank">
 </head>
 
 <body>
 
-  <!-- Toast Container -->
-  <div class="toast-container" id="toastContainer"></div>
-
   <!-- SIDEBAR -->
-  <div class="sidebar">
+  <aside class="sidebar">
+
     <div class="sidebar-header">
-      <h2>📋 القائمة</h2>
+      📡 ALM v3
     </div>
 
-    <button class="side-btn active" id="sbOpcode" onclick="highlightSidebar('sbOpcode')">
-      <span class="icon">⚡</span><span class="text">تنفيذ Opcode</span>
+    <button
+      class="side-btn active"
+      data-window="opcodeWindow"
+    >
+      ⚡ Opcode
     </button>
-    <button class="side-btn" id="sbTerminal" onclick="highlightSidebar('sbTerminal')">
-      <span class="icon">🖥</span><span class="text">الطرفية</span>
+
+    <button
+      class="side-btn"
+      data-window="terminalWindow"
+    >
+      🖥 Terminal
     </button>
-    <button class="side-btn" id="sbStress" onclick="highlightSidebar('sbStress')">
-      <span class="icon">🔥</span><span class="text">اختبار الضغط</span>
+
+    <button
+      class="side-btn"
+      data-window="stressWindow"
+    >
+      🔥 Stress
     </button>
-    <button class="side-btn" id="sbDevices" onclick="highlightSidebar('sbDevices')">
-      <span class="icon">🖧</span><span class="text">الأجهزة</span>
+
+    <button
+      class="side-btn"
+      data-window="devicesWindow"
+    >
+      🖧 Devices
     </button>
-    <button class="side-btn" id="sbLogs" onclick="highlightSidebar('sbLogs')">
-      <span class="icon">📡</span><span class="text">السجلات</span>
+
+    <button
+      class="side-btn"
+      data-window="logsWindow"
+    >
+      📋 Logs
     </button>
-  </div>
+
+  </aside>
 
   <!-- MAIN -->
-  <div class="main">
+  <main class="main">
 
     <!-- TOPBAR -->
-    <div class="topbar">
-      <div class="top-title">
-        <h1>📡 ALM v3 Control Dashboard</h1>
-        <div class="top-sub">Runtime • Sessions • Tasks • Stress • Live Transport</div>
-      </div>
+    <header class="topbar">
 
-      <div id="wsStatus" class="ws-badge">
-        <span class="status-dot offline" id="statusDot"></span>
-        WS: ⏳ Connecting...
-      </div>
-    </div>
+      <div>
 
-    <!-- DASHBOARD CONTENT — ALL PANELS STACKED VERTICALLY -->
-    <div class="dashboard-content">
+        <h1>
+          ALM Runtime Dashboard
+        </h1>
 
-      <!-- ===== PANEL 1: OPCODE ===== -->
-      <div class="window" id="winOpcode">
-        <div class="window-header" onclick="toggleWindow('winOpcode')">
-          <div class="window-title">⚡ تنفيذ Opcode</div>
-          <div class="window-toggle">▾</div>
+        <div class="sub">
+          Gateway • Runtime • Sessions • Tasks
         </div>
+
+      </div>
+
+      <div
+        id="wsStatus"
+        class="ws-status offline"
+      >
+        WS: Offline
+      </div>
+
+    </header>
+
+    <!-- CONTENT -->
+    <section class="content">
+
+      <!-- OPCODE -->
+      <div
+        class="window"
+        id="opcodeWindow"
+      >
+
+        <div class="window-header">
+          ⚡ Opcode Execution
+        </div>
+
         <div class="window-body">
-          <div class="row">
-            <label>معرف الجهاز</label>
-            <input id="opcodeDevice" value="android-1" placeholder="أدخل معرف الجهاز..." />
-          </div>
-          <div class="row">
-            <label>رمز العملية</label>
-            <input id="opcodeInput" value="system.getIdentity" placeholder="أدخل الأمر..." />
-          </div>
-          <button class="btn btn-primary" onclick="sendOpcode()">
-            <span>🚀</span> إرسال رمز العملية
+
+          <label>
+            Device ID
+          </label>
+
+          <input
+            id="opcodeDevice"
+            value="router-1"
+          />
+
+          <label>
+            Opcode
+          </label>
+
+          <input
+            id="opcodeInput"
+            value="system.getIdentity"
+          />
+
+          <button id="runOpcodeBtn">
+            Execute
           </button>
-          <div id="opcodeResult" class="runtime-terminal" style="margin-top:8px;">
-            <div class="empty-state">
-              <div class="icon">📭</div>
-              لم يتم تنفيذ أي أمر بعد...
-            </div>
-          </div>
+
+          <div
+            id="opcodeResult"
+            class="terminal"
+          ></div>
+
         </div>
+
       </div>
 
-      <!-- ===== PANEL 2: RESULTS ===== -->
-      <div class="window" id="winResults">
-        <div class="window-header" onclick="toggleWindow('winResults')">
-          <div class="window-title">📜 النتيجة</div>
-          <div class="window-toggle">▾</div>
-        </div>
-        <div class="window-body">
-          <div id="resultsBox" class="runtime-terminal">
-            <div class="empty-state">
-              <div class="icon">📜</div>
-              النتائج ستظهر هنا...
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- TERMINAL -->
+      <div
+        class="window"
+        id="terminalWindow"
+      >
 
-      <!-- ===== PANEL 3: DEVICES ===== -->
-      <div class="window" id="winDevices">
-        <div class="window-header" onclick="toggleWindow('winDevices')">
-          <div class="window-title">📡 الأجهزة (من السجل)</div>
-          <div class="window-toggle">▾</div>
+        <div class="window-header">
+          🖥 Interactive Terminal
         </div>
-        <div class="window-body">
-          <div id="devicesBox" class="runtime-terminal">
-            <div class="empty-state">
-              <div class="icon">🖧</div>
-              جاري البحث عن الأجهزة...
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- ===== PANEL 4: LOGS ===== -->
-      <div class="window" id="winLogs">
-        <div class="window-header" onclick="toggleWindow('winLogs')">
-          <div class="window-title">📋 جذوع الأشجار</div>
-          <div class="window-toggle">▾</div>
-        </div>
         <div class="window-body">
-          <div id="logsBox" class="runtime-terminal">
-            <div class="empty-state">
-              <div class="icon">📋</div>
-              لا توجد سجلات حالياً...
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- ===== PANEL 5: TERMINAL ===== -->
-      <div class="window" id="winTerminal">
-        <div class="window-header" onclick="toggleWindow('winTerminal')">
-          <div class="window-title">🖥 بوابة المحطة (مباشر)</div>
-          <div class="window-toggle">▾</div>
-        </div>
-        <div class="window-body">
-          <div class="row">
-            <label>الأمر</label>
-            <input id="terminalInput" value="uname -a" placeholder="أدخل الأمر..." />
-          </div>
-          <button class="btn btn-primary" onclick="runTerminal()">
-            <span>▶</span> تنفيذ
+          <label>
+            Command
+          </label>
+
+          <input
+            id="terminalInput"
+            value="uname -a"
+          />
+
+          <button id="runTerminalBtn">
+            Execute
           </button>
-          <div id="terminalOutput" class="runtime-terminal" style="margin-top:8px;">
-            <div class="empty-state">
-              <div class="icon">💻</div>
-              جاهز لتنفيذ الأوامر...
-            </div>
-          </div>
+
+          <div
+            id="terminalOutput"
+            class="terminal"
+          ></div>
+
         </div>
+
       </div>
 
-      <!-- ===== PANEL 6: SESSION ===== -->
-      <div class="window" id="winSession">
-        <div class="window-header" onclick="toggleWindow('winSession')">
-          <div class="window-title">🔌 الاتصال بالجلسة</div>
-          <div class="window-toggle">▾</div>
-        </div>
-        <div class="window-body">
-          <div id="sessionInfo" class="runtime-terminal">
-            <div class="empty-state">
-              <div class="icon">🔌</div>
-              Session: sess-kopmhcjm8gg
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- STRESS -->
+      <div
+        class="window"
+        id="stressWindow"
+      >
 
-      <!-- ===== PANEL 7: STRESS ===== -->
-      <div class="window" id="winStress">
-        <div class="window-header" onclick="toggleWindow('winStress')">
-          <div class="window-title">🔥 لوحة تحكم اختبار الضغط</div>
-          <div class="window-toggle">▾</div>
+        <div class="window-header">
+          🔥 Stress Runtime
         </div>
+
         <div class="window-body">
+
           <div class="stress-buttons">
-            <button class="btn btn-light" onclick="runStress('light')">
-              <span>🟢</span> خفيف
+
+            <button
+              class="stress-btn"
+              data-level="light"
+            >
+              Light
             </button>
-            <button class="btn btn-medium" onclick="runStress('medium')">
-              <span>🟡</span> واسطة
+
+            <button
+              class="stress-btn"
+              data-level="medium"
+            >
+              Medium
             </button>
-            <button class="btn btn-heavy" onclick="runStress('heavy')">
-              <span>🟠</span> ثقيل
+
+            <button
+              class="stress-btn"
+              data-level="heavy"
+            >
+              Heavy
             </button>
-            <button class="btn btn-extreme" onclick="runStress('extreme')">
-              <span>🔴</span> أقصى
+
+            <button
+              class="stress-btn"
+              data-level="extreme"
+            >
+              Extreme
             </button>
+
           </div>
-          <div id="stressResults" class="runtime-terminal">
-            <div class="empty-state">
-              <div class="icon">🔥</div>
-              اختر مستوى الضغط...
-            </div>
-          </div>
+
+          <div
+            id="stressOutput"
+            class="terminal"
+          ></div>
+
         </div>
+
       </div>
 
-      <!-- ===== PANEL 8: RESULTS 2 ===== -->
-      <div class="window" id="winResults2">
-        <div class="window-header" onclick="toggleWindow('winResults2')">
-          <div class="window-title">📊 النتائج</div>
-          <div class="window-toggle">▾</div>
+      <!-- DEVICES -->
+      <div
+        class="window"
+        id="devicesWindow"
+      >
+
+        <div class="window-header">
+          🖧 Runtime Devices
         </div>
-        <div class="window-body">
-          <div id="results2Box" class="runtime-terminal">
-            <div class="empty-state">
-              <div class="icon">📊</div>
-              النتائج ستظهر هنا...
-            </div>
-          </div>
-        </div>
+
+        <div
+          id="devicesOutput"
+          class="terminal"
+        ></div>
+
       </div>
 
-    </div>
+      <!-- LOGS -->
+      <div
+        class="window"
+        id="logsWindow"
+      >
 
-    <!-- FOOTER — DEVELOPER NAME -->
-    <div class="footer">
-      <span class="dev-icon">👨‍💻</span> المطور: رأفت عمر
-    </div>
+        <div class="window-header">
+          📋 Runtime Logs
+        </div>
 
-  </div>
+        <div
+          id="logsOutput"
+          class="terminal"
+        ></div>
 
-  <script type="module" src="app.js"></script>
+      </div>
 
-  <script>
-    // ========== WINDOW TOGGLE ==========
-    function toggleWindow(winId) {
-      const win = document.getElementById(winId);
-      win.classList.toggle('collapsed');
-    }
+    </section>
 
-    // ========== SIDEBAR HIGHLIGHT ==========
-    function highlightSidebar(btnId) {
-      document.querySelectorAll('.side-btn').forEach(b => b.classList.remove('active'));
-      const btn = document.getElementById(btnId);
-      if (btn) btn.classList.add('active');
-    }
+  </main>
 
-    // ========== TOAST ==========
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-      toast.innerHTML = `<span>${icons[type] || icons.info}</span> ${message}`;
-      container.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
-    }
-
-    // ========== OPCODE ==========
-    function sendOpcode() {
-      const device = document.getElementById('opcodeDevice').value.trim();
-      const opcode = document.getElementById('opcodeInput').value.trim();
-      const resultBox = document.getElementById('opcodeResult');
-      const resultsBox = document.getElementById('resultsBox');
-
-      if (!device || !opcode) {
-        showToast('يرجى ملء جميع الحقول', 'error');
-        return;
-      }
-
-      const timestamp = new Date().toLocaleTimeString('ar-SA');
-      const output = `[${timestamp}] ⏳ جاري التنفيذ على ${device}...\n> ${opcode}\n\n✅ تم التنفيذ بنجاح!\n{
-  "device": "${device}",
-  "opcode": "${opcode}",
-  "status": "success",
-  "timestamp": "${new Date().toISOString()}"
-}`;
-
-      resultBox.textContent = output;
-      resultsBox.textContent = output;
-      showToast('تم تنفيذ الأمر بنجاح', 'success');
-    }
-
-    // ========== TERMINAL ==========
-    function runTerminal() {
-      const cmd = document.getElementById('terminalInput').value.trim();
-      const outputBox = document.getElementById('terminalOutput');
-
-      if (!cmd) {
-        showToast('يرجى إدخال أمر', 'error');
-        return;
-      }
-
-      outputBox.textContent = `$ ${cmd}\n⏳ جاري التنفيذ...\n\nLinux alm-server 5.15.0-105-generic #115-Ubuntu SMP Mon Apr 15 09:52:04 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux\n\nCommand completed in 0.42s`;
-      showToast('تم تنفيذ الأمر', 'success');
-    }
-
-    // ========== STRESS ==========
-    function runStress(level) {
-      const resultBox = document.getElementById('stressResults');
-      const results2Box = document.getElementById('results2Box');
-      const levels = {
-        light: { label: 'خفيف', duration: 2000 },
-        medium: { label: 'متوسط', duration: 3000 },
-        heavy: { label: 'عالي', duration: 4000 },
-        extreme: { label: 'قصوي', duration: 5000 }
-      };
-
-      const info = levels[level];
-      const timestamp = new Date().toLocaleTimeString('ar-SA');
-      const output = `[${timestamp}] 🔥 بدء اختبار الضغط: ${info.label}\n⏳ جاري الاختبار...\n\n✅ اكتمل اختبار الضغط (${info.label})\n{
-  "level": "${level}",
-  "cpu_usage": "${Math.floor(Math.random() * 40 + 30)}%",
-  "memory_usage": "${Math.floor(Math.random() * 30 + 40)}%",
-  "duration": "${info.duration / 1000}s",
-  "status": "passed"
-}`;
-
-      resultBox.textContent = output;
-      results2Box.textContent = output;
-      showToast(`اكتمل اختبار الضغط: ${info.label}`, 'success');
-    }
-
-    // ========== WS STATUS ==========
-    function updateWsStatus(connected) {
-      const badge = document.getElementById('wsStatus');
-      const dot = document.getElementById('statusDot');
-
-      if (connected) {
-        dot.classList.remove('offline');
-        badge.innerHTML = '<span class="status-dot" id="statusDot"></span> WS: متصل';
-      } else {
-        dot.classList.add('offline');
-        badge.innerHTML = '<span class="status-dot offline" id="statusDot"></span> WS: غير متصل';
-      }
-    }
-
-    setTimeout(() => updateWsStatus(true), 2000);
-
-    // ========== DEMO DATA ==========
-    const demoDevices = [
-      { name: 'ether1', type: 'إيثرنت', status: 'متصل', ip: '192.168.88.1' },
-      { name: 'pppoe-out1', type: 'PPPoE', status: 'متصل', ip: '10.0.0.2' },
-      { name: 'wlan1', type: 'واي فاي', status: 'متصل', ip: '192.168.88.10' },
-      { name: 'bridge1', type: 'جسر', status: 'متصل', ip: '-' },
-      { name: 'vlan10', type: 'VLAN', status: 'متصل', ip: '192.168.10.1' },
-    ];
-
-    const demoLogs = [
-      '{"type":"snapshot","devices":[{"deviceId":"router-1","ip":"192.168.88.232","port":22,"method":"ssh","profile":"linux"}]}',
-      '{"type":"terminal","line":"✅ تم اختبار العرض: شديد"}',
-      '{"type":"stressUpdate","data":{"ok":180000,"errors":0,"p50":0,"p90":0,"p99":0,"total":180000}}',
-      '{"type":"snapshot","devices":[{"deviceId":"router-1","ip":"192.168.88.232","port":22,"method":"ssh","profile":"linux"}]}',
-      '{"type":"snapshot","devices":[{"deviceId":"router-1","ip":"192.168.88.232","port":22,"method":"ssh","profile":"linux"}]}',
-      '{"type":"snapshot","devices":[{"deviceId":"router-1","ip":"192.168.88.232","port":22,"method":"ssh","profile":"linux"}]}',
-    ];
-
-    const demoSession = `الاتصال بالجلسة: sess-ajzknbv1u75 🟢
-طلب واجهة تشغيل المستخدم تم اختباره بالضغط: شديد🔥
-بدء اختبار الإجهاد: شديد🔥
-تم حفظ نتائج اختبار الإجهاد 📋
-تم إكمال اختبار الإجهاد: شديد ✅`;
-
-    function renderDevices() {
-      const box = document.getElementById('devicesBox');
-      let html = '<table class="data-table"><thead><tr>';
-      html += '<th>الاسم</th><th>النوع</th><th>الحالة</th><th>IP</th>';
-      html += '</tr></thead><tbody>';
-      demoDevices.forEach(d => {
-        html += `<tr><td>${d.name}</td><td>${d.type}</td><td>${d.status}</td><td>${d.ip}</td></tr>`;
-      });
-      html += '</tbody></table>';
-      box.innerHTML = html;
-    }
-
-    function renderLogs() {
-      const box = document.getElementById('logsBox');
-      box.textContent = demoLogs.join('\n');
-    }
-
-    function renderSession() {
-      const box = document.getElementById('sessionInfo');
-      box.innerHTML = `<div style="color:#22c55e">${demoSession.replace(/\n/g, '<br>')}</div>`;
-    }
-
-    // ========== INIT ==========
-    document.addEventListener('DOMContentLoaded', () => {
-      showToast('مرحباً بك في ALM v3 Dashboard', 'info');
-      renderDevices();
-      renderLogs();
-      renderSession();
-    });
-  </script>
+  <script
+    type="module"
+    src="./app.js"
+  ></script>
 
 </body>
+
 </html>
