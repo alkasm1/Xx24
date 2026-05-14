@@ -110,7 +110,8 @@ const {
 const {
   sender
 } = createWSServer({
-
+server,
+  
   eventBus,
 
   taskManager,
