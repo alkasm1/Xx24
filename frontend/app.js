@@ -14,19 +14,10 @@ import {
 } from "./runtime/message_router.js";
 
 // ========================================
-// CONFIG
-// ========================================
-
-const GATEWAY_HOST =
-  window.location.hostname;
-
-// ========================================
 // WS CONNECT
 // ========================================
 
 connectWS({
-
-  host: GATEWAY_HOST,
 
   onMessage(data) {
 
@@ -99,11 +90,6 @@ window.sendOpcode =
       !opcode
     ) {
 
-      setBoxContent(
-        "opcodeResult",
-        "❌ missing fields"
-      );
-
       return;
     }
 
@@ -121,13 +107,6 @@ window.sendOpcode =
 
       meta: {}
     });
-
-    setBoxContent(
-
-      "opcodeResult",
-
-      `🚀 Executing:\n\n${opcode}`
-    );
   };
 
 // ========================================
@@ -137,13 +116,6 @@ window.sendOpcode =
 function runStress(
   profile
 ) {
-
-  setBoxContent(
-
-    "stressResults",
-
-    `🔥 Running ${profile} stress...`
-  );
 
   sendWS({
 
@@ -221,21 +193,6 @@ function handleUIMessage(
 
       break;
 
-    case "stress.result":
-
-      setBoxContent(
-
-        "stressResults",
-
-        JSON.stringify(
-          data,
-          null,
-          2
-        )
-      );
-
-      break;
-
     case "snapshot":
 
       renderDevices(
@@ -256,7 +213,7 @@ function handleUIMessage(
 }
 
 // ========================================
-// DEVICES RENDER
+// DEVICES
 // ========================================
 
 function renderDevices(
@@ -272,13 +229,11 @@ function renderDevices(
     return;
   }
 
-  if (
-    !devices.length
-  ) {
+  if (!devices.length) {
 
     box.innerHTML =
       `
-      <div class="empty-state">
+      <div class="device-item">
         No devices connected
       </div>
       `;
@@ -289,18 +244,41 @@ function renderDevices(
   box.innerHTML =
     devices.map(device => `
 
-      <div class="runtime-device">
+      <div class="device-item">
 
-        <div class="runtime-device-title">
+        <div class="device-title">
           ${device.deviceId || "unknown"}
         </div>
 
-        <div class="runtime-device-meta">
-          ${device.ip || "-"}
-        </div>
+        <div class="device-grid">
 
-        <div class="runtime-device-meta">
-          ${device.profile || "-"}
+          <div class="device-field">
+            <div class="device-label">
+              IP
+            </div>
+            <div class="device-value">
+              ${device.ip || "-"}
+            </div>
+          </div>
+
+          <div class="device-field">
+            <div class="device-label">
+              Profile
+            </div>
+            <div class="device-value">
+              ${device.profile || "-"}
+            </div>
+          </div>
+
+          <div class="device-field">
+            <div class="device-label">
+              Status
+            </div>
+            <div class="device-value">
+              ONLINE
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -309,7 +287,7 @@ function renderDevices(
 }
 
 // ========================================
-// TERMINAL UI
+// TERMINAL OUTPUT
 // ========================================
 
 function appendTerminal(
@@ -325,12 +303,18 @@ function appendTerminal(
     return;
   }
 
-  box.innerHTML +=
-    `
-    <div class="line">
-      ${escapeHtml(text)}
-    </div>
-    `;
+  const line =
+    document.createElement(
+      "div"
+    );
+
+  line.className =
+    "line";
+
+  line.textContent =
+    text;
+
+  box.appendChild(line);
 
   box.scrollTop =
     box.scrollHeight;
@@ -346,19 +330,25 @@ function appendLogs(
 
   const box =
     document.getElementById(
-      "logsBox"
+      "logs"
     );
 
   if (!box) {
     return;
   }
 
-  box.innerHTML +=
-    `
-    <div class="line">
-      ${escapeHtml(text)}
-    </div>
-    `;
+  const line =
+    document.createElement(
+      "div"
+    );
+
+  line.className =
+    "line";
+
+  line.textContent =
+    text;
+
+  box.appendChild(line);
 
   box.scrollTop =
     box.scrollHeight;
@@ -368,22 +358,6 @@ function appendLogs(
 // HELPERS
 // ========================================
 
-function setBoxContent(
-  id,
-  text
-) {
-
-  const el =
-    document.getElementById(id);
-
-  if (!el) {
-    return;
-  }
-
-  el.textContent =
-    text;
-}
-
 function genId() {
 
   return (
@@ -392,14 +366,4 @@ function genId() {
       .toString(36)
       .slice(2)
   );
-}
-
-function escapeHtml(
-  text
-) {
-
-  return String(text)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
 }
