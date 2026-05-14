@@ -21,6 +21,10 @@ function createAPIServer({
 
 } = {}) {
 
+  // =====================================
+  // EXPRESS
+  // =====================================
+
   const app =
     express();
 
@@ -49,16 +53,25 @@ function createAPIServer({
   );
 
   // =====================================
-  // FRONTEND
+  // FRONTEND PATH
   // =====================================
 
   const frontendPath =
     path.join(
 
-      __dirname,
+      process.cwd(),
 
-      "../../frontend"
+      "frontend"
     );
+
+  console.log(
+    "📁 Frontend:",
+    frontendPath
+  );
+
+  // =====================================
+  // STATIC
+  // =====================================
 
   app.use(
     express.static(
@@ -67,21 +80,24 @@ function createAPIServer({
   );
 
   // =====================================
-  // FALLBACK
+  // INDEX ROUTE ONLY
   // =====================================
 
-  app.use((req, res) => {
+  app.get(
+    "/",
+    (req, res) => {
 
-    res.sendFile(
+      res.sendFile(
 
-      path.join(
+        path.join(
 
-        frontendPath,
+          frontendPath,
 
-        "index.html"
-      )
-    );
-  });
+          "index.html"
+        )
+      );
+    }
+  );
 
   // =====================================
   // HTTP SERVER
@@ -108,6 +124,10 @@ function createAPIServer({
       );
     }
   );
+
+  // =====================================
+  // EXPORT
+  // =====================================
 
   return {
 
