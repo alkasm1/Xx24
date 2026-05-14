@@ -1,273 +1,452 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ALM v3 Dashboard</title>
 
-<head>
+    <style>
+      * { box-sizing: border-box; }
+      :root{
+        --bg-left:#7a7a7a;
+        --bg-left-dark:#6a6a6a;
+        --bg-left-darker:#5a5a5a;
 
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        --panel:#f4f6f8;
+        --panel-2:#ffffff;
 
-  <title>ALM v3 Dashboard</title>
+        --line:#cfd6dd;
+        --line-2:#b7c0c9;
 
-  <style>
+        --text:#111827;
+        --muted:#4b5563;
 
-    * { box-sizing: border-box; }
+        --tab:#e8edf2;
+        --tab-active:#ffffff;
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
+        --shadow: 0 10px 30px rgba(0,0,0,.18);
 
-    /* SIDEBAR */
-    .sidebar {
-      width: 240px;
-      background: #111827;
-      border-right: 1px solid #1f2937;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+        --accent:#2563eb;
+        --accent-2:#16a34a;
 
-    .sidebar h2 {
-      font-size: 18px;
-      margin-bottom: 10px;
-      color: #f8fafc;
-    }
+        --btn:#e5e7eb;
+        --btn-hover:#d1d5db;
 
-    .side-btn {
-      background: #1e293b;
-      color: #e2e8f0;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #334155;
-      cursor: pointer;
-      text-align: right;
-      font-size: 14px;
-      transition: 0.2s;
-    }
+        --danger:#ef4444;
+      }
 
-    .side-btn:hover {
-      background: #334155;
-    }
+      body{
+        margin:0;
+        font-family: Arial, sans-serif;
+        height:100vh;
+        overflow:hidden;
+        background: #d6dbe1; /* مثل لون سطح Router UI */
+        color: var(--text);
+        display:flex;
+      }
 
-    /* MAIN AREA */
-    .main {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-    }
+      /* ============ Sidebar ============ */
+      .sidebar{
+        width: 260px;
+        background: linear-gradient(180deg, var(--bg-left), var(--bg-left-dark));
+        border-left: 1px solid rgba(0,0,0,.25);
+        box-shadow: inset -1px 0 0 rgba(255,255,255,.25);
+        padding: 14px 10px;
+        overflow:auto;
+      }
 
-    /* TOP BAR */
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
+      .sidebar-header{
+        background: rgba(0,0,0,.08);
+        border: 1px solid rgba(0,0,0,.15);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+      }
 
-    .badge {
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: bold;
-      color: #fff;
-      background: #1e293b;
-      border: 1px solid #334155;
-    }
+      .sidebar-header h2{
+        margin:0;
+        font-size: 16px;
+        color:#fff;
+        letter-spacing:.2px;
+      }
 
-    /* CARDS (unchanged from your code) */
-    .card {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 0 18px rgba(0,0,0,0.25);
-      margin-bottom: 20px;
-    }
+      .side-btn{
+        width:100%;
+        border-radius: 7px;
+        border: 1px solid rgba(255,255,255,.22);
+        background: rgba(0,0,0,.06);
+        color:#111;
+        text-align:center;
+        padding: 10px 8px;
+        cursor:pointer;
+        font-weight: 700;
+        margin: 6px 0;
+        transition: .15s ease;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:10px;
+        box-shadow: 0 1px 0 rgba(255,255,255,.18);
+      }
 
-    .row { margin-bottom: 14px; }
+      .side-btn:hover{
+        background: rgba(255,255,255,.20);
+      }
 
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: bold;
-      color: #cbd5e1;
-    }
+      .side-btn.active{
+        background: rgba(255,255,255,.35);
+        outline: 2px solid rgba(37,99,235,.35);
+      }
 
-    input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #334155;
-      background: #0f172a;
-      color: #e2e8f0;
-      font-size: 14px;
-      outline: none;
-    }
+      /* ============ Main ============ */
+      .main{
+        flex:1;
+        display:flex;
+        flex-direction:column;
+        min-width:0;
+      }
 
-    input:focus { border-color: #2563eb; }
+      /* Topbar like screenshot */
+      .topbar{
+        background: linear-gradient(180deg, #f7f9fb, #eef2f6);
+        border-bottom: 1px solid var(--line);
+        padding: 14px 18px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:14px;
+      }
 
-    button {
-      border: none;
-      border-radius: 8px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: 0.2s;
-    }
+      .top-title{
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+      }
+      .top-title h1{
+        margin:0;
+        font-size: 18px;
+        letter-spacing:.2px;
+      }
+      .top-sub{
+        font-size: 12.5px;
+        color: var(--muted);
+      }
 
-    .btn-primary { background: #2563eb; color: white; }
-    .btn-light { background: #16a34a; color: white; }
-    .btn-medium { background: #ca8a04; color: white; }
-    .btn-heavy { background: #ea580c; color: white; }
-    .btn-extreme { background: #991b1b; color: white; }
+      .ws-badge{
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--line-2);
+        background: #fff;
+        font-weight: 700;
+        color: #0f172a;
+        white-space:nowrap;
+        box-shadow: 0 2px 0 rgba(0,0,0,.05);
+      }
 
-    .stress-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
+      /* Page container */
+      .content{
+        padding: 14px 18px;
+        overflow:auto;
+      }
 
-    .runtime-terminal {
-      background: #020617;
-      color: #22c55e;
-      border-radius: 12px;
-      padding: 16px;
-      font-family: monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      overflow-x: auto;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      border: 1px solid #1e293b;
-      min-height: 220px;
-      max-height: 320px;
-    }
+      /* Tabs style (optional: يمكنك حذفها إذا لا تريد) */
+      .page-tabs{
+        display:flex;
+        gap:10px;
+        align-items:center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .tab{
+        background: var(--tab);
+        border: 1px solid var(--line);
+        border-bottom: none;
+        padding: 10px 14px;
+        border-radius: 10px 10px 0 0;
+        cursor:pointer;
+        font-weight: 800;
+        color: #111827;
+        transition:.15s ease;
+      }
+      .tab.active{
+        background: var(--tab-active);
+        box-shadow: var(--shadow);
+      }
 
-    /* Hide all pages initially */
-    .page { display: none; }
+      /* ============ Cards similar to screenshot panel ============ */
+      .card{
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        box-shadow: 0 1px 0 rgba(255,255,255,.6) inset;
+        padding: 16px;
+      }
 
-    /* Show active page */
-    .active { display: block; }
+      .section-title{
+        font-size: 16px;
+        margin: 0 0 12px 0;
+        font-weight: 900;
+        display:flex;
+        align-items:center;
+        gap:10px;
+      }
 
-  </style>
+      .row{
+        margin-bottom: 14px;
+      }
 
-</head>
+      label{
+        display:block;
+        margin-bottom: 6px;
+        font-weight: 800;
+        color: #374151;
+        font-size: 13px;
+      }
 
-<body>
+      input{
+        width:100%;
+        padding: 11px 12px;
+        border-radius: 9px;
+        border: 1px solid var(--line-2);
+        background: #f9fafb;
+        color: var(--text);
+        font-size: 14px;
+        outline:none;
+      }
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <h2>القائمة</h2>
+      input:focus{
+        border-color: rgba(37,99,235,.85);
+        box-shadow: 0 0 0 4px rgba(37,99,235,.15);
+        background:#fff;
+      }
 
-    <button class="side-btn" onclick="showPage('pageOpcode')">⚡ تنفيذ Opcode</button>
-    <button class="side-btn" onclick="showPage('pageTerminal')">🖥 الطرفية</button>
-    <button class="side-btn" onclick="showPage('pageStress')">🔥 اختبار الضغط</button>
-    <button class="side-btn" onclick="showPage('pageDevices')">🖧 الأجهزة</button>
-    <button class="side-btn" onclick="showPage('pageLogs')">📡 السجلات</button>
-  </div>
+      /* Buttons like RouterOS (grey buttons + colored variants) */
+      .btn{
+        border: 1px solid rgba(0,0,0,.12);
+        background: var(--btn);
+        color:#0f172a;
+        padding: 10px 14px;
+        border-radius: 10px;
+        cursor:pointer;
+        font-weight: 900;
+        transition: .15s ease;
+        box-shadow: 0 2px 0 rgba(0,0,0,.08);
+      }
+      .btn:hover{ background: var(--btn-hover); transform: translateY(-1px); }
+      .btn:active{ transform: translateY(0px); box-shadow: 0 1px 0 rgba(0,0,0,.08); }
 
-  <!-- MAIN AREA -->
-  <div class="main">
+      .btn-primary{ background: rgba(37,99,235,.95); color:#fff; border-color: rgba(37,99,235,.45); }
+      .btn-primary:hover{ background: rgba(37,99,235,1); }
 
-    <!-- TOP BAR -->
-    <div class="topbar">
-      <div>
-        <h1>📡 ALM v3 Control Dashboard</h1>
-        <div style="opacity:0.7; font-size:13px;">Runtime • Sessions • Tasks • Stress • Live Transport</div>
+      .btn-light{ background: rgba(22,163,74,.95); color:#fff; border-color: rgba(22,163,74,.45); }
+      .btn-medium{ background: rgba(202,138,4,.95); color:#fff; border-color: rgba(202,138,4,.45); }
+      .btn-heavy{ background: rgba(234,88,12,.95); color:#fff; border-color: rgba(234,88,12,.45); }
+      .btn-extreme{ background: rgba(153,27,27,.95); color:#fff; border-color: rgba(153,27,27,.45); }
+
+      .stress-buttons{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        margin-bottom: 12px;
+      }
+
+      /* Terminal output: in screenshot it's grid/mono on light bg */
+      .runtime-terminal{
+        background: #0b1220;
+        color: #22c55e;
+        border-radius: 10px;
+        border: 1px solid #0f172a;
+        padding: 14px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 13px;
+        line-height: 1.55;
+        overflow:auto;
+        min-height: 220px;
+        max-height: 360px;
+        white-space: pre-wrap;
+      }
+
+      /* Pages visibility */
+      .page{ display:none; }
+      .page.active{ display:block; }
+
+      /* Responsive */
+      @media (max-width: 900px){
+        .sidebar{ width: 220px; }
+      }
+      @media (max-width: 720px){
+        body{ flex-direction:column; }
+        .sidebar{
+          width:100%;
+          display:flex;
+          flex-direction:row;
+          gap:10px;
+          overflow:auto;
+          padding: 10px;
+        }
+        .side-btn{ flex: 1 0 auto; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>القائمة</h2>
       </div>
 
-      <div id="wsStatus" class="badge">WS: ⏳ Connecting...</div>
+      <button
+        class="side-btn"
+        id="sbOpcode"
+        onclick="showPage('pageOpcode','sbOpcode')"
+      >⚡ تنفيذ Opcode</button>
+
+      <button
+        class="side-btn"
+        id="sbTerminal"
+        onclick="showPage('pageTerminal','sbTerminal')"
+      >🖥 الطرفية</button>
+
+      <button
+        class="side-btn"
+        id="sbStress"
+        onclick="showPage('pageStress','sbStress')"
+      >🔥 اختبار الضغط</button>
+
+      <button
+        class="side-btn"
+        id="sbDevices"
+        onclick="showPage('pageDevices','sbDevices')"
+      >🖧 الأجهزة</button>
+
+      <button
+        class="side-btn"
+        id="sbLogs"
+        onclick="showPage('pageLogs','sbLogs')"
+      >📡 السجلات</button>
     </div>
 
-    <!-- PAGES -->
-
-    <!-- OPCODE PAGE -->
-    <div id="pageOpcode" class="page active">
-      <div class="card">
-        <h2>⚡ Opcode Execution</h2>
-
-        <div class="row">
-          <label>Device ID</label>
-          <input id="opcodeDevice" value="router-1" />
+    <!-- Main -->
+    <div class="main">
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="top-title">
+          <h1>📡 ALM v3 Control Dashboard</h1>
+          <div class="top-sub">Runtime • Sessions • Tasks • Stress • Live Transport</div>
         </div>
 
-        <div class="row">
-          <label>Opcode</label>
-          <input id="opcodeInput" value="system.getIdentity" />
+        <div id="wsStatus" class="ws-badge">WS: ⏳ Connecting...</div>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- Tabs Row (optional—شكل مطابق أكثر للصورة) -->
+        <div class="page-tabs">
+          <div class="tab" id="tabOpcode" onclick="showPage('pageOpcode','sbOpcode')">Opcode</div>
+          <div class="tab" id="tabTerminal" onclick="showPage('pageTerminal','sbTerminal')">Terminal</div>
+          <div class="tab" id="tabStress" onclick="showPage('pageStress','sbStress')">Stress</div>
+          <div class="tab" id="tabDevices" onclick="showPage('pageDevices','sbDevices')">Devices</div>
+          <div class="tab" id="tabLogs" onclick="showPage('pageLogs','sbLogs')">Logs</div>
         </div>
 
-        <button class="btn-primary" onclick="sendOpcode()">🚀 Execute Opcode</button>
+        <!-- OPCODE PAGE -->
+        <div id="pageOpcode" class="page active">
+          <div class="card">
+            <h2 class="section-title">⚡ Opcode Execution</h2>
 
-        <div id="opcodeResult" class="runtime-terminal" style="margin-top:14px;"></div>
-      </div>
-    </div>
+            <div class="row">
+              <label>Device ID</label>
+              <input id="opcodeDevice" value="router-1" />
+            </div>
 
-    <!-- TERMINAL PAGE -->
-    <div id="pageTerminal" class="page">
-      <div class="card">
-        <h2>🖥 Interactive Terminal</h2>
+            <div class="row">
+              <label>Opcode</label>
+              <input id="opcodeInput" value="system.getIdentity" />
+            </div>
 
-        <div class="row">
-          <label>Command</label>
-          <input id="terminalInput" value="uname -a" />
+            <button class="btn btn-primary" onclick="sendOpcode()">🚀 Execute Opcode</button>
+
+            <div id="opcodeResult" class="runtime-terminal" style="margin-top:14px;"></div>
+          </div>
         </div>
 
-        <button class="btn-primary" onclick="runTerminal()">▶ Execute Command</button>
+        <!-- TERMINAL PAGE -->
+        <div id="pageTerminal" class="page">
+          <div class="card">
+            <h2 class="section-title">🖥 Interactive Terminal</h2>
 
-        <div id="terminalOutput" class="runtime-terminal" style="margin-top:14px;"></div>
-      </div>
-    </div>
+            <div class="row">
+              <label>Command</label>
+              <input id="terminalInput" value="uname -a" />
+            </div>
 
-    <!-- STRESS PAGE -->
-    <div id="pageStress" class="page">
-      <div class="card">
-        <h2>🔥 Stress Testing</h2>
+            <button class="btn btn-primary" onclick="runTerminal()">▶ Execute Command</button>
 
-        <div class="stress-buttons">
-          <button id="runLight" class="btn-light">Light</button>
-          <button id="runMedium" class="btn-medium">Medium</button>
-          <button id="runHeavy" class="btn-heavy">Heavy</button>
-          <button id="runExtreme" class="btn-extreme">Extreme</button>
+            <div id="terminalOutput" class="runtime-terminal" style="margin-top:14px;"></div>
+          </div>
         </div>
 
-        <div id="stressResults" class="runtime-terminal"></div>
+        <!-- STRESS PAGE -->
+        <div id="pageStress" class="page">
+          <div class="card">
+            <h2 class="section-title">🔥 Stress Testing</h2>
+
+            <div class="stress-buttons">
+              <button id="runLight" class="btn btn-light">Light</button>
+              <button id="runMedium" class="btn btn-medium">Medium</button>
+              <button id="runHeavy" class="btn btn-heavy">Heavy</button>
+              <button id="runExtreme" class="btn btn-extreme">Extreme</button>
+            </div>
+
+            <div id="stressResults" class="runtime-terminal"></div>
+          </div>
+        </div>
+
+        <!-- DEVICES PAGE -->
+        <div id="pageDevices" class="page">
+          <div class="card">
+            <h2 class="section-title">🖧 Runtime Devices</h2>
+            <div id="devicesBox" class="runtime-terminal"></div>
+          </div>
+        </div>
+
+        <!-- LOGS PAGE -->
+        <div id="pageLogs" class="page">
+          <div class="card">
+            <h2 class="section-title">📡 Runtime Logs</h2>
+            <div id="logs" class="runtime-terminal"></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- DEVICES PAGE -->
-    <div id="pageDevices" class="page">
-      <div class="card">
-        <h2>🖧 Runtime Devices</h2>
-        <div id="devicesBox" class="runtime-terminal"></div>
-      </div>
-    </div>
+    <script type="module" src="app.js"></script>
 
-    <!-- LOGS PAGE -->
-    <div id="pageLogs" class="page">
-      <div class="card">
-        <h2>📡 Runtime Logs</h2>
-        <div id="logs" class="runtime-terminal"></div>
-      </div>
-    </div>
+    <script>
+      function showPage(pageId, activeBtnId) {
+        // pages
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
 
-  </div>
+        // sidebar buttons
+        document.querySelectorAll('.side-btn').forEach(b => b.classList.remove('active'));
+        if (activeBtnId) document.getElementById(activeBtnId)?.classList.add('active');
 
-  <script type="module" src="app.js"></script>
+        // top tabs
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        if (pageId === 'pageOpcode') document.getElementById('tabOpcode').classList.add('active');
+        if (pageId === 'pageTerminal') document.getElementById('tabTerminal').classList.add('active');
+        if (pageId === 'pageStress') document.getElementById('tabStress').classList.add('active');
+        if (pageId === 'pageDevices') document.getElementById('tabDevices').classList.add('active');
+        if (pageId === 'pageLogs') document.getElementById('tabLogs').classList.add('active');
+      }
 
-  <script>
-    function showPage(id) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
-  </script>
-
-</body>
-
+      // init active sidebar + tab
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('sbOpcode')?.classList.add('active');
+        document.getElementById('tabOpcode')?.classList.add('active');
+      });
+    </script>
+  </body>
 </html>
