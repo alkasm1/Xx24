@@ -64,7 +64,7 @@ function connectWS({
 
   host = location.hostname,
 
-  port = 5001,
+  port = 8000,
 
   onMessage
 
