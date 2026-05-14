@@ -1,6 +1,7 @@
 // backend/gateway/ws/server.js
 
-const WebSocket = require("ws");
+const WebSocket =
+  require("ws");
 
 const {
   createSender
@@ -15,25 +16,45 @@ const {
 } = require("./heartbeat");
 
 function createWSServer({
-  port = 5001,
-  host = "0.0.0.0",
+
+  server,
 
   eventBus,
+
   taskManager,
+
   sessionManager,
+
   runStress,
 
   activeRequests
+
 }) {
+
+  // =====================================
+  // WS SERVER ON TOP OF HTTP SERVER
+  // =====================================
 
   const wss =
     new WebSocket.Server({
-      port,
-      host
+
+      server
     });
+
+  console.log(
+    "🌐 WebSocket attached to HTTP server"
+  );
+
+  // =====================================
+  // SENDER
+  // =====================================
 
   const sender =
     createSender(wss);
+
+  // =====================================
+  // CONNECTION
+  // =====================================
 
   wss.on(
     "connection",
@@ -43,19 +64,29 @@ function createWSServer({
         sessionManager.createSession(
           ws,
           {
+
             remoteAddress:
+
               ws._socket
                 ?.remoteAddress ||
+
               null
           }
         );
 
       console.log(
+
         "🟢 Session connected:",
+
         session.sessionId
       );
 
-      ws.isAlive = true;
+      ws.isAlive =
+        true;
+
+      // =====================================
+      // HEARTBEAT
+      // =====================================
 
       ws.on(
         "pong",
@@ -70,8 +101,13 @@ function createWSServer({
         }
       );
 
+      // =====================================
+      // HANDLERS
+      // =====================================
+
       const handlers =
         createHandlers({
+
           ws,
 
           eventBus,
@@ -92,12 +128,18 @@ function createWSServer({
         handlers.onMessage
       );
 
+      // =====================================
+      // CLOSE
+      // =====================================
+
       ws.on(
         "close",
         () => {
 
           console.log(
+
             "🔴 Session disconnected:",
+
             ws.sessionId
           );
 
@@ -107,12 +149,18 @@ function createWSServer({
         }
       );
 
+      // =====================================
+      // ERROR
+      // =====================================
+
       ws.on(
         "error",
         err => {
 
           console.log(
+
             "❌ WS error:",
+
             err.message
           );
         }
@@ -120,17 +168,30 @@ function createWSServer({
     }
   );
 
+  // =====================================
+  // HEARTBEAT LOOP
+  // =====================================
+
   startHeartbeatLoop({
+
     wss,
+
     sessionManager
   });
 
+  // =====================================
+  // EXPORT
+  // =====================================
+
   return {
+
     wss,
+
     sender
   };
 }
 
 module.exports = {
+
   createWSServer
 };
