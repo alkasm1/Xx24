@@ -104,7 +104,7 @@ function connectWS({
 
   ws =
     new WebSocket(
-      `ws://${location.hostname}:5001`
+      `ws://${host}:5001`
     );
 
   // -----------------------------
