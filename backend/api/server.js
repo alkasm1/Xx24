@@ -65,12 +65,7 @@ function createAPIServer({
   // INDEX.HTML
   // =============================
 
-  app.get(
-    "*",
-    (
-      req,
-      res
-    ) => {
+  app.get("/*", (req,res)=>{
 
       res.sendFile(
 
