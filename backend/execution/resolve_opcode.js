@@ -1,72 +1,107 @@
-const {
-  getOpcode
-} = require(
-  "../devices/profile_registry"
-);
+// backend/execution/resolve_opcode.js
 
 // =====================================
-// RESOLVE OPCODE
+// OPCODE TABLE
 // =====================================
 
-function resolveOpcode({
+const OPCODES = {
 
-  device,
+  // ===================================
+  // SYSTEM EXEC
+  // ===================================
 
-  opcode
-}) {
+  "system.exec": (
+    meta = {}
+  ) => ({
 
-  if (!device) {
+    transport: "ssh",
 
-    throw new Error(
-      "Device required"
-    );
-  }
+    payload: {
 
-  if (!opcode) {
+      command:
+        meta.command ||
+        "uname -a"
+    },
 
-    throw new Error(
-      "Opcode required"
-    );
-  }
+    timeout: 15000
+  }),
 
-  // =====================================
-  // PROFILE
-  // =====================================
+  // ===================================
+  // GET IDENTITY
+  // ===================================
 
-  const profileId =
-    device.profile ||
-    "linux";
+  "system.getIdentity": () => ({
 
-  // =====================================
-  // OPCODE DESCRIPTOR
-  // =====================================
+    transport: "ssh",
 
-  const descriptor =
-    getOpcode({
+    payload: {
 
-      profileId,
+      command:
+        "uname -a"
+    },
 
+    timeout: 10000
+  }),
+
+  // ===================================
+  // HOSTNAME
+  // ===================================
+
+  "system.hostname": () => ({
+
+    transport: "ssh",
+
+    payload: {
+
+      command:
+        "hostname"
+    },
+
+    timeout: 10000
+  }),
+
+  // ===================================
+  // UPTIME
+  // ===================================
+
+  "system.uptime": () => ({
+
+    transport: "ssh",
+
+    payload: {
+
+      command:
+        "uptime"
+    },
+
+    timeout: 10000
+  })
+};
+
+// =====================================
+// RESOLVE
+// =====================================
+
+function resolveOpcode(
+  opcode,
+  meta = {}
+) {
+
+  const handler =
+    OPCODES[
       opcode
-    });
+    ];
 
-  if (!descriptor) {
+  if (!handler) {
 
     throw new Error(
-
       `Opcode not found: ${opcode}`
     );
   }
 
-  // =====================================
-
-  return {
-
-    profileId,
-
-    opcode,
-
-    descriptor
-  };
+  return handler(
+    meta
+  );
 }
 
 module.exports = {
