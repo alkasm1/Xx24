@@ -6,9 +6,15 @@
 
 const OPCODES = {
 
+  // ===================================
+  // GENERIC EXEC
+  // ===================================
+
   "system.exec": (
     meta = {}
   ) => ({
+
+    type: "command",
 
     transport: "ssh",
 
@@ -19,10 +25,18 @@ const OPCODES = {
         "uname -a"
     },
 
-    timeout: 15000
+    timeout: 15000,
+
+    parser: "text"
   }),
 
+  // ===================================
+  // IDENTITY
+  // ===================================
+
   "system.getIdentity": () => ({
+
+    type: "command",
 
     transport: "ssh",
 
@@ -32,10 +46,18 @@ const OPCODES = {
         "uname -a"
     },
 
-    timeout: 10000
+    timeout: 10000,
+
+    parser: "text"
   }),
 
+  // ===================================
+  // HOSTNAME
+  // ===================================
+
   "system.hostname": () => ({
+
+    type: "command",
 
     transport: "ssh",
 
@@ -45,10 +67,18 @@ const OPCODES = {
         "hostname"
     },
 
-    timeout: 10000
+    timeout: 10000,
+
+    parser: "text"
   }),
 
+  // ===================================
+  // UPTIME
+  // ===================================
+
   "system.uptime": () => ({
+
+    type: "command",
 
     transport: "ssh",
 
@@ -58,12 +88,14 @@ const OPCODES = {
         "uptime"
     },
 
-    timeout: 10000
+    timeout: 10000,
+
+    parser: "text"
   })
 };
 
 // =====================================
-// RESOLVE OPCODE
+// RESOLVE
 // =====================================
 
 function resolveOpcode({
