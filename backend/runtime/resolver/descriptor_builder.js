@@ -1,3 +1,5 @@
+// backend/runtime/resolver/descriptor_builder.js
+
 const {
   resolveOpcode
 } = require(
@@ -40,19 +42,18 @@ function buildDescriptor({
   // RESOLVE OPCODE
   // =====================================
 
-  const resolved =
+  const base =
     resolveOpcode({
 
       device,
 
-      opcode
+      opcode,
+
+      meta
     });
 
-  const base =
-    resolved.descriptor;
-
   // =====================================
-  // BUILD RUNTIME DESCRIPTOR
+  // BUILD DESCRIPTOR
   // =====================================
 
   const descriptor = {
@@ -69,13 +70,9 @@ function buildDescriptor({
 
       "ssh",
 
-    payload: {
+    payload:
 
-      command:
-        base.command ||
-
-        null
-    },
+      base.payload || {},
 
     parser:
 
