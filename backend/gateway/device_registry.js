@@ -13,7 +13,7 @@ class DeviceRegistry {
 
       ip: "192.168.88.232",
 
-      port: 22,
+      port: 8022,
 
       username: "admin",
 
