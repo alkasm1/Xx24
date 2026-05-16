@@ -1,42 +1,110 @@
 const {
-  resolveOpcodeHandler
+  resolveOpcode
 } = require(
-  "./opcode_resolver"
+  "../../execution/resolve_opcode"
 );
 
+// =====================================
+// BUILD DESCRIPTOR
+// =====================================
+
 function buildDescriptor({
+
   device,
+
   opcode,
+
   meta = {}
+
 }) {
 
+  // =====================================
+  // VALIDATION
+  // =====================================
+
   if (!device) {
+
     throw new Error(
       "Device is required"
     );
   }
 
-  const handler =
-    resolveOpcodeHandler({
-      profile:
-        device.profile,
+  if (!opcode) {
+
+    throw new Error(
+      "Opcode is required"
+    );
+  }
+
+  // =====================================
+  // RESOLVE OPCODE
+  // =====================================
+
+  const resolved =
+    resolveOpcode({
+
+      device,
 
       opcode
     });
 
-  const descriptor =
-    handler(meta);
+  const base =
+    resolved.descriptor;
 
-  if (!descriptor) {
-    throw new Error(
-      `Descriptor build failed: ${opcode}`
-    );
-  }
+  // =====================================
+  // BUILD RUNTIME DESCRIPTOR
+  // =====================================
 
-  if (
-    !descriptor.transport
-  ) {
+  const descriptor = {
+
+    type:
+      base.type ||
+      "command",
+
+    transport:
+
+      base.transport ||
+
+      device.transport ||
+
+      "ssh",
+
+    payload: {
+
+      command:
+        base.command ||
+
+        null
+    },
+
+    parser:
+
+      base.parser ||
+
+      "text",
+
+    timeout:
+
+      base.timeout ||
+
+      10000,
+
+    options: {
+
+      ...(base.options || {}),
+
+      ...(meta.options || {})
+    }
+  };
+
+  // =====================================
+  // VALIDATION
+  // =====================================
+
+  if (!descriptor.transport) {
+
     throw new Error(
+
       `Descriptor missing transport: ${opcode}`
     );
   }
@@ -44,6 +112,9 @@ function buildDescriptor({
   return descriptor;
 }
 
+// =====================================
+
 module.exports = {
+
   buildDescriptor
 };
