@@ -1,14 +1,10 @@
 // backend/execution/resolve_opcode.js
 
 // =====================================
-// OPCODE TABLE
+// OPCODES
 // =====================================
 
 const OPCODES = {
-
-  // ===================================
-  // SYSTEM EXEC
-  // ===================================
 
   "system.exec": (
     meta = {}
@@ -26,10 +22,6 @@ const OPCODES = {
     timeout: 15000
   }),
 
-  // ===================================
-  // GET IDENTITY
-  // ===================================
-
   "system.getIdentity": () => ({
 
     transport: "ssh",
@@ -43,10 +35,6 @@ const OPCODES = {
     timeout: 10000
   }),
 
-  // ===================================
-  // HOSTNAME
-  // ===================================
-
   "system.hostname": () => ({
 
     transport: "ssh",
@@ -59,10 +47,6 @@ const OPCODES = {
 
     timeout: 10000
   }),
-
-  // ===================================
-  // UPTIME
-  // ===================================
 
   "system.uptime": () => ({
 
@@ -79,13 +63,15 @@ const OPCODES = {
 };
 
 // =====================================
-// RESOLVE
+// RESOLVE OPCODE
 // =====================================
 
-function resolveOpcode(
+function resolveOpcode({
+
   opcode,
+
   meta = {}
-) {
+}) {
 
   const handler =
     OPCODES[
@@ -103,6 +89,10 @@ function resolveOpcode(
     meta
   );
 }
+
+// =====================================
+// EXPORT
+// =====================================
 
 module.exports = {
 
