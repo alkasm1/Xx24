@@ -11,7 +11,7 @@ class DeviceRegistry {
     this.upsert("router-1", {
       deviceId: "router-1",
 
-      ip: "192.168.88.232",
+      ip: "192.168.88.224",
 
       port: 8022,
 
