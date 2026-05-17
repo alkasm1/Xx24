@@ -1,5 +1,10 @@
 // backend/gateway/gateway.js
 
+const {
+  TaskRuntime
+} = require(
+  "./runtime/task_runtime"
+);
 require("./transports");
 
 const { createAPIServer } = require("../api/server");
