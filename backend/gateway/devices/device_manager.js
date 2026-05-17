@@ -26,6 +26,7 @@ class DeviceManager {
     this.devices.set(
       device.deviceId,
       {
+
         ...device,
 
         status:
@@ -148,7 +149,7 @@ class DeviceManager {
   }
 
   // =====================================
-  // OFFLINE CHECK
+  // CLEANUP
   // =====================================
 
   cleanup(
@@ -173,6 +174,45 @@ class DeviceManager {
           "offline";
       }
     }
+  }
+
+  // =====================================
+  // STATS
+  // =====================================
+
+  getStats() {
+
+    let online = 0;
+
+    let offline = 0;
+
+    for (
+      const d
+      of this.devices.values()
+    ) {
+
+      if (
+        d.status ===
+        "online"
+      ) {
+
+        online++;
+
+      } else {
+
+        offline++;
+      }
+    }
+
+    return {
+
+      online,
+
+      offline,
+
+      total:
+        this.devices.size
+    };
   }
 }
 
