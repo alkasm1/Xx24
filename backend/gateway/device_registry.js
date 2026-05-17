@@ -15,54 +15,54 @@ class DeviceRegistry {
     // =====================================
 
     this.upsert(
+  "router-1",
+  {
+
+    deviceId:
       "router-1",
-      {
 
-        deviceId:
-          "router-1",
+    ip:
+      "192.168.88.240",
 
-        ip:
-          "192.168.88.240",
+    port:
+      8022,
 
-        port:
-          8022,
+    username:
+      "u0_a123",
 
-        username:
-          "u0_a123",
+    password:
+      "123456",
 
-        password:
-          "",
+    method:
+      "ssh",
 
-        method:
-          "ssh",
+    transport:
+      "ssh",
 
-        transport:
-          "ssh",
+    profile:
+      "linux",
 
-        profile:
-          "linux",
+    vendor:
+      "android-termux",
 
-        vendor:
-          "android-termux",
+    status:
+      "online",
 
-        status:
-          "online",
+    lastSeen:
+      Date.now(),
 
-        lastSeen:
-          Date.now(),
+    capabilities: [
 
-        capabilities: [
+      "system.exec",
 
-          "system.exec",
+      "system.getIdentity",
 
-          "system.getIdentity",
+      "system.hostname",
 
-          "system.hostname",
-
-          "system.uptime"
-        ]
-      }
-    );
+      "system.uptime"
+    ]
+  }
+);
 
     // =====================================
     // CLEANUP LOOP
