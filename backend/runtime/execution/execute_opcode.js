@@ -1,4 +1,9 @@
 const {
+  emitDeviceUpdated
+} = require(
+  "../events/runtime_events"
+);
+const {
   buildDescriptor
 } = require(
   "../resolver/descriptor_builder"
@@ -99,6 +104,16 @@ async function executeOpcode({
 
           try {
 
+            emitDeviceUpdated({
+
+  ...device,
+
+  status:
+    "busy",
+
+  activeOpcode:
+    opcode
+});
             const result =
 
               await adapter.execute(
@@ -110,6 +125,19 @@ async function executeOpcode({
                 meta
               );
 
+            emitDeviceUpdated({
+
+  ...device,
+
+  status:
+    "online",
+
+  activeOpcode:
+    null,
+
+  lastExecution:
+    Date.now()
+});
             resolve({
 
               success:
