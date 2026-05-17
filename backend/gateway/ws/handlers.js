@@ -1,4 +1,12 @@
-// backend/gateway/ws/handlers.js
+const {
+  executeTerminalCommand
+} = require(
+  "../terminal/terminal_executor"
+);
+
+const registry = require(
+  "../device_registry"
+);
 
 const {
   emitTaskUpdated
@@ -6,23 +14,22 @@ const {
   "../../runtime/events/runtime_events"
 );
 
-const {
-  executeTerminalCommand
-} = require(
-  "../terminal/terminal_executor"
-);
-const registry = require(
-  "../device_registry"
-);
-
 function createHandlers({
+
   ws,
+
   eventBus,
+
   taskManager,
+
   sessionManager,
+
   sender,
+
   runStress,
+
   activeRequests
+
 }) {
 
   async function onMessage(raw) {
@@ -44,9 +51,10 @@ function createHandlers({
       return;
     }
 
-    // -----------------------------
-    // UI HEARTBEAT
-    // -----------------------------
+    // =====================================
+    // PING
+    // =====================================
+
     if (
       msg.type === "ping"
     ) {
@@ -61,9 +69,10 @@ function createHandlers({
       return;
     }
 
-    // -----------------------------
-    // STRESS RUN
-    // -----------------------------
+    // =====================================
+    // STRESS
+    // =====================================
+
     if (
       msg.type ===
       "ui.stress.run"
@@ -102,110 +111,110 @@ function createHandlers({
 
       return;
     }
-    // -----------------------------
-// TERMINAL EXECUTION
-// -----------------------------
-if (
-  msg.type ===
-  "ui.terminal.exec"
-) {
 
-  // -----------------------------
-  // REQUEST ID REQUIRED
-  // -----------------------------
-  if (
-    !msg.requestId
-  ) {
+    // =====================================
+    // TERMINAL
+    // =====================================
 
-    return sender.send(ws, {
-      type:
-        "terminal.output",
+    if (
+      msg.type ===
+      "ui.terminal.exec"
+    ) {
 
-      error:
-        "Missing requestId"
-    });
-  }
+      if (
+        !msg.requestId
+      ) {
 
-  // -----------------------------
-  // DEDUPE
-  // -----------------------------
-  if (
-    activeRequests.has(
-      msg.requestId
-    )
-  ) {
+        return sender.send(ws, {
 
-    return;
-  }
+          type:
+            "terminal.output",
 
-  activeRequests.add(
-    msg.requestId
-  );
+          error:
+            "Missing requestId"
+        });
+      }
 
-  try {
-
-    const result =
-      await executeTerminalCommand({
-
-        deviceId:
-          msg.deviceId,
-
-        command:
-          msg.command,
-
-        requestId:
+      if (
+        activeRequests.has(
           msg.requestId
-      });
+        )
+      ) {
 
-    sender.send(ws, {
-      type:
-        "terminal.output",
+        return;
+      }
 
-      requestId:
-        msg.requestId,
+      activeRequests.add(
+        msg.requestId
+      );
 
-      deviceId:
-        msg.deviceId,
+      try {
 
-      command:
-        msg.command,
+        const result =
+          await executeTerminalCommand({
 
-      output:
-        result.result
-    });
+            deviceId:
+              msg.deviceId,
 
-  } catch (err) {
+            command:
+              msg.command,
 
-    sender.send(ws, {
-      type:
-        "terminal.output",
+            requestId:
+              msg.requestId
+          });
 
-      requestId:
-        msg.requestId,
+        sender.send(ws, {
 
-      deviceId:
-        msg.deviceId,
+          type:
+            "terminal.output",
 
-      command:
-        msg.command,
+          requestId:
+            msg.requestId,
 
-      error:
-        err.message
-    });
+          deviceId:
+            msg.deviceId,
 
-  } finally {
+          command:
+            msg.command,
 
-    activeRequests.delete(
-      msg.requestId
-    );
-  }
+          output:
+            result.result
+        });
 
-  return;
-}
+      } catch (err) {
 
-    // -----------------------------
-    // OPCODE EXECUTION
-    // -----------------------------
+        sender.send(ws, {
+
+          type:
+            "terminal.output",
+
+          requestId:
+            msg.requestId,
+
+          deviceId:
+            msg.deviceId,
+
+          command:
+            msg.command,
+
+          error:
+            err.message
+        });
+
+      } finally {
+
+        activeRequests.delete(
+          msg.requestId
+        );
+      }
+
+      return;
+    }
+
+    // =====================================
+    // OPCODE
+    // =====================================
+
     if (
       msg.type ===
       "ui.opcode"
@@ -216,11 +225,14 @@ if (
       ) {
 
         return sender.send(ws, {
+
           type:
             "opcode.result",
 
           result: {
+
             success: false,
+
             error:
               "Missing requestId"
           }
@@ -262,6 +274,7 @@ if (
         );
 
         return sender.send(ws, {
+
           type:
             "opcode.result",
 
@@ -275,7 +288,9 @@ if (
             msg.opcode,
 
           result: {
+
             success: false,
+
             error:
               `Device not found: ${msg.deviceId}`
           }
@@ -285,26 +300,26 @@ if (
       try {
 
         const task =
-          await taskManager.executeOpcode(
-            {
-              emitTaskUpdated(
-  task
-);
-              device,
+          await taskManager.executeOpcode({
 
-              opcode:
-                msg.opcode,
+            device,
 
-              meta:
-                msg.meta || {},
+            opcode:
+              msg.opcode,
 
-              requestId:
-                msg.requestId,
+            meta:
+              msg.meta || {},
 
-              sessionId:
-                ws.sessionId
-            }
-          );
+            requestId:
+              msg.requestId,
+
+            sessionId:
+              ws.sessionId
+          });
+
+        emitTaskUpdated(
+          task
+        );
 
         sessionManager.attachTask(
           ws.sessionId,
@@ -312,6 +327,7 @@ if (
         );
 
         sender.send(ws, {
+
           type:
             "opcode.result",
 
@@ -336,6 +352,7 @@ if (
         );
 
         sender.send(ws, {
+
           type:
             "opcode.result",
 
@@ -349,7 +366,9 @@ if (
             msg.opcode,
 
           result: {
+
             success: false,
+
             error:
               err.message
           }
