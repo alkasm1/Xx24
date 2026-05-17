@@ -1,9 +1,4 @@
 const {
-  emitDeviceUpdated
-} = require(
-  "../events/runtime_events"
-);
-const {
   buildDescriptor
 } = require(
   "../resolver/descriptor_builder"
@@ -19,6 +14,12 @@ const {
   getDeviceQueue
 } = require(
   "../resolver/execution_queue"
+);
+
+const {
+  emitDeviceUpdated
+} = require(
+  "../events/runtime_events"
 );
 
 // =====================================
@@ -106,14 +107,15 @@ async function executeOpcode({
 
             emitDeviceUpdated({
 
-  ...device,
+              ...device,
 
-  status:
-    "busy",
+              status:
+                "busy",
 
-  activeOpcode:
-    opcode
-});
+              activeOpcode:
+                opcode
+            });
+
             const result =
 
               await adapter.execute(
@@ -127,17 +129,18 @@ async function executeOpcode({
 
             emitDeviceUpdated({
 
-  ...device,
+              ...device,
 
-  status:
-    "online",
+              status:
+                "online",
 
-  activeOpcode:
-    null,
+              activeOpcode:
+                null,
 
-  lastExecution:
-    Date.now()
-});
+              lastExecution:
+                Date.now()
+            });
+
             resolve({
 
               success:
@@ -162,6 +165,22 @@ async function executeOpcode({
             });
 
           } catch (err) {
+
+            emitDeviceUpdated({
+
+              ...device,
+
+              status:
+                "error",
+
+              activeOpcode:
+                null,
+
+              lastError:
+                err.message ||
+
+                String(err)
+            });
 
             reject({
 
@@ -199,8 +218,6 @@ async function executeOpcode({
     }
   );
 }
-
-// =====================================
 
 module.exports = {
 
