@@ -4,84 +4,167 @@ const DEVICE_TIMEOUT_MS =
   30000;
 
 class DeviceRegistry {
+
   constructor() {
+
     this.devices =
       new Map();
 
-    this.upsert("router-1", {
-      deviceId: "router-1",
+    // =====================================
+    // DEVICE
+    // =====================================
 
-      ip: "192.168.88.240",
+    this.upsert(
+      "router-1",
+      {
 
-      port: 8022,
+        deviceId:
+          "router-1",
 
-      username: "admin",
+        ip:
+          "192.168.88.240",
 
-      password: "1234",
+        port:
+          8022,
 
-      method: "ssh",
+        username:
+          "u0_a123",
 
-      profile: "linux",
+        password:
+          "",
 
-      vendor: "generic",
+        method:
+          "ssh",
 
-      status: "online",
+        transport:
+          "ssh",
 
-      lastSeen:
-        Date.now(),
+        profile:
+          "linux",
 
-      capabilities: [
-        "system.getIdentity",
-        "system.reboot"
-      ]
-    });
+        vendor:
+          "android-termux",
 
-    // cleanup loop
-    setInterval(() => {
-      this.cleanupExpired();
-    }, 5000);
+        status:
+          "online",
+
+        lastSeen:
+          Date.now(),
+
+        capabilities: [
+
+          "system.exec",
+
+          "system.getIdentity",
+
+          "system.hostname",
+
+          "system.uptime"
+        ]
+      }
+    );
+
+    // =====================================
+    // CLEANUP LOOP
+    // =====================================
+
+    setInterval(
+      () => {
+
+        this.cleanupExpired();
+
+      },
+      5000
+    );
   }
+
+  // =====================================
+  // UPSERT
+  // =====================================
 
   upsert(id, data) {
-    this.devices.set(id, {
-      ...data,
-      deviceId: id
-    });
+
+    this.devices.set(
+      id,
+      {
+
+        ...data,
+
+        deviceId: id
+      }
+    );
   }
+
+  // =====================================
+  // GET
+  // =====================================
 
   get(id) {
-    return this.devices.get(id);
+
+    return this.devices.get(
+      id
+    );
   }
 
+  // =====================================
+  // GET ALL
+  // =====================================
+
   getAll() {
+
     return Array.from(
       this.devices.values()
     );
   }
 
+  // =====================================
+  // UPDATE
+  // =====================================
+
   update(id, data) {
+
     if (
       !this.devices.has(id)
     ) {
       return;
     }
 
-    this.devices.set(id, {
-      ...this.devices.get(id),
-      ...data
-    });
+    this.devices.set(
+      id,
+      {
+
+        ...this.devices.get(id),
+
+        ...data
+      }
+    );
   }
 
+  // =====================================
+  // REMOVE
+  // =====================================
+
   remove(id) {
+
     return this.devices.delete(
       id
     );
   }
 
-  cleanupExpired() {
-    const now = Date.now();
+  // =====================================
+  // CLEANUP
+  // =====================================
 
-    for (const device of this.devices.values()) {
+  cleanupExpired() {
+
+    const now =
+      Date.now();
+
+    for (
+      const device
+      of this.devices.values()
+    ) {
+
       const age =
         now -
         device.lastSeen;
@@ -90,28 +173,45 @@ class DeviceRegistry {
         age >
         DEVICE_TIMEOUT_MS
       ) {
+
         device.status =
           "offline";
       }
     }
   }
 
+  // =====================================
+  // STATS
+  // =====================================
+
   getStats() {
+
     let online = 0;
+
     let offline = 0;
 
-    for (const d of this.devices.values()) {
+    for (
+      const d
+      of this.devices.values()
+    ) {
+
       if (
-        d.status === "online"
+        d.status ===
+        "online"
       ) {
+
         online++;
+
       } else {
+
         offline++;
       }
     }
 
     return {
+
       online,
+
       offline
     };
   }
