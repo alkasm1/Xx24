@@ -1,221 +1,67 @@
 // backend/gateway/device_registry.js
 
-const DEVICE_TIMEOUT_MS =
-  30000;
+const devices =
+  require(
+    "./devices/device_manager"
+  );
 
-class DeviceRegistry {
+// =====================================
+// DEFAULT DEVICE
+// =====================================
 
-  constructor() {
+devices.add({
 
-    this.devices =
-      new Map();
+  deviceId:
+    "router-1",
 
-    // =====================================
-    // DEVICE
-    // =====================================
+  ip:
+    "192.168.88.240",
 
-    this.upsert(
-  "router-1",
-  {
+  port:
+    8022,
 
-    deviceId:
-      "router-1",
+  username:
+    "u0_a123",
 
-    ip:
-      "192.168.88.240",
+  password:
+    "123456",
 
-    port:
-      8022,
+  method:
+    "ssh",
 
-    username:
-      "u0_a123",
+  transport:
+    "ssh",
 
-    password:
-      "123456",
+  profile:
+    "linux",
 
-    method:
-      "ssh",
+  vendor:
+    "android-termux",
 
-    transport:
-      "ssh",
+  status:
+    "online",
 
-    profile:
-      "linux",
+  capabilities: [
 
-    vendor:
-      "android-termux",
+    "system.exec",
 
-    status:
-      "online",
+    "system.getIdentity",
 
-    lastSeen:
-      Date.now(),
+    "system.hostname",
 
-    capabilities: [
+    "system.uptime"
+  ]
+});
 
-      "system.exec",
+// =====================================
 
-      "system.getIdentity",
+setInterval(() => {
 
-      "system.hostname",
+  devices.cleanup(
+    30000
+  );
 
-      "system.uptime"
-    ]
-  }
-);
-
-    // =====================================
-    // CLEANUP LOOP
-    // =====================================
-
-    setInterval(
-      () => {
-
-        this.cleanupExpired();
-
-      },
-      5000
-    );
-  }
-
-  // =====================================
-  // UPSERT
-  // =====================================
-
-  upsert(id, data) {
-
-    this.devices.set(
-      id,
-      {
-
-        ...data,
-
-        deviceId: id
-      }
-    );
-  }
-
-  // =====================================
-  // GET
-  // =====================================
-
-  get(id) {
-
-    return this.devices.get(
-      id
-    );
-  }
-
-  // =====================================
-  // GET ALL
-  // =====================================
-
-  getAll() {
-
-    return Array.from(
-      this.devices.values()
-    );
-  }
-
-  // =====================================
-  // UPDATE
-  // =====================================
-
-  update(id, data) {
-
-    if (
-      !this.devices.has(id)
-    ) {
-      return;
-    }
-
-    this.devices.set(
-      id,
-      {
-
-        ...this.devices.get(id),
-
-        ...data
-      }
-    );
-  }
-
-  // =====================================
-  // REMOVE
-  // =====================================
-
-  remove(id) {
-
-    return this.devices.delete(
-      id
-    );
-  }
-
-  // =====================================
-  // CLEANUP
-  // =====================================
-
-  cleanupExpired() {
-
-    const now =
-      Date.now();
-
-    for (
-      const device
-      of this.devices.values()
-    ) {
-
-      const age =
-        now -
-        device.lastSeen;
-
-      if (
-        age >
-        DEVICE_TIMEOUT_MS
-      ) {
-
-        device.status =
-          "offline";
-      }
-    }
-  }
-
-  // =====================================
-  // STATS
-  // =====================================
-
-  getStats() {
-
-    let online = 0;
-
-    let offline = 0;
-
-    for (
-      const d
-      of this.devices.values()
-    ) {
-
-      if (
-        d.status ===
-        "online"
-      ) {
-
-        online++;
-
-      } else {
-
-        offline++;
-      }
-    }
-
-    return {
-
-      online,
-
-      offline
-    };
-  }
-}
+}, 5000);
 
 module.exports =
-  new DeviceRegistry();
+  devices;
