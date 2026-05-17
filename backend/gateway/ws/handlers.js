@@ -300,7 +300,7 @@ function createHandlers({
       try {
 
         const task =
-          await taskManager.executeOpcode({
+          await taskManager.execute({
 
             device,
 
