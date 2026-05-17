@@ -1,6 +1,12 @@
 // backend/gateway/ws/handlers.js
 
 const {
+  emitTaskUpdated
+} = require(
+  "../../runtime/events/runtime_events"
+);
+
+const {
   executeTerminalCommand
 } = require(
   "../terminal/terminal_executor"
@@ -281,6 +287,9 @@ if (
         const task =
           await taskManager.executeOpcode(
             {
+              emitTaskUpdated(
+  task
+);
               device,
 
               opcode:
