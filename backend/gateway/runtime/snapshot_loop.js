@@ -1,10 +1,19 @@
-// backend/gateway/runtime/snapshot_loop.js
+const deviceState =
+  require(
+    "../../runtime/state/device_state"
+  );
+
+const taskState =
+  require(
+    "../../runtime/state/task_state"
+  );
 
 function sanitizeDevice(
   device
 ) {
 
   return {
+
     deviceId:
       device.deviceId,
 
@@ -29,6 +38,9 @@ function sanitizeDevice(
     lastSeen:
       device.lastSeen,
 
+    updatedAt:
+      device.updatedAt,
+
     capabilities:
       Array.isArray(
         device.capabilities
@@ -41,45 +53,86 @@ function sanitizeDevice(
 function startSnapshotLoop({
 
   registry,
+
   metrics,
+
   sessionManager,
+
   taskManager,
+
   sendToUI,
+
   getBroadcasts,
 
   intervalMs = 2000
 }) {
 
-  return setInterval(() => {
+  return setInterval(
+    () => {
 
-    const rawDevices =
-      registry.getAll();
+      const rawDevices =
 
-    const devices =
-      rawDevices.map(
-        sanitizeDevice
-      );
+        registry.getAll();
 
-    sendToUI({
-      type:
-        "snapshot",
+      // =====================================
+      // UPDATE DEVICE STATE
+      // =====================================
 
-      devices,
+      for (
+        const device
+        of rawDevices
+      ) {
 
-      metrics:
-        metrics.snapshot(),
+        deviceState.update(
+          device.deviceId,
+          device
+        );
+      }
 
-      broadcasts:
-        getBroadcasts(),
+      // =====================================
+      // SNAPSHOT
+      // =====================================
 
-      sessions:
-        sessionManager.listSessions(),
+      const devices =
 
-      activeTasks:
-        taskManager.listTasks()
-    });
+        deviceState
+          .getAll()
+          .map(
+            sanitizeDevice
+          );
 
-  }, intervalMs);
+      const tasks =
+        taskState.getAll();
+
+      sendToUI({
+
+        type:
+          "runtime.snapshot",
+
+        devices,
+
+        tasks,
+
+        metrics:
+          metrics.snapshot(),
+
+        broadcasts:
+          getBroadcasts(),
+
+        sessions:
+          sessionManager.listSessions(),
+
+        activeTasks:
+          taskManager.listTasks(),
+
+        ts:
+          Date.now()
+      });
+
+    },
+
+    intervalMs
+  );
 }
 
 module.exports = {
