@@ -104,7 +104,15 @@ function createAPIServer({
   // =====================================
 
   const server =
-    http.createServer(app);
+  http.createServer(app);
+
+server.on("listening", () => {
+
+  console.log(
+    "SERVER ADDRESS:",
+    server.address()
+  );
+});
 
   // =====================================
   // START
