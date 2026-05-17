@@ -1,28 +1,28 @@
-// backend/gateway/runtime/terminal_stream.js
+const eventBus = require(
+  "../event_bus"
+);
 
-const eventBus =
-  require("../event_bus");
-
-function safeSerialize(v) {
+function stringify(arg) {
 
   if (
-    typeof v === "string"
+    typeof arg === "object"
   ) {
-    return v;
+
+    try {
+
+      return JSON.stringify(
+        arg,
+        null,
+        2
+      );
+
+    } catch {
+
+      return "[object]";
+    }
   }
 
-  try {
-
-    return JSON.stringify(
-      v,
-      null,
-      2
-    );
-
-  } catch (_) {
-
-    return String(v);
-  }
+  return String(arg);
 }
 
 function initTerminalStream(
@@ -43,7 +43,7 @@ function initTerminalStream(
       const payload =
         args
           .map(
-            safeSerialize
+            stringify
           )
           .join(" ");
 
@@ -59,23 +59,20 @@ function initTerminalStream(
     } catch (_) {}
   };
 
-  // =========================
-  // EVENT BUS TERMINAL
-  // =========================
+  // =====================================
+  // EVENT BUS TERMINAL LOGS
+  // =====================================
 
   eventBus.on(
     "terminal.log",
-    line => {
+    (line) => {
 
       sendToUI({
 
         type:
           "terminal",
 
-        line:
-          safeSerialize(
-            line
-          )
+        line
       });
     }
   );
