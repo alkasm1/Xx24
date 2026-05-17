@@ -1,28 +1,32 @@
-const eventBus = require(
-  "../event_bus"
-);
+// backend/gateway/runtime/terminal_stream.js
+
+const eventBus =
+  require(
+    "../event_bus"
+  );
 
 function stringify(arg) {
 
   if (
-    typeof arg === "object"
+    typeof arg ===
+    "string"
   ) {
 
-    try {
-
-      return JSON.stringify(
-        arg,
-        null,
-        2
-      );
-
-    } catch {
-
-      return "[object]";
-    }
+    return arg;
   }
 
-  return String(arg);
+  try {
+
+    return JSON.stringify(
+      arg,
+      null,
+      2
+    );
+
+  } catch {
+
+    return String(arg);
+  }
 }
 
 function initTerminalStream(
@@ -60,19 +64,20 @@ function initTerminalStream(
   };
 
   // =====================================
-  // EVENT BUS TERMINAL LOGS
+  // EVENT BUS TERMINAL
   // =====================================
 
   eventBus.on(
     "terminal.log",
-    (line) => {
+    line => {
 
       sendToUI({
 
         type:
           "terminal",
 
-        line
+        line:
+          stringify(line)
       });
     }
   );
