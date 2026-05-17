@@ -1,32 +1,85 @@
 // backend/gateway/runtime/terminal_stream.js
 
-const eventBus = require("../event_bus");
+const eventBus =
+  require("../event_bus");
 
-function initTerminalStream(sendToUI) {
-  const originalLog = console.log;
+function safeSerialize(v) {
 
-  console.log = (...args) => {
+  if (
+    typeof v === "string"
+  ) {
+    return v;
+  }
+
+  try {
+
+    return JSON.stringify(
+      v,
+      null,
+      2
+    );
+
+  } catch (_) {
+
+    return String(v);
+  }
+}
+
+function initTerminalStream(
+  sendToUI
+) {
+
+  const originalLog =
+    console.log;
+
+  console.log = (
+    ...args
+  ) => {
+
     originalLog(...args);
 
     try {
-      const payload = args
-        .map(a => (typeof a === "object" ? JSON.stringify(a) : String(a)))
-        .join(" ");
+
+      const payload =
+        args
+          .map(
+            safeSerialize
+          )
+          .join(" ");
 
       sendToUI({
-        type: "terminal",
-        line: payload
+
+        type:
+          "terminal",
+
+        line:
+          payload
       });
+
     } catch (_) {}
   };
 
-  // Forward eventBus terminal logs if any
-  eventBus.on("terminal.log", line => {
-    sendToUI({
-      type: "terminal",
-      line
-    });
-  });
+  // =========================
+  // EVENT BUS TERMINAL
+  // =========================
+
+  eventBus.on(
+    "terminal.log",
+    line => {
+
+      sendToUI({
+
+        type:
+          "terminal",
+
+        line:
+          safeSerialize(
+            line
+          )
+      });
+    }
+  );
 }
 
-module.exports = initTerminalStream;
+module.exports =
+  initTerminalStream;
