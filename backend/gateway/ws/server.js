@@ -1,191 +1,111 @@
 // backend/gateway/ws/server.js
 
-const WebSocket =
-  require("ws");
-runtimeState.setSession({
-  id:
-    ws.sessionId,
+const WebSocket = require("ws");
+const runtimeState = require("../runtime/runtime_state");
 
-  connectedAt:
-    Date.now()
-});
-
-const {
-  createSender
-} = require("./sender");
-
-const {
-  createHandlers
-} = require("./handlers");
-
-const {
-  startHeartbeatLoop
-} = require("./heartbeat");
+const { createSender } = require("./sender");
+const { createHandlers } = require("./handlers");
+const { startHeartbeatLoop } = require("./heartbeat");
 
 function createWSServer({
-
   server,
-
   eventBus,
-
   taskManager,
-
   sessionManager,
-
   runStress,
-
   activeRequests
-
 }) {
 
   // =====================================
   // WS SERVER ATTACHED TO HTTP SERVER
   // =====================================
 
-  const wss =
-    new WebSocket.Server({
+  const wss = new WebSocket.Server({ server });
 
-      server
-    });
-
-  console.log(
-    "🌐 WebSocket attached to HTTP server"
-  );
+  console.log("🌐 WebSocket attached to HTTP server");
 
   // =====================================
   // SENDER
   // =====================================
 
-  const sender =
-    createSender(wss);
+  const sender = createSender(wss);
 
   // =====================================
   // CONNECTION
   // =====================================
 
-  wss.on(
-    "connection",
-    ws => {
+  wss.on("connection", ws => {
 
-      const session =
-        sessionManager.createSession(
-          ws,
-          {
+    const session = sessionManager.createSession(ws, {
+      remoteAddress: ws._socket?.remoteAddress || null
+    });
 
-            remoteAddress:
+    console.log("🟢 Session connected:", session.sessionId);
 
-              ws._socket
-                ?.remoteAddress ||
+    // =====================================
+    // RUNTIME STATE: SESSION REGISTER
+    // =====================================
 
-              null
-          }
-        );
+    runtimeState.setSession({
+      id: session.sessionId,
+      connectedAt: Date.now(),
+      remoteAddress: ws._socket?.remoteAddress || null
+    });
 
-      console.log(
+    ws.sessionId = session.sessionId;
+    ws.isAlive = true;
 
-        "🟢 Session connected:",
+    // =====================================
+    // HEARTBEAT
+    // =====================================
 
-        session.sessionId
-      );
+    ws.on("pong", () => {
+      ws.isAlive = true;
+      sessionManager.touchSession(ws.sessionId);
+    });
 
-      ws.isAlive =
-        true;
+    // =====================================
+    // HANDLERS
+    // =====================================
 
-      // =====================================
-      // HEARTBEAT
-      // =====================================
+    const handlers = createHandlers({
+      ws,
+      eventBus,
+      taskManager,
+      sessionManager,
+      sender,
+      runStress,
+      activeRequests
+    });
 
-      ws.on(
-        "pong",
-        () => {
+    ws.on("message", handlers.onMessage);
 
-          ws.isAlive =
-            true;
+    // =====================================
+    // CLOSE
+    // =====================================
 
-          sessionManager.touchSession(
-            ws.sessionId
-          );
-        }
-      );
+    ws.on("close", () => {
+      console.log("🔴 Session disconnected:", ws.sessionId);
 
-      // =====================================
-      // HANDLERS
-      // =====================================
+      runtimeState.removeSession(ws.sessionId);
+      sessionManager.destroySession(ws.sessionId);
+    });
 
-      const handlers =
-        createHandlers({
+    // =====================================
+    // ERROR
+    // =====================================
 
-          ws,
-
-          eventBus,
-
-          taskManager,
-
-          sessionManager,
-
-          sender,
-
-          runStress,
-
-          activeRequests
-        });
-
-      ws.on(
-        "message",
-        handlers.onMessage
-      );
-
-      // =====================================
-      // CLOSE
-      // =====================================
-
-      ws.on(
-        "close",
-        () => {
-
-          console.log(
-
-            "🔴 Session disconnected:",
-
-            ws.sessionId
-          );
-
-          sessionManager.destroySession(
-            ws.sessionId
-          );
-        }
-      );
-runtimeState.removeSession(
-  ws.sessionId
-);
-      
-      // =====================================
-      // ERROR
-      // =====================================
-
-      ws.on(
-        "error",
-        err => {
-
-          console.log(
-
-            "❌ WS error:",
-
-            err.message
-          );
-        }
-      );
-    }
-  );
+    ws.on("error", err => {
+      console.log("❌ WS error:", err.message);
+    });
+  });
 
   // =====================================
   // HEARTBEAT LOOP
   // =====================================
 
   startHeartbeatLoop({
-
     wss,
-
     sessionManager
   });
 
@@ -194,14 +114,11 @@ runtimeState.removeSession(
   // =====================================
 
   return {
-
     wss,
-
     sender
   };
 }
 
 module.exports = {
-
   createWSServer
 };
