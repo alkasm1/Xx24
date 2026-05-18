@@ -1,147 +1,61 @@
 // backend/gateway/gateway.js
 
-const {
-  TaskRuntime
-} = require(
-  "./runtime/task_runtime"
-);
+const { TaskRuntime } = require("./runtime/task_runtime");
+require("./transports");
 
-require(
-  "./transports"
-);
-
-const {
-  createAPIServer
-} = require(
-  "../api/server"
-);
-
-const eventBus =
-  require(
-    "./event_bus"
-  );
-
-const registry =
-  require(
-    "./device_registry"
-  );
-
-const Metrics =
-  require(
-    "./metrics"
-  );
-
-const {
-  dispatch
-} = require(
-  "./dispatcher"
-);
-
-const {
-  createWSServer
-} = require(
-  "./ws"
-);
-
-const initTerminalStream =
-  require(
-    "./runtime/terminal_stream"
-  );
-
-const {
-  runStress
-} = require(
-  "../../stress/runner"
-);
-
-const {
-  createSessionManager
-} = require(
-  "../../packages/alm-core/runtime/session_manager"
-);
-
-const {
-  startSnapshotLoop
-} = require(
-  "./runtime/snapshot_loop"
-);
-
-const {
-  startUDPRuntime
-} = require(
-  "./runtime/udp_runtime"
-);
-
-const {
-  loadState
-} = require(
-  "./runtime/state_store"
-);
-
-const {
-  discoverDeviceCapabilities
-} = require(
-  "./runtime/runtime_introspection"
-);
-
-const runtimeState =
-  require(
-    "./runtime/runtime_state"
-  );
+const { createAPIServer } = require("../api/server");
+const eventBus = require("./event_bus");
+const registry = require("./device_registry");
+const Metrics = require("./metrics");
+const { dispatch } = require("./dispatcher");
+const { createWSServer } = require("./ws");
+const initTerminalStream = require("./runtime/terminal_stream");
+const { runStress } = require("../../stress/runner");
+const { createSessionManager } = require("../../packages/alm-core/runtime/session_manager");
+const { startSnapshotLoop } = require("./runtime/snapshot_loop");
+const { startUDPRuntime } = require("./runtime/udp_runtime");
+const { loadState } = require("./runtime/state_store");
+const { discoverDeviceCapabilities } = require("./runtime/runtime_introspection");
+const runtimeState = require("./runtime/runtime_state");
 
 // =====================================
 // TASK RUNTIME
 // =====================================
 
-const taskRuntime =
-  new TaskRuntime({
-
-    dispatcher:
-      dispatch,
-
-    eventBus
-  });
+const taskRuntime = new TaskRuntime({
+  dispatcher: dispatch,
+  eventBus
+});
 
 // =====================================
 // SESSION MANAGER
 // =====================================
 
-const sessionManager =
-  createSessionManager();
+const sessionManager = createSessionManager();
 
 // =====================================
 // METRICS
 // =====================================
 
-const metrics =
-  new Metrics(
-    eventBus,
-    registry
-  );
+const metrics = new Metrics(eventBus, registry);
 
 // =====================================
 // ACTIVE REQUESTS
 // =====================================
 
-const activeRequests =
-  new Set();
+const activeRequests = new Set();
 
 // =====================================
 // LEGACY STATE
 // =====================================
 
-const {
-  broadcastRequests
-} = loadState();
+const { broadcastRequests } = loadState();
 
 // =====================================
 // API SERVER
 // =====================================
 
-const {
-  server
-} = createAPIServer({
-
+const { server } = createAPIServer({
   port: 8000
 });
 
@@ -149,21 +63,12 @@ const {
 // WS SERVER
 // =====================================
 
-const {
-  sender
-} = createWSServer({
-
+const { sender } = createWSServer({
   server,
-
   eventBus,
-
-  taskManager:
-    taskRuntime,
-
+  taskManager: taskRuntime,
   sessionManager,
-
   runStress,
-
   activeRequests
 });
 
@@ -171,114 +76,69 @@ const {
 // UI SENDER
 // =====================================
 
-function sendToUI(
-  obj
-) {
-
-  sender.broadcast(
-    obj
-  );
+function sendToUI(obj) {
+  sender.broadcast(obj);
 }
 
 // =====================================
 // TERMINAL STREAM
 // =====================================
 
-initTerminalStream(
-  sendToUI
-);
+initTerminalStream(sendToUI);
 
 // =====================================
-// TASK EVENTS
+// TASK EVENTS (الإصدار الصحيح)
 // =====================================
 
-function emitTaskUpdate(
-  task
-) {
-
+function emitTaskUpdate(task) {
   sendToUI({
-
-    type:
-      "task.update",
-
+    type: "task.update",
     task
   });
 
-  const doneStates = [
-
-    "SUCCESS",
-
-    "FAILED",
-
-    "TIMEOUT",
-
-    "CANCELLED"
-  ];
+  const doneStates = ["SUCCESS", "FAILED", "TIMEOUT", "CANCELLED"];
 
   if (
-
-    doneStates.includes(
-      task.status
-    ) &&
-
+    doneStates.includes(task.status) &&
     task.meta &&
-
     task.meta.sessionId
-
   ) {
-
-    sessionManager.detachTask(
-
-      task.meta.sessionId,
-
-      task.id
-    );
+    sessionManager.detachTask(task.meta.sessionId, task.id);
   }
 }
 
-eventBus.on(
-  "task.created",
-  emitTaskUpdate
-);
+// كل حدث يستقبل task → نضيفه إلى RuntimeState
+eventBus.on("task.created", task => {
+  runtimeState.setTask(task);
+  emitTaskUpdate(task);
+});
 
-eventBus.on(
-  "task.started",
-  emitTaskUpdate
-);
+eventBus.on("task.started", task => {
+  runtimeState.setTask(task);
+  emitTaskUpdate(task);
+});
 
-eventBus.on(
-  "task.completed",
-  emitTaskUpdate
-);
+eventBus.on("task.completed", task => {
+  runtimeState.setTask(task);
+  emitTaskUpdate(task);
+});
 
-eventBus.on(
-  "task.failed",
-  emitTaskUpdate
-);
-runtimeState.setTask(
-  task
-);
+eventBus.on("task.failed", task => {
+  runtimeState.setTask(task);
+  emitTaskUpdate(task);
+});
 
 // =====================================
 // SNAPSHOT LOOP
 // =====================================
 
 startSnapshotLoop({
-
   registry,
-
   metrics,
-
   sessionManager,
-
-  taskManager:
-    taskRuntime,
-
+  taskManager: taskRuntime,
   sendToUI,
-
-  getBroadcasts:
-    () =>
-      broadcastRequests
+  getBroadcasts: () => broadcastRequests
 });
 
 // =====================================
@@ -286,41 +146,25 @@ startSnapshotLoop({
 // =====================================
 
 startUDPRuntime({
-
   registry,
-
   sendToUI
 });
 
 // =====================================
 // BOOT
 // =====================================
-(async () => {
 
-  const devices =
-    registry.getAll();
+(async () => {
+  const devices = registry.getAll();
 
   for (const device of devices) {
-
-    await discoverDeviceCapabilities(
-
-      device,
-      registry
-    );
+    await discoverDeviceCapabilities(device, registry);
   }
-
 })();
-for (
-  const device
-  of registry.getAll()
-) {
 
-  runtimeState.setDevice(
-    device
-  );
+// تسجيل الأجهزة في RuntimeState
+for (const device of registry.getAll()) {
+  runtimeState.setDevice(device);
 }
 
-
-console.log(
-  "🚀 Gateway Runtime Online"
-);
+console.log("🚀 Gateway Runtime Online");
