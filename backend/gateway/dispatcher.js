@@ -1,63 +1,28 @@
-const {
-  executeOpcode
-} = require(
-  "../runtime/execution/execute_opcode"
-);
+// backend/gateway/dispatcher.js
 
-const {
-  getQueueStats
-} = require(
-  "../runtime/resolver/execution_queue"
-);
-
-const {
-  resolveOpcode
-} = require(
-  "../execution/resolve_opcode"
-);
+const opcodeRegistry = require("./opcodes/registry");
+const { executeOpcode } = require("./runtime/execution/execute_opcode");
+const { getQueueStats } = require("./runtime/resolver/execution_queue");
 
 // =====================================
 // DISPATCH
 // =====================================
 
-async function dispatch(
+async function dispatch(device, opcode, meta = {}) {
 
-  device,
+  // 1) جلب الوصف من registry الجديد
+  const descriptor = opcodeRegistry.get(opcode);
 
-  opcode,
+  if (!descriptor) {
+    throw new Error(`Opcode not found: ${opcode}`);
+  }
 
-  meta = {}
-
-) {
-
-  // =====================================
-  // RESOLVE OPCODE
-  // =====================================
-
-  const resolved =
-    resolveOpcode({
-
-      device,
-
-      opcode
-    });
-
-  // =====================================
-  // EXECUTE
-  // =====================================
-
+  // 2) تنفيذ الأوبكود
   return executeOpcode({
-
     device,
-
     opcode,
-
-    descriptor:
-      resolved.descriptor,
-
-    profileId:
-      resolved.profileId,
-
+    descriptor,
+    profileId: descriptor.profile || "default",
     meta
   });
 }
@@ -67,9 +32,6 @@ async function dispatch(
 // =====================================
 
 module.exports = {
-
   dispatch,
-
-  getDispatcherStats:
-    getQueueStats
+  getDispatcherStats: getQueueStats
 };
