@@ -78,6 +78,12 @@ const {
   "./runtime/state_store"
 );
 
+const {
+  discoverDeviceCapabilities
+} = require(
+  "./runtime/runtime_introspection"
+);
+
 // =====================================
 // TASK RUNTIME
 // =====================================
@@ -281,6 +287,21 @@ startUDPRuntime({
 // =====================================
 // BOOT
 // =====================================
+(async () => {
+
+  const devices =
+    registry.getAll();
+
+  for (const device of devices) {
+
+    await discoverDeviceCapabilities(
+
+      device,
+      registry
+    );
+  }
+
+})();
 
 console.log(
   "🚀 Gateway Runtime Online"
