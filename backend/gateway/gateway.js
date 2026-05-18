@@ -84,6 +84,11 @@ const {
   "./runtime/runtime_introspection"
 );
 
+const runtimeState =
+  require(
+    "./runtime/runtime_state"
+  );
+
 // =====================================
 // TASK RUNTIME
 // =====================================
@@ -250,6 +255,9 @@ eventBus.on(
   "task.failed",
   emitTaskUpdate
 );
+runtimeState.setTask(
+  task
+);
 
 // =====================================
 // SNAPSHOT LOOP
@@ -302,6 +310,16 @@ startUDPRuntime({
   }
 
 })();
+for (
+  const device
+  of registry.getAll()
+) {
+
+  runtimeState.setDevice(
+    device
+  );
+}
+
 
 console.log(
   "🚀 Gateway Runtime Online"
