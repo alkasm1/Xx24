@@ -1,53 +1,29 @@
-const {
-  executeTerminalCommand
-} = require(
-  "../terminal/terminal_executor"
-);
+// backend/gateway/ws/handlers.js
 
-const registry = require(
-  "../device_registry"
-);
-
-const {
-  emitTaskUpdated
-} = require(
-  "../../runtime/events/runtime_events"
-);
+const { executeTerminalCommand } = require("../terminal/terminal_executor");
+const registry = require("../device_registry");
+const { emitTaskUpdated } = require("../../runtime/events/runtime_events");
+const runtimeState = require("../runtime/runtime_state");
 
 function createHandlers({
-
   ws,
-
   eventBus,
-
   taskManager,
-
   sessionManager,
-
   sender,
-
   runStress,
-
   activeRequests
-
 }) {
 
   async function onMessage(raw) {
 
-    sessionManager.touchSession(
-      ws.sessionId
-    );
+    sessionManager.touchSession(ws.sessionId);
 
     let msg;
 
     try {
-
-      msg = JSON.parse(
-        raw.toString()
-      );
-
+      msg = JSON.parse(raw.toString());
     } catch {
-
       return;
     }
 
@@ -55,17 +31,11 @@ function createHandlers({
     // PING
     // =====================================
 
-    if (
-      msg.type === "ping"
-    ) {
-
-      ws.send(
-        JSON.stringify({
-          type: "pong",
-          ts: Date.now()
-        })
-      );
-
+    if (msg.type === "ping") {
+      ws.send(JSON.stringify({
+        type: "pong",
+        ts: Date.now()
+      }));
       return;
     }
 
@@ -73,321 +43,179 @@ function createHandlers({
     // STRESS
     // =====================================
 
-    if (
-      msg.type ===
-      "ui.stress.run"
-    ) {
+    if (msg.type === "ui.stress.run") {
 
-      const profile =
-        msg.profile ||
-        "light";
+      const profile = msg.profile || "light";
 
-      console.log(
-        "🔥 UI requested stress run:",
-        profile
-      );
+      console.log("🔥 UI requested stress run:", profile);
 
       try {
-
-        const results =
-          await runStress(
-            profile
-          );
+        const results = await runStress(profile);
 
         sender.broadcast({
-          type:
-            "stressUpdate",
-
+          type: "stressUpdate",
           data: results
         });
 
       } catch (err) {
-
-        console.log(
-          "❌ Stress run failed:",
-          err.message
-        );
+        console.log("❌ Stress run failed:", err.message);
       }
 
       return;
     }
 
     // =====================================
-    // TERMINAL
+    // TERMINAL EXECUTION
     // =====================================
 
-    if (
-      msg.type ===
-      "ui.terminal.exec"
-    ) {
+    if (msg.type === "ui.terminal.exec") {
 
-      if (
-        !msg.requestId
-      ) {
-
+      if (!msg.requestId) {
         return sender.send(ws, {
-
-          type:
-            "terminal.output",
-
-          error:
-            "Missing requestId"
+          type: "terminal.output",
+          error: "Missing requestId"
         });
       }
 
-      if (
-        activeRequests.has(
-          msg.requestId
-        )
-      ) {
-
+      if (activeRequests.has(msg.requestId)) {
         return;
       }
 
-      activeRequests.add(
-        msg.requestId
-      );
+      activeRequests.add(msg.requestId);
 
       try {
 
-        const result =
-          await executeTerminalCommand({
+        const result = await executeTerminalCommand({
+          deviceId: msg.deviceId,
+          command: msg.command,
+          requestId: msg.requestId
+        });
 
-            deviceId:
-              msg.deviceId,
-
-            command:
-              msg.command,
-
-            requestId:
-              msg.requestId
-          });
+        // ⭐ تسجيل التنفيذ في RuntimeState
+        runtimeState.setTask({
+          id: msg.requestId,
+          type: "terminal",
+          deviceId: msg.deviceId,
+          command: msg.command,
+          result: result.result,
+          executedAt: Date.now()
+        });
 
         sender.send(ws, {
-
-          type:
-            "terminal.output",
-
-          requestId:
-            msg.requestId,
-
-          deviceId:
-            msg.deviceId,
-
-          command:
-            msg.command,
-
-          output:
-            result.result
+          type: "terminal.output",
+          requestId: msg.requestId,
+          deviceId: msg.deviceId,
+          command: msg.command,
+          output: result.result
         });
 
       } catch (err) {
 
         sender.send(ws, {
-
-          type:
-            "terminal.output",
-
-          requestId:
-            msg.requestId,
-
-          deviceId:
-            msg.deviceId,
-
-          command:
-            msg.command,
-
-          error:
-            err.message
+          type: "terminal.output",
+          requestId: msg.requestId,
+          deviceId: msg.deviceId,
+          command: msg.command,
+          error: err.message
         });
 
       } finally {
-
-        activeRequests.delete(
-          msg.requestId
-        );
+        activeRequests.delete(msg.requestId);
       }
 
       return;
     }
 
     // =====================================
-    // OPCODE
+    // OPCODE EXECUTION
     // =====================================
 
-    if (
-      msg.type ===
-      "ui.opcode"
-    ) {
+    if (msg.type === "ui.opcode") {
 
-      if (
-        !msg.requestId
-      ) {
-
+      if (!msg.requestId) {
         return sender.send(ws, {
-
-          type:
-            "opcode.result",
-
+          type: "opcode.result",
           result: {
-
             success: false,
-
-            error:
-              "Missing requestId"
+            error: "Missing requestId"
           }
         });
       }
 
-      if (
-        activeRequests.has(
-          msg.requestId
-        )
-      ) {
-
-        console.log(
-          "⚠ Duplicate request ignored:",
-          msg.requestId
-        );
-
+      if (activeRequests.has(msg.requestId)) {
+        console.log("⚠ Duplicate request ignored:", msg.requestId);
         return;
       }
 
-      activeRequests.add(
-        msg.requestId
-      );
+      activeRequests.add(msg.requestId);
 
-      eventBus.emit(
-        "opcode.received",
-        msg
-      );
+      eventBus.emit("opcode.received", msg);
 
-      const device =
-        registry.get(
-          msg.deviceId
-        );
+      const device = registry.get(msg.deviceId);
 
       if (!device) {
 
-        activeRequests.delete(
-          msg.requestId
-        );
+        activeRequests.delete(msg.requestId);
 
         return sender.send(ws, {
-
-          type:
-            "opcode.result",
-
-          requestId:
-            msg.requestId,
-
-          deviceId:
-            msg.deviceId,
-
-          opcode:
-            msg.opcode,
-
+          type: "opcode.result",
+          requestId: msg.requestId,
+          deviceId: msg.deviceId,
+          opcode: msg.opcode,
           result: {
-
             success: false,
-
-            error:
-              `Device not found: ${msg.deviceId}`
+            error: `Device not found: ${msg.deviceId}`
           }
         });
       }
 
       try {
 
-        const task =
-          await taskManager.execute({
+        const task = await taskManager.execute({
+          device,
+          opcode: msg.opcode,
+          meta: msg.meta || {},
+          requestId: msg.requestId,
+          sessionId: ws.sessionId
+        });
 
-            device,
+        // ⭐ تسجيل المهمة في RuntimeState
+        runtimeState.setTask(task);
 
-            opcode:
-              msg.opcode,
+        emitTaskUpdated(task);
 
-            meta:
-              msg.meta || {},
-
-            requestId:
-              msg.requestId,
-
-            sessionId:
-              ws.sessionId
-          });
-
-        emitTaskUpdated(
-          task
-        );
-
-        sessionManager.attachTask(
-          ws.sessionId,
-          task.id
-        );
+        sessionManager.attachTask(ws.sessionId, task.id);
 
         sender.send(ws, {
-
-          type:
-            "opcode.result",
-
-          requestId:
-            task.id,
-
-          deviceId:
-            task.deviceId,
-
-          opcode:
-            task.opcode,
-
-          result:
-            task.result
+          type: "opcode.result",
+          requestId: task.id,
+          deviceId: task.deviceId,
+          opcode: task.opcode,
+          result: task.result
         });
 
       } catch (err) {
 
-        eventBus.emit(
-          "opcode.failed",
-          msg
-        );
+        eventBus.emit("opcode.failed", msg);
 
         sender.send(ws, {
-
-          type:
-            "opcode.result",
-
-          requestId:
-            msg.requestId,
-
-          deviceId:
-            msg.deviceId,
-
-          opcode:
-            msg.opcode,
-
+          type: "opcode.result",
+          requestId: msg.requestId,
+          deviceId: msg.deviceId,
+          opcode: msg.opcode,
           result: {
-
             success: false,
-
-            error:
-              err.message
+            error: err.message
           }
         });
 
       } finally {
-
-        activeRequests.delete(
-          msg.requestId
-        );
+        activeRequests.delete(msg.requestId);
       }
     }
   }
 
-  return {
-    onMessage
-  };
+  return { onMessage };
 }
 
-module.exports = {
-  createHandlers
-};
+module.exports = { createHandlers };
