@@ -1,44 +1,225 @@
-// backend/gateway/runtime/execution/execute_opcode.js
+const {
+  buildDescriptor
+} = require(
+  "../resolver/descriptor_builder"
+);
 
-const { buildDescriptor } = require("../resolver/descriptor_builder");
-const { resolveTransport } = require("../resolver/transport_resolver");
-const { getDeviceQueue } = require("../resolver/execution_queue");
+const {
+  resolveTransport
+} = require(
+  "../resolver/transport_resolver"
+);
 
-async function executeOpcode({ device, opcode, meta = {}, descriptor }) {
+const {
+  getDeviceQueue
+} = require(
+  "../resolver/execution_queue"
+);
 
-  // إذا registry أعطانا descriptor جاهز → نستخدمه
-  const finalDescriptor =
+const {
+  emitDeviceUpdated
+} = require(
+  "../events/runtime_events"
+);
+
+// =====================================
+// EXECUTE OPCODE
+// =====================================
+
+async function executeOpcode({
+
+  device,
+
+  opcode,
+
+  descriptor = null,
+
+  profileId = null,
+
+  meta = {}
+
+}) {
+
+  // =====================================
+  // DESCRIPTOR
+  // =====================================
+
+  const runtimeDescriptor =
+
     descriptor ||
-    buildDescriptor({ device, opcode, meta });
 
-  const adapter = resolveTransport(finalDescriptor.transport);
+    buildDescriptor({
 
-  const queue = getDeviceQueue(device.deviceId);
+      device,
 
-  return new Promise((resolve, reject) => {
-    queue.push(
-      async () => {
-        try {
-          const result = await adapter.execute(device, finalDescriptor, meta);
+      opcode,
 
-          resolve({
-            opcode,
-            profile: device.profile,
-            descriptor: finalDescriptor,
-            ...result
-          });
+      meta
+    });
 
-        } catch (err) {
-          reject(err);
-        }
-      },
-      {
-        id: meta.requestId || `${device.deviceId}-${opcode}`
-      }
+  // =====================================
+  // TRANSPORT
+  // =====================================
+
+  const transportName =
+
+    runtimeDescriptor.transport ||
+
+    device.transport ||
+
+    "ssh";
+
+  const adapter =
+    resolveTransport(
+      transportName
     );
-  });
+
+  if (!adapter) {
+
+    throw new Error(
+
+      `Transport adapter not found: ${transportName}`
+    );
+  }
+
+  // =====================================
+  // DEVICE QUEUE
+  // =====================================
+
+  const queue =
+    getDeviceQueue(
+      device.deviceId
+    );
+
+  // =====================================
+  // EXECUTION
+  // =====================================
+
+  return new Promise(
+
+    (resolve, reject) => {
+
+      queue.push(
+
+        async () => {
+
+          try {
+
+            emitDeviceUpdated({
+
+              ...device,
+
+              status:
+                "busy",
+
+              activeOpcode:
+                opcode
+            });
+
+            const result =
+
+              await adapter.execute(
+
+                device,
+
+                runtimeDescriptor,
+
+                meta
+              );
+
+            emitDeviceUpdated({
+
+              ...device,
+
+              status:
+                "online",
+
+              activeOpcode:
+                null,
+
+              lastExecution:
+                Date.now()
+            });
+
+            resolve({
+
+              success:
+                result.success,
+
+              opcode,
+
+              profile:
+                profileId ||
+
+                device.profile ||
+
+                "unknown",
+
+              transport:
+                transportName,
+
+              descriptor:
+                runtimeDescriptor,
+
+              ...result
+            });
+
+          } catch (err) {
+
+            emitDeviceUpdated({
+
+              ...device,
+
+              status:
+                "error",
+
+              activeOpcode:
+                null,
+
+              lastError:
+                err.message ||
+
+                String(err)
+            });
+
+            reject({
+
+              success: false,
+
+              opcode,
+
+              profile:
+                profileId ||
+
+                device.profile ||
+
+                "unknown",
+
+              transport:
+                transportName,
+
+              error:
+                err.message ||
+
+                String(err)
+            });
+          }
+
+        },
+
+        {
+          id:
+
+            meta.requestId ||
+
+            `${device.deviceId}-${opcode}`
+        }
+      );
+    }
+  );
 }
 
 module.exports = {
+
   executeOpcode
 };
