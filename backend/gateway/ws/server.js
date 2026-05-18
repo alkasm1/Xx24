@@ -2,6 +2,13 @@
 
 const WebSocket =
   require("ws");
+runtimeState.setSession({
+  id:
+    ws.sessionId,
+
+  connectedAt:
+    Date.now()
+});
 
 const {
   createSender
@@ -148,7 +155,10 @@ function createWSServer({
           );
         }
       );
-
+runtimeState.removeSession(
+  ws.sessionId
+);
+      
       // =====================================
       // ERROR
       // =====================================
