@@ -1,17 +1,11 @@
-// backend/gateway/runtime/terminal_stream.js
-
 const eventBus =
-  require(
-    "../event_bus"
-  );
+  require("../event_bus");
 
 function stringify(arg) {
 
   if (
-    typeof arg ===
-    "string"
+    typeof arg === "string"
   ) {
-
     return arg;
   }
 
@@ -46,9 +40,7 @@ function initTerminalStream(
 
       const payload =
         args
-          .map(
-            stringify
-          )
+          .map(stringify)
           .join(" ");
 
       sendToUI({
@@ -64,7 +56,7 @@ function initTerminalStream(
   };
 
   // =====================================
-  // EVENT BUS TERMINAL
+  // EVENT BUS TERMINAL LOGS
   // =====================================
 
   eventBus.on(
