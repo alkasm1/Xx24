@@ -87,7 +87,7 @@ function sendToUI(obj) {
 initTerminalStream(sendToUI);
 
 // =====================================
-// TASK EVENTS (الإصدار الصحيح)
+// TASK EVENTS
 // =====================================
 
 function emitTaskUpdate(task) {
@@ -107,7 +107,6 @@ function emitTaskUpdate(task) {
   }
 }
 
-// كل حدث يستقبل task → نضيفه إلى RuntimeState
 eventBus.on("task.created", task => {
   runtimeState.setTask(task);
   emitTaskUpdate(task);
