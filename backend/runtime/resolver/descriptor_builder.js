@@ -1,9 +1,9 @@
 // backend/runtime/resolver/descriptor_builder.js
 
 const {
-  resolveOpcode
+  buildOpcodeDescriptor
 } = require(
-  "../../execution/resolve_opcode"
+  "../../gateway/opcodes/registry"
 );
 
 // =====================================
@@ -39,11 +39,11 @@ function buildDescriptor({
   }
 
   // =====================================
-  // RESOLVE OPCODE
+  // BUILD OPCODE DESCRIPTOR
   // =====================================
 
   const base =
-    resolveOpcode({
+    buildOpcodeDescriptor({
 
       device,
 
@@ -52,14 +52,24 @@ function buildDescriptor({
       meta
     });
 
+  if (!base) {
+
+    throw new Error(
+
+      `Failed to build descriptor: ${opcode}`
+    );
+  }
+
   // =====================================
-  // BUILD DESCRIPTOR
+  // BUILD RUNTIME DESCRIPTOR
   // =====================================
 
   const descriptor = {
 
     type:
+
       base.type ||
+
       "command",
 
     transport:
@@ -109,6 +119,8 @@ function buildDescriptor({
   return descriptor;
 }
 
+// =====================================
+// EXPORT
 // =====================================
 
 module.exports = {
